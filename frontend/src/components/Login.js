@@ -21,9 +21,18 @@ const Login = () => {
 
 return (
   <form onSubmit={handleSubmit}>
-    <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" />
-    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
-    <button type="submit">Login</button>
+    <input
+      value={username}
+      onChange={(e) => setUsername(e.target.value)}
+      placeholder="Username"
+    />
+    <input
+      type="password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      placeholder="Password"
+    />
+    <button type="submit">Login</button>   {/*  thêm nút này */}
   </form>
 );
 
