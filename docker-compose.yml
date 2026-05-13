@@ -43,6 +43,7 @@ services:
       - "8080:8080"
     env_file:
       - .env
+      - /backend/.env # Đảm bảo file .env ở backend có các biến cần thiết
     environment:
       SPRING_PROFILES_ACTIVE: dev # hoặc prod tùy lúc muốn test
       DB_URL: jdbc:postgresql://postgres:5432/travi_db
@@ -50,6 +51,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      FRONTEND_URL_ENV: frontend:51
       OPENAI_API_KEY: ${OPENAI_API_KEY}
 
     depends_on:
