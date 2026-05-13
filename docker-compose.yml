@@ -43,7 +43,6 @@ services:
       - "8080:8080"
     env_file:
       - .env
-      - /backend/.env # Đảm bảo file .env ở backend có các biến cần thiết
     environment:
       SPRING_PROFILES_ACTIVE: dev # hoặc prod tùy lúc muốn test
       DB_URL: jdbc:postgresql://postgres:5432/travi_db
