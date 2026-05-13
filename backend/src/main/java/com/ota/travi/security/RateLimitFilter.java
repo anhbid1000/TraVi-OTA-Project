@@ -1,4 +1,5 @@
-package com.ota.travi.security;
+CustomUserDetails
+        CustomUserDetailsServicepackage com.ota.travi.security;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
