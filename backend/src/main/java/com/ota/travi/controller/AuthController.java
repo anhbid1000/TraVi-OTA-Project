@@ -1,6 +1,10 @@
 package com.ota.travi.controller;
 
-import com.ota.travi.dto.*;
+import com.ota.travi.dto.request.LoginRequest;
+import com.ota.travi.dto.request.RefreshTokenRequest;
+import com.ota.travi.dto.request.RegisterRequest;
+import com.ota.travi.dto.request.VerifyOtpRequest;
+import com.ota.travi.dto.response.AuthResponse;
 import com.ota.travi.security.CustomUserDetails;
 import com.ota.travi.security.CustomUserDetailsService;
 import com.ota.travi.security.JwtUtil;

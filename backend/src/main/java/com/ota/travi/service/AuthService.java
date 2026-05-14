@@ -2,7 +2,9 @@ package com.ota.travi.service;
 
 import com.ota.travi.Enum.HangThanhVien;
 import com.ota.travi.Enum.TrangThaiUser;
-import com.ota.travi.dto.*;
+import com.ota.travi.dto.response.AuthResponse;
+import com.ota.travi.dto.request.LoginRequest;
+import com.ota.travi.dto.request.RegisterRequest;
 import com.ota.travi.entity.DoiTac;
 import com.ota.travi.entity.KhachHang;
 import com.ota.travi.entity.User;
