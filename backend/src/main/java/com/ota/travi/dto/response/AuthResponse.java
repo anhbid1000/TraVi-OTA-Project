@@ -1,4 +1,4 @@
-package com.ota.travi.dto;
+package com.ota.travi.dto.response;
 
 public record AuthResponse (
         String token,

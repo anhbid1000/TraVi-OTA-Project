@@ -1,5 +1,4 @@
-package com.ota.travi.dto;
-
+package com.ota.travi.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
