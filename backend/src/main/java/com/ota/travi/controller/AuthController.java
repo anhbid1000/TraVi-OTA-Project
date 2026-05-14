@@ -14,10 +14,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
+import static com.ota.travi.constant.ApiEndpoints.AUTH_LOGIN;
+import static com.ota.travi.constant.ApiEndpoints.AUTH_LOGOUT;
+import static com.ota.travi.constant.ApiEndpoints.AUTH_REFRESH;
+import static com.ota.travi.constant.ApiEndpoints.AUTH_REGISTER;
+import static com.ota.travi.constant.ApiEndpoints.AUTH_VERIFY_EMAIL;
+
 @RestController
-@RequestMapping("/api/auth")
 public class AuthController {
     @Autowired
     private AuthService authService;
@@ -36,7 +42,7 @@ public class AuthController {
 
 
     // --- 1. API ĐĂNG KÝ (REGISTER) ---
-    @PostMapping("/register")
+    @PostMapping(AUTH_REGISTER)
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try{
             String message = authService.register(request);
@@ -46,7 +52,7 @@ public class AuthController {
         }
     }
 
-    @PutMapping("/verify-email")
+    @PutMapping(AUTH_VERIFY_EMAIL)
     public ResponseEntity<?> verifyEmail(@Valid @RequestBody VerifyOtpRequest request) {
         try{
             String message = authService.verifyRegisterOtp(request.email(), request.confirmOTP());
@@ -57,7 +63,7 @@ public class AuthController {
     }
 
     // --- 2. API ĐĂNG NHẬP (LOGIN) ---
-    @PostMapping("/login")
+    @PostMapping(AUTH_LOGIN)
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try{
             //1. Xử lý login, Tạo phản hồi và trả về cho client
@@ -73,10 +79,10 @@ public class AuthController {
     }
 
     // --- 3. API ĐĂNG XUẤT (LOGOUT) ---
-    @PostMapping("/logout")
+    @PostMapping(AUTH_LOGOUT)
     public ResponseEntity<Object> logout(
             HttpServletRequest request,
-            @RequestBody(required = false) RefreshTokenRequest refreshTokenRequest
+            @Nullable @RequestBody(required = false) RefreshTokenRequest refreshTokenRequest
     ) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -99,9 +105,13 @@ public class AuthController {
     }
 
     // --- 4. API LÀM MỚI TOKEN (REFRESH TOKEN) ---
-    @PostMapping("/refresh")
+    @PostMapping(AUTH_REFRESH)
     public ResponseEntity<Object> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         String refreshToken = request.refreshToken();
+
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return new ResponseEntity<>("Refresh Token không được để trống", HttpStatus.BAD_REQUEST);
+        }
 
         // 1. Thẻ này có bị đăng xuất (nằm trong blacklist) không?
         if (blacklistService.isBlacklisted(refreshToken)) {

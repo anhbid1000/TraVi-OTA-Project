@@ -13,6 +13,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.time.Duration;
 
+import static com.ota.travi.constant.ApiEndpoints.AUTH_LOGIN;
+
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
 
@@ -26,7 +28,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         // Chỉ áp dụng giới hạn cho API Đăng nhập
-        if (request.getRequestURI().startsWith("/api/auth/login")) {
+        if (request.getRequestURI().startsWith(AUTH_LOGIN)) {
             if (!bucket.tryConsume(1)) { // Rút 1 token từ xô (bucket)
                 response.setStatus(429); // 429 Too Many Requests
                 response.setContentType("application/json; charset=UTF-8");
