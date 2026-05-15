@@ -1,5 +1,4 @@
 import {
-  createContext,
   useCallback,
   useEffect,
   useMemo,
@@ -8,20 +7,8 @@ import {
 } from 'react'
 import { authService } from '../services/authService'
 import { tokenStorage } from '../services/tokenStorage'
-import type { AuthResponse, AuthUser, LoginRequest } from '../types/auth'
-
-type AuthContextValue = {
-  user: AuthUser | null
-  accessToken: string | null
-  refreshToken: string | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  login: (payload: LoginRequest) => Promise<AuthResponse>
-  logout: () => Promise<void>
-  refreshSession: () => Promise<AuthResponse>
-}
-
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+import { AuthContext, type AuthContextValue } from './authContext'
+import type { AuthUser, LoginRequest } from '../types/auth'
 
 type AuthProviderProps = {
   children: ReactNode
