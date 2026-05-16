@@ -5,6 +5,7 @@ import type {
   LoginRequest,
   RefreshTokenRequest,
   RegisterRequest,
+  ResendOtpRequest,
   VerifyEmailRequest,
 } from '../types/auth'
 
@@ -49,6 +50,11 @@ export const authService = {
 
   async verifyEmail(payload: VerifyEmailRequest) {
     const { data } = await api.put<string>(`${AUTH_ENDPOINT}/verify-email`, payload)
+    return data
+  },
+
+  async resendOtp(payload: ResendOtpRequest) {
+    const { data } = await api.post<string>(`${AUTH_ENDPOINT}/resend-otp`, payload)
     return data
   },
 }

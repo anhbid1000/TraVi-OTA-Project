@@ -19,6 +19,7 @@ public final class ApiEndpoints {
     public static final String AUTH_PREFIX = BASE_PREFIX + "/auth";
     public static final String AUTH_REGISTER = AUTH_PREFIX + "/register";
     public static final String AUTH_VERIFY_EMAIL = AUTH_PREFIX + "/verify-email";
+    public static final String AUTH_RESEND_OTP = AUTH_PREFIX + "/resend-otp";
     public static final String AUTH_LOGIN = AUTH_PREFIX + "/login";
     public static final String AUTH_LOGOUT = AUTH_PREFIX + "/logout";
     public static final String AUTH_REFRESH = AUTH_PREFIX + "/refresh";

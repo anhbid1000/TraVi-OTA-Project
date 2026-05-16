@@ -14,12 +14,13 @@ public record RegisterRequest(
         String email,
 
         @NotBlank(message = "Mật khẩu không được để trống")
-        String matKhau,
-
-        @NotBlank(message = "Mật khẩu không được để trống")
         @Size(min = 9 , max = 20 , message = "Mật khẩu phải gồm 8-20 kí tự")
         @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
                 message = "Mật khẩu phải chứa ít nhất 1 kí tự in hoa, 1 kí tự thường, 1 chữ số, và 1 kí tự đặc biệt")
+        String matKhau,
+
+        @NotBlank(message = "Họ tên không được để trống")
+        @Size(min = 2, max = 100, message = "Họ tên phải gồm 2-100 ký tự")
         String hoTen,
 
         @NotBlank(message = "Số điện thoại không được để trống")

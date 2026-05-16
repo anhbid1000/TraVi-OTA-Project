@@ -3,6 +3,7 @@ package com.ota.travi.controller;
 import com.ota.travi.dto.request.LoginRequest;
 import com.ota.travi.dto.request.RefreshTokenRequest;
 import com.ota.travi.dto.request.RegisterRequest;
+import com.ota.travi.dto.request.ResendOtpRequest;
 import com.ota.travi.dto.request.VerifyOtpRequest;
 import com.ota.travi.dto.response.AuthResponse;
 import com.ota.travi.security.CustomUserDetails;
@@ -25,6 +26,7 @@ import static com.ota.travi.constant.ApiEndpoints.AUTH_LOGIN;
 import static com.ota.travi.constant.ApiEndpoints.AUTH_LOGOUT;
 import static com.ota.travi.constant.ApiEndpoints.AUTH_REFRESH;
 import static com.ota.travi.constant.ApiEndpoints.AUTH_REGISTER;
+import static com.ota.travi.constant.ApiEndpoints.AUTH_RESEND_OTP;
 import static com.ota.travi.constant.ApiEndpoints.AUTH_VERIFY_EMAIL;
 
 @RestController
@@ -67,6 +69,16 @@ public class AuthController {
     }
 
     // --- 2. API ĐĂNG NHẬP (LOGIN) ---
+    @PostMapping(AUTH_RESEND_OTP)
+    public ResponseEntity<?> resendOtp(@Valid @RequestBody ResendOtpRequest request) {
+        try{
+            String message = authService.resendRegisterOtp(request.email());
+            return new ResponseEntity<>(message, HttpStatus.OK);
+        }catch (RuntimeException ex){
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping(AUTH_LOGIN)
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try{

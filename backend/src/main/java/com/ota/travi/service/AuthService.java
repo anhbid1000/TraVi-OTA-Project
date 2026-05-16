@@ -120,6 +120,22 @@ public class AuthService {
         return "Xác minh OTP thành công. Tài khoản đã được kích hoạt.";
     }
 
+    public String resendRegisterOtp(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản với email này"));
+
+        if (user.getTrangThai() == TrangThaiUser.HOAT_DONG) {
+            throw new RuntimeException("Tài khoản này đã được xác minh");
+        }
+
+        if (user.getTrangThai() != TrangThaiUser.CHUA_XAC_THUC) {
+            throw new RuntimeException("Không thể gửi OTP cho tài khoản ở trạng thái hiện tại");
+        }
+
+        otpService.sendVerificationRegister(user);
+        return "Mã OTP mới đã được gửi tới email của bạn.";
+    }
+
     public AuthResponse login(AuthenticationManager authenticationManager, JwtUtil jwtUtil, LoginRequest request) {
         // 1. Giao việc kiểm tra Username/Password cho Spring Security (AuthenticationManager)
         // Quá trình này sẽ tự động gọi hàm loadUserByUsername ở CustomUserDetailsService (Task 4)

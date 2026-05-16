@@ -24,13 +24,22 @@ export type RefreshTokenRequest = {
   refreshToken: string
 }
 
+export type AccountType = 'DOI_TAC' | 'KHACH_HANG'
+
 export type RegisterRequest = {
+  username: string
   email: string
+  hoTen: string
+  soDienThoai: string
   matKhau: string
-  [key: string]: unknown
+  loaiTaiKhoan: AccountType
 }
 
 export type VerifyEmailRequest = {
   email: string
   confirmOTP: string
+}
+
+export type ResendOtpRequest = {
+  email: string
 }

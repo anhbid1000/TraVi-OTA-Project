@@ -1,0 +1,6 @@
+export { AdminLogin } from './AdminLogin'
+export { CustomerLogin } from './CustomerLogin'
+export { CustomerRegister } from './CustomerRegister'
+export { PartnerLogin } from './PartnerLogin'
+export { PartnerRegister } from './PartnerRegister'
+export { VerifyEmailPage } from './VerifyEmailPage'

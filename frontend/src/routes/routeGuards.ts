@@ -31,3 +31,18 @@ export const hasAllowedRole = (user: AuthUser | null, allowedRoles: readonly Rol
 
   return allowedRoles.some((role) => normalizeRole(role) === currentRole)
 } 
+
+export const getDefaultPathByRole = (role?: string) => {
+  const normalizedRole = normalizeRole(role)
+
+  switch (normalizedRole) {
+    case 'QUAN_TRI_VIEN':
+      return '/admin'
+    case 'DOI_TAC':
+      return '/partner'
+    case 'KHACH_HANG':
+      return '/'
+    default:
+      return '/'
+  }
+}
