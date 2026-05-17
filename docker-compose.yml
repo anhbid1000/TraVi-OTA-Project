@@ -50,6 +50,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      FRONTEND_URL_ENV: frontend:51
       OPENAI_API_KEY: ${OPENAI_API_KEY}
 
     depends_on:
