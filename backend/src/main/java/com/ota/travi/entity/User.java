@@ -1,7 +1,5 @@
 package com.ota.travi.entity;
 
-import com.ota.travi.Enum.GioiTinh;
-import com.ota.travi.Enum.TrangThaiUser;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,6 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import com.ota.travi.enums.GioiTinh;
+import com.ota.travi.enums.TrangThaiUser;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;

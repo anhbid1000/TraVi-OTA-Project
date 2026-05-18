@@ -3,12 +3,14 @@ package com.ota.travi.dto.request;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public record LoginRequest (
+public record LoginRequest(
         @NotBlank(message = "Email không được để trống")
         @Email(message = "Email không hợp lệ")
         String email,
 
-        @NotBlank(message = "Mật khẩu không đưược để trống")
+        @NotBlank(message = "Mật khẩu không được để trống")
         String matKhau,
+
         Boolean nhoMatKhau
-){}
+) {
+}

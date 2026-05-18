@@ -1,0 +1,46 @@
+package com.ota.travi.entity;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "nha_hang")
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class NhaHang extends TaiSan {
+    @Column(nullable = false)
+    private String ten;
+
+    private String loaiAmThuc;
+
+    private LocalTime gioMoCua;
+
+    private LocalTime gioDongCua;
+
+    private Integer sucChua;
+
+    @OneToMany(mappedBy = "nhaHang", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Ban> danhSachBan = new ArrayList<>();
+
+    @OneToMany(mappedBy = "nhaHang", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AnhNhaHang> danhSachAnh = new ArrayList<>();
+
+    @OneToMany(mappedBy = "nhaHang", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TienIchNhaHang> tienIch = new ArrayList<>();
+
+    @OneToMany(mappedBy = "nhaHang", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ThucDon> thucDon = new ArrayList<>();
+}
