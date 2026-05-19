@@ -22,4 +22,29 @@ public class BookingController {
         DonDatCho newBooking = bookingService.createBooking(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(newBooking);
     }
+// === CỔNG API CHO GIAI ĐOẠN 3: PARTNER APIs ===
+
+    // API 3.1: Lấy danh sách đơn hàng dành cho Đối tác (Có thể lọc theo trạng thái)
+    @GetMapping("/partner/list")
+    public ResponseEntity<java.util.List<DonDatCho>> getPartnerBookings(@RequestParam(required = false) String status) {
+        return ResponseEntity.ok(bookingService.getPartnerBookings(status));
+    }
+
+    // API 3.2a: Đối tác bấm Xác nhận khách đã đến nhận phòng/bàn (Check-in)
+    @PutMapping("/partner/{id}/check-in")
+    public ResponseEntity<DonDatCho> partnerCheckIn(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.checkIn(id));
+    }
+
+    // API 3.2b: Đối tác bấm Xác nhận khách trả phòng/bàn đi về (Check-out)
+    @PutMapping("/partner/{id}/check-out")
+    public ResponseEntity<DonDatCho> partnerCheckOut(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.checkOut(id));
+    }
+
+    // API 3.2c: Đối tác bấm phạt do khách quá giờ không đến (No-show)
+    @PutMapping("/partner/{id}/no-show")
+    public ResponseEntity<DonDatCho> partnerNoShow(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.noShow(id));
+    }
 }

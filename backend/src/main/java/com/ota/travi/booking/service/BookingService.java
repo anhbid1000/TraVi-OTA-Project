@@ -57,4 +57,52 @@ public class BookingService {
         // Lưu xuống Database
         return donDatChoRepository.save(don);
     }
+    // === CODE BỔ SUNG CHO GIAI ĐOẠN 3: PARTNER APIs ===
+
+    // Task 3.1: Lấy danh sách đơn hàng cho Đối tác quản lý (phân loại theo trạng thái)
+    public java.util.List<DonDatCho> getPartnerBookings(String filterStatus) {
+        // Thực tế sẽ dùng câu Query trong Repository, ở đây mình lọc nhanh bằng Stream
+        return donDatChoRepository.findAll().stream()
+                .filter(don -> filterStatus == null || don.getTrangThai().name().equalsIgnoreCase(filterStatus))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    // Task 3.2a: API Check-in khi khách đến nhận phòng/bàn
+    @Transactional(rollbackFor = Exception.class)
+    public DonDatCho checkIn(Long id) {
+        DonDatCho don = donDatChoRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        
+        // Đổi trạng thái đơn thành ĐANG PHỤC VỤ
+        don.setTrangThai(com.ota.travi.booking.domain.enums.TrangThaiDon.DANG_PHUC_VU);
+        // TODO: Đổi trạng thái Phòng/Bàn thực tế trong DB thành "Đang sử dụng"
+        
+        return donDatChoRepository.save(don);
+    }
+
+    // Task 3.2b: API Check-out khi khách dùng xong và rời đi
+    @Transactional(rollbackFor = Exception.class)
+    public DonDatCho checkOut(Long id) {
+        DonDatCho don = donDatChoRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        
+        // Đổi trạng thái đơn thành ĐÃ HOÀN THANH
+        don.setTrangThai(com.ota.travi.booking.domain.enums.TrangThaiDon.DA_HOAN_THANH);
+        // TODO: Đổi trạng thái Phòng/Bàn thực tế thành "Trống / Cần dọn dẹp" và cộng doanh thu
+        
+        return donDatChoRepository.save(don);
+    }
+
+    // Task 3.2c: API No-show xử lý khi khách đặt nhưng bùng kèo không đến
+    @Transactional(rollbackFor = Exception.class)
+    public DonDatCho noShow(Long id) {
+        DonDatCho don = donDatChoRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+        
+        // Khách không đến thì hủy đơn
+        don.setTrangThai(com.ota.travi.booking.domain.enums.TrangThaiDon.DA_HUY);
+        // Phạt 100% tiền nếu đơn này đã được thanh toán trước đó (giữ nguyên tiền, không hoàn)
+        
+        return donDatChoRepository.save(don);
+    }
 }
