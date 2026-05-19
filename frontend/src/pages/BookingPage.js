@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import CountdownTimer from '../components/CountdownTimer.jsx';
+import CountdownTimer from '../components/CountdownTimer';
 
 const BookingPage = () => {
     const { user } = useAuth();
