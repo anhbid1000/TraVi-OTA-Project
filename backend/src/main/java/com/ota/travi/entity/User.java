@@ -4,6 +4,7 @@ import com.ota.travi.Enum.GioiTinh;
 import com.ota.travi.Enum.TrangThaiUser;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +24,7 @@ import java.util.Date;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public abstract class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
