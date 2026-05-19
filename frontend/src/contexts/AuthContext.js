@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState } from 'react';
 const AuthContext = createContext(null);
 
 // Nhà cung cấp dữ liệu đăng nhập giả lập cho toàn bộ ứng dụng
-public const AuthProvider = ({ children }) => {
+export const AuthProvider = ({ children }) => {
     // Giả lập tình huống khách hàng đã đăng nhập tài khoản của họ từ trước
     const [user, setUser] = useState({
         id: 1,
@@ -22,6 +22,6 @@ public const AuthProvider = ({ children }) => {
 };
 
 // Hàm Hook ngắn gọn để các trang khác gọi ra xài nhanh
-public const useAuth = () => {
+export const useAuth = () => {
     return useContext(AuthContext);
 };
