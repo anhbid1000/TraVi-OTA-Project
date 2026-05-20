@@ -36,8 +36,12 @@ public final class ApiEndpoints {
     public static final String USER_RECOMMENDATIONS = USER_PREFIX + "/recommendations"; // AI hints
 
     // 3. PARTNER - Partner / Vendor endpoints (ROLE: PARTNER)
+    public static final String PARTNER_LEGACY_PREFIX = API_PREFIX + "/partner";
+    public static final String PARTNER_LEGACY_BUSINESS_PROFILES = PARTNER_LEGACY_PREFIX + "/business-profiles";
     public static final String PARTNER_PREFIX = BASE_PREFIX + "/partner";
+    public static final String PARTNER_BUSINESS_PROFILES = PARTNER_PREFIX + "/business-profiles";
     public static final String PARTNER_HOTELS = PARTNER_PREFIX + "/hotels"; // manage partner hotels
+    public static final String PARTNER_RESTAURANTS = PARTNER_PREFIX + "/restaurants";
     public static final String PARTNER_PROMOTIONS = PARTNER_PREFIX + "/promotions";
     public static final String PARTNER_ANALYTICS = PARTNER_PREFIX + "/analytics";
 

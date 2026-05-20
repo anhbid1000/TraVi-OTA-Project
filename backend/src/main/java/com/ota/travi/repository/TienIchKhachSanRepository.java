@@ -10,5 +10,7 @@ import java.util.Optional;
 public interface TienIchKhachSanRepository extends JpaRepository<TienIchKhachSan, String> {
     Optional<TienIchKhachSan> findByTenTienIch(String tenTienIch);
 
+    Optional<TienIchKhachSan> findByTenTienIchIgnoreCase(String tenTienIch);
+
     boolean existsByTenTienIch(String tenTienIch);
 }
