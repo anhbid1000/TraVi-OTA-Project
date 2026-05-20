@@ -48,6 +48,7 @@ public final class ApiEndpoints {
     // 4. ADMIN - Admin dashboard & management (ROLE: ADMIN)
     public static final String ADMIN_PREFIX = BASE_PREFIX + "/admin";
     public static final String ADMIN_USERS = ADMIN_PREFIX + "/users";
+    public static final String ADMIN_APPROVALS = ADMIN_PREFIX + "/approvals";
     public static final String ADMIN_CONFIGS = ADMIN_PREFIX + "/configs";
     public static final String ADMIN_MONITORING = ADMIN_PREFIX + "/activities";
 

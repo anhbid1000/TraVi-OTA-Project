@@ -1,15 +1,15 @@
 package com.ota.travi.dto.request;
 
-import com.ota.travi.enums.TrangThaiKiemDuyet;
+import com.ota.travi.enums.ApprovalDecisionStatus;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record ApprovalStatusRequest(
-        @NotNull(message = "Trạng thái kiểm duyệt không được để trống")
-        TrangThaiKiemDuyet trangThaiKiemDuyet,
+        @NotNull(message = "Trang thai kiem duyet khong duoc de trong")
+        ApprovalDecisionStatus status,
 
-        @Size(max = 500, message = "Lý do không được vượt quá 500 ký tự")
-        String lyDo
+        @Size(max = 500, message = "Ly do khong duoc vuot qua 500 ky tu")
+        String reason
 ) {
 }

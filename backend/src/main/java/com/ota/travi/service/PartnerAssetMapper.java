@@ -1,6 +1,7 @@
 package com.ota.travi.service;
 
 import com.ota.travi.dto.response.AnhResponse;
+import com.ota.travi.dto.response.AdminApprovalResponse;
 import com.ota.travi.dto.response.BanResponse;
 import com.ota.travi.dto.response.ChinhSachResponse;
 import com.ota.travi.dto.response.ComboResponse;
@@ -40,6 +41,26 @@ public class PartnerAssetMapper {
         return new HoSoKinhDoanhResponse(
                 hoSo.getIdHoSo(),
                 hoSo.getDoiTac().getId(),
+                hoSo.getTenCoSo(),
+                hoSo.getSdtLienHe(),
+                hoSo.getLoaiDichVu(),
+                hoSo.getMaSoThue(),
+                hoSo.getGiayPhepKinhDoanh(),
+                hoSo.getToaDoGPS(),
+                hoSo.getTrangThaiKiemDuyet(),
+                hoSo.getThoiGianDangKy(),
+                hoSo.getThoiGianDuyet(),
+                toChinhSachResponse(hoSo.getChinhSach()),
+                hoSo.getDanhSachTaiSan().stream().map(this::toTaiSanResponse).toList()
+        );
+    }
+
+    public AdminApprovalResponse toAdminApprovalResponse(HoSoKinhDoanh hoSo) {
+        return new AdminApprovalResponse(
+                hoSo.getIdHoSo(),
+                hoSo.getDoiTac().getId(),
+                hoSo.getDoiTac().getEmail(),
+                hoSo.getDoiTac().getHoTen(),
                 hoSo.getTenCoSo(),
                 hoSo.getSdtLienHe(),
                 hoSo.getLoaiDichVu(),
