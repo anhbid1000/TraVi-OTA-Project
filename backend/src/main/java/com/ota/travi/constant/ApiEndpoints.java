@@ -44,18 +44,32 @@ public final class ApiEndpoints {
     public static final String USER_BOOKINGS = USER_PREFIX + "/bookings";
     public static final String USER_REVIEWS = USER_PREFIX + "/reviews";
     public static final String USER_RECOMMENDATIONS = USER_PREFIX + "/recommendations"; // AI hints
+    // USER FEEDBACK
+    public static final String USER_FEEDBACK_PREFIX = USER_PREFIX + "/feedback";
+    public static final String USER_FEEDBACK_REVIEWS = USER_FEEDBACK_PREFIX + "/reviews";
+    public static final String USER_FEEDBACK_COMPLAINTS = USER_FEEDBACK_PREFIX + "/complaints";
+    public static final String USER_FEEDBACK_REPORTS = USER_FEEDBACK_PREFIX + "/reports";
 
     // 3. PARTNER - Partner / Vendor endpoints (ROLE: PARTNER)
     public static final String PARTNER_PREFIX = BASE_PREFIX + "/partner";
     public static final String PARTNER_HOTELS = PARTNER_PREFIX + "/hotels"; // manage partner hotels
     public static final String PARTNER_PROMOTIONS = PARTNER_PREFIX + "/promotions";
     public static final String PARTNER_ANALYTICS = PARTNER_PREFIX + "/analytics";
+    // PARTNER FEEDBACK
+    public static final String PARTNER_REVIEWS = PARTNER_PREFIX + "/reviews";
+    public static final String PARTNER_REVIEW_REPLY = PARTNER_REVIEWS + "/{id}/reply";
+    public static final String PARTNER_COMPLAINT_RESOLVE = PARTNER_PREFIX + "/complaints/{id}/resolve";
+    public static final String PARTNER_REPORT_EXPLANATION = PARTNER_PREFIX + "/reports/{id}/explanations";
 
     // 4. ADMIN - Admin dashboard & management (ROLE: ADMIN)
     public static final String ADMIN_PREFIX = BASE_PREFIX + "/admin";
     public static final String ADMIN_USERS = ADMIN_PREFIX + "/users";
     public static final String ADMIN_CONFIGS = ADMIN_PREFIX + "/configs";
     public static final String ADMIN_MONITORING = ADMIN_PREFIX + "/activities";
+    // MANAGE FEEDBACK
+    public static final String ADMIN_REVIEW_MODERATE = ADMIN_PREFIX + "/reviews/{id}/moderate";
+    public static final String ADMIN_REPORT_STATUS = ADMIN_PREFIX + "/reports/{id}/status";
+    public static final String ADMIN_REPORT_VERDICT = ADMIN_PREFIX + "/reports/{id}/verdict";
 
     // 5. EXTERNAL SYSTEMS - Integrations (Payment, Map, Notification, etc.)
     public static final String SYSTEMS_PREFIX = BASE_PREFIX + "/systems";

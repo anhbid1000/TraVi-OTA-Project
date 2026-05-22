@@ -1,0 +1,603 @@
+/* ==========================================================================
+   DISPUTE CENTER CSS - PREVENTING BLACK BORDERS & PREMIUM MINIMAL
+   ========================================================================== */
+
+/* --- 1. CORE LAYOUT --- */
+.dispute-workspace {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* --- 2. CỘT TRÁI - PANEL DANH SÁCH --- */
+.dispute-list-pane {
+  width: 360px;
+  flex-shrink: 0;
+  background-color: #ffffff;
+  border: 1px solid #edeef0;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.012);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pane-title-box {
+  padding: 18px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  background-color: #ffffff;
+}
+
+.pane-title-box h2 {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #003b1b;
+}
+
+.dispute-cards-container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Thẻ tóm tắt từng vụ việc */
+.dispute-summary-card {
+  background-color: #f8f9fb;
+  border: 1px solid #edeef0;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dispute-summary-card:hover {
+  background-color: #ffffff;
+  border-color: #c0c9be;
+  transform: translateY(-1px);
+}
+
+.dispute-summary-card.card-active {
+  background-color: #ffffff;
+  border-color: #003b1b;
+  box-shadow: 0 4px 16px rgba(0, 59, 27, 0.06);
+}
+
+.card-top-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.dispute-id {
+  font-size: 12px;
+  font-weight: 700;
+  color: #003b1b;
+  background-color: #e6f0ea;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dispute-date {
+  font-size: 12px;
+  color: #717970;
+}
+
+.card-service-title {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #191c1e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-reason-preview {
+  margin: 0 0 14px 0;
+  font-size: 13px;
+  color: #404941;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.booking-link {
+  color: #717970;
+}
+
+.booking-link strong {
+  color: #191c1e;
+}
+
+/* Các nhãn màu trạng thái tranh chấp */
+.status-dispute {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.badge-investigation {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.badge-action-required {
+  background-color: #fde8e8;
+  color: #ba1a1a;
+  animation: pulseWarning 2s infinite ease-in-out;
+}
+
+@keyframes pulseWarning {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+.badge-resolved {
+  background-color: #d1faf0;
+  color: #005236;
+}
+
+/* --- 3. CỘT PHẢI - CHI TIẾT & TIMELINE CHAT PANEL --- */
+.dispute-detail-chat-pane {
+  flex: 1;
+  background-color: #ffffff;
+  border: 1px solid #edeef0;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.015);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.active-pane-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f3f4f6;
+  background-color: #ffffff;
+}
+
+.header-main-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.header-main-info h2 {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #191c1e;
+}
+
+.service-type-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.service-type-tag.hotel { background-color: #e0f2fe; color: #0369a1; }
+.service-type-tag.restaurant { background-color: #ffedd5; color: #c2410c; }
+
+.plaintiff-text {
+  margin: 0;
+  font-size: 13px;
+  color: #404941;
+}
+
+/* LUỒNG DÒNG CHẢY TIMELINE CHAT */
+.dispute-timeline-chat-flow {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background-color: #fafbfc;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Khối mô tả lỗi vi phạm bị tố cáo gốc */
+.original-complaint-box {
+  background-color: #fff5f5;
+  border: 1px solid #fecdcd;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.complaint-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #ba1a1a;
+}
+
+.complaint-title h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.text-danger { color: #ba1a1a; }
+
+.original-complaint-box p {
+  margin: 0;
+  font-size: 14px;
+  color: #191c1e;
+  line-height: 1.5;
+}
+
+/* Node phân nhánh timeline đối thoại */
+.timeline-card-node {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+
+.node-avatar-indicator {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.node-content-body {
+  flex: 1;
+  background-color: #ffffff;
+  border: 1px solid #edeef0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.01);
+}
+
+.node-meta-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.node-sender-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #191c1e;
+}
+
+.node-time {
+  font-size: 11px;
+  color: #717970;
+}
+
+.node-message-text p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #404941;
+}
+
+/* Định màu biểu tượng và khung theo vai trò gửi */
+.node-system .node-avatar-indicator { background-color: #edeef0; color: #717970; }
+.node-system .node-content-body { background-color: #f1f3f5; border-style: dashed; }
+
+.node-customer .node-avatar-indicator { background-color: #fff5f5; color: #ba1a1a; }
+
+.node-admin .node-avatar-indicator { background-color: #e6f0ea; color: #003b1b; }
+.node-admin .node-content-body { border-left: 3px solid #003b1b; }
+
+.node-partner .node-avatar-indicator { background-color: #e0f2fe; color: #0369a1; }
+.node-partner .node-content-body { border-left: 3px solid #0369a1; background-color: #f7faff; }
+
+/* Các ô tài liệu đính kèm bên trong box chat */
+.node-attachments-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.attachment-chip-item {
+  background-color: #f8f9fb;
+  border: 1px solid #edeef0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 240px;
+}
+
+.attachment-chip-item .material-symbols-outlined {
+  color: #717970;
+}
+
+.file-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.f-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #191c1e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.f-size {
+  font-size: 11px;
+  color: #717970;
+}
+
+/* --- 4. BỘ PHẦN SOẠN PHẢN HỒI / UPLOAD GIẢI TRÌNH (COMPOSER) --- */
+.partner-reply-composer-zone {
+  padding: 16px 24px;
+  background-color: #ffffff;
+  border-top: 1px solid #edeef0;
+}
+
+.dispute-closed-alert {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #717970;
+  padding: 12px;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.composer-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Khu vực xếp hàng các file đính kèm chờ gửi lên BE */
+.staging-upload-files-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.staging-file-card {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.text-green { color: #16a34a; }
+
+.staging-name {
+  color: #166534;
+  font-weight: 500;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-remove-staging {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.btn-remove-staging .material-symbols-outlined {
+  font-size: 14px !important;
+  color: #ba1a1a;
+}
+
+/* Dòng controls thanh input điều khiển */
+.input-row-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hidden-native-input {
+  display: none;
+}
+
+/* Nút ghim đính kèm */
+.btn-trigger-upload-file {
+  background-color: #ffffff;
+  border: 1px solid #edeef0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #404941;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.btn-trigger-upload-file:hover {
+  background-color: #f3f4f6;
+  border-color: #c0c9be;
+  color: #003b1b;
+}
+
+/* Ô nhập chữ phản hồi biện hộ */
+.text-explanation-input {
+  flex: 1;
+  border: 1px solid #edeef0;
+  border-radius: 8px;
+  padding: 11px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  outline: none;
+  background-color: #f8f9fb;
+  transition: all 0.15s ease;
+}
+
+.text-explanation-input:focus {
+  border-color: #003b1b;
+  background-color: #ffffff;
+}
+
+/* Nút bấm submit gửi */
+.btn-send-dispute-reply {
+  background-color: #003b1b;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 20px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.btn-send-dispute-reply:hover:not(:disabled) {
+  background-color: #14532d;
+}
+
+.btn-send-dispute-reply:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Minh chứng đính kèm của khách */
+.customer-proofs-zone {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #fecdcd; /* Đường đứt nét ngăn cách màu đỏ nhẹ */
+}
+
+.proofs-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ba1a1a;
+  margin-bottom: 10px;
+}
+
+.proofs-title .material-symbols-outlined {
+  font-size: 18px !important;
+}
+
+.customer-attachments-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.customer-file-card {
+  background-color: #ffffff;
+  border: 1px solid #fecdcd;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 260px; /* Độ rộng cố định vừa vặn */
+  box-shadow: 0 2px 6px rgba(186, 26, 26, 0.03);
+}
+
+.customer-file-card .icon-type {
+  color: #ba1a1a; /* Icon màu đỏ để nhấn mạnh đây là tệp tố cáo của khách */
+}
+
+.customer-file-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.cf-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #191c1e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cf-size {
+  font-size: 11px;
+  color: #717970;
+  margin-top: 2px;
+}
+
+/* Nút tải xuống minh chứng */
+.btn-download-proof {
+  background: #fff5f5;
+  border: 1px solid #fecdcd;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #ba1a1a;
+  transition: all 0.15s ease;
+}
+
+.btn-download-proof:hover {
+  background-color: #ba1a1a;
+  color: #ffffff;
+  border-color: #ba1a1a;
+}
+
+.btn-download-proof .material-symbols-outlined {
+  font-size: 16px !important;
+}
+
+/* Vận hành Responsive di động */
+@media (max-width: 1024px) {
+  .dispute-workspace { flex-direction: column; }
+  .dispute-list-pane { width: 100%; height: 260px; }
+  .btn-trigger-upload-file span:not(.material-symbols-outlined) { display: none; }
+}

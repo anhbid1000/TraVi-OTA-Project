@@ -1,4 +1,4 @@
-import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom';
 import {
   AdminLogin,
   CustomerLogin,
@@ -7,19 +7,23 @@ import {
   PartnerLogin,
   PartnerRegister,
   VerifyEmailPage,
-} from './pages/auth'
-import { useAuth } from './hooks/useAuth'
-import { ForbiddenPage } from './pages/ForbiddenPage'
-import { HomePage } from './pages/HomePage'
-import { AdminRoute, ProtectedRoute, StaffRoute } from './routes'
-import { HotelCatalogPage } from './features/hotels/pages/HotelCatalogPage'
-import { RestaurantCatalogPage } from './features/restaurants/pages/RestaurantCatalogPage'
-import { HotelDetailPage } from './features/hotels/pages/HotelDetailPage'
-import { RestaurantDetailPage } from './features/restaurants/pages/RestaurantDetailPage'
-import './App.css'
+} from './pages/auth';
+import { useAuth } from './hooks/useAuth';
+import { ForbiddenPage } from './pages/ForbiddenPage';
+import { HomePage } from './pages/HomePage';
+import { AdminRoute, ProtectedRoute, StaffRoute } from './routes';
+import { HotelCatalogPage } from './features/hotels/pages/HotelCatalogPage';
+import { RestaurantCatalogPage } from './features/restaurants/pages/RestaurantCatalogPage';
+import { HotelDetailPage } from './features/hotels/pages/HotelDetailPage';
+import { RestaurantDetailPage } from './features/restaurants/pages/RestaurantDetailPage';
+import MyBookings from './pages/user/dashboard/MyBookings';
+import ManageReview from './pages/partner/manageReview/ManageReview';
+import DisputeCenter from './pages/partner/DisputeCenter/DisputeCenter';
+import TribunalView from './pages/admin/tribunalView/TribunalView';
+import './App.css';
 
 function PaymentPage() {
-  const { isLoading, logout, user } = useAuth()
+  const { isLoading, logout, user } = useAuth();
 
   return (
     <main style={{ padding: '32px', maxWidth: '960px', margin: '0 auto' }}>
@@ -31,7 +35,7 @@ function PaymentPage() {
       <button
         type="button"
         onClick={() => {
-          void logout()
+          void logout();
         }}
         disabled={isLoading}
       >
@@ -41,7 +45,7 @@ function PaymentPage() {
         <Link to="/">Quay ve trang chu</Link>
       </p>
     </main>
-  )
+  );
 }
 
 function AdminDashboardPage() {
@@ -50,7 +54,7 @@ function AdminDashboardPage() {
       <h1>Admin Dashboard</h1>
       <p>Trang này chỉ dành cho quản trị viên.</p>
     </main>
-  )
+  );
 }
 
 function PartnerDashboardPage() {
@@ -59,7 +63,7 @@ function PartnerDashboardPage() {
       <h1>Đối tác Dashboard</h1>
       <p>Trang này chỉ dành cho đối tác.</p>
     </main>
-  )
+  );
 }
 
 function NotFoundPage() {
@@ -68,7 +72,7 @@ function NotFoundPage() {
       <h1>404 - Không tìm thấy trang</h1>
       <Link to="/">Quay về trang chủ</Link>
     </main>
-  )
+  );
 }
 
 /**
@@ -143,10 +147,15 @@ function App() {
           <Route path="/partner" element={<PartnerDashboardPage />} />
         </Route>
 
+        <Route path="/user/bookings" element={<MyBookings />} />
+        <Route path="/partner/reviews" element={<ManageReview />} />
+        <Route path="/partner/dispute" element={<DisputeCenter />} />
+        <Route path="/admin/tribunal/:caseId" element={<TribunalView />} />
+
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;
