@@ -27,8 +27,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Chỉ áp dụng giới hạn cho API Đăng nhập
-        if (request.getRequestURI().startsWith(AUTH_LOGIN)) {
+        // Chỉ áp dụng giới hạn cho API Đăng nhập (bỏ qua tiền kiểm OPTIONS)
+        if (request.getRequestURI().startsWith(AUTH_LOGIN) && !request.getMethod().equalsIgnoreCase("OPTIONS")) {
             if (!bucket.tryConsume(1)) { // Rút 1 token từ xô (bucket)
                 response.setStatus(429); // 429 Too Many Requests
                 response.setContentType("application/json; charset=UTF-8");

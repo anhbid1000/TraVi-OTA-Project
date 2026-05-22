@@ -77,6 +77,19 @@ public class PartnerBusinessProfileService {
         return partnerAssetMapper.toHoSoResponse(hoSoKinhDoanhRepository.save(hoSo));
     }
 
+    @Transactional(readOnly = true)
+    public List<HoSoKinhDoanhResponse> getBusinessProfiles(String partnerId) {
+        requirePartner(partnerId);
+        return hoSoKinhDoanhRepository.findByDoiTac_Id(partnerId).stream()
+                .map(partnerAssetMapper::toHoSoResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public HoSoKinhDoanhResponse getBusinessProfile(String partnerId, String profileId) {
+        return partnerAssetMapper.toHoSoResponse(requireOwnedBusinessProfile(partnerId, profileId));
+    }
+
     @Transactional
     public HoSoKinhDoanhResponse updateBusinessProfile(String partnerId, String profileId, PartnerBusinessProfileRequest request) {
         HoSoKinhDoanh hoSo = requireOwnedBusinessProfile(partnerId, profileId);
@@ -86,6 +99,10 @@ public class PartnerBusinessProfileService {
 
         if (maSoThueChanged && hoSoKinhDoanhRepository.existsByMaSoThueAndIdHoSoNot(request.hoSo().maSoThue(), profileId)) {
             throw new BusinessConflictException("Ma so thue da ton tai");
+        }
+
+        if (sensitiveChanged) {
+            captureApprovalSnapshot(hoSo);
         }
 
         applyBusinessProfileFields(hoSo, request);
@@ -122,6 +139,15 @@ public class PartnerBusinessProfileService {
         hoSo.setMaSoThue(request.hoSo().maSoThue());
         hoSo.setGiayPhepKinhDoanh(request.hoSo().giayPhepKinhDoanh());
         hoSo.setToaDoGPS(request.hoSo().toaDoGPS());
+    }
+
+    private void captureApprovalSnapshot(HoSoKinhDoanh hoSo) {
+        hoSo.setOldTenCoSo(hoSo.getTenCoSo());
+        hoSo.setOldSdtLienHe(hoSo.getSdtLienHe());
+        hoSo.setOldLoaiDichVu(hoSo.getLoaiDichVu() == null ? null : hoSo.getLoaiDichVu().name());
+        hoSo.setOldMaSoThue(hoSo.getMaSoThue());
+        hoSo.setOldGiayPhepKinhDoanh(hoSo.getGiayPhepKinhDoanh());
+        hoSo.setOldToaDoGPS(hoSo.getToaDoGPS());
     }
 
     private ChinhSach toChinhSach(ChinhSachRequest request, HoSoKinhDoanh hoSo) {

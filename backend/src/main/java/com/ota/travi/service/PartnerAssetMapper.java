@@ -6,6 +6,7 @@ import com.ota.travi.dto.response.BanResponse;
 import com.ota.travi.dto.response.ChinhSachResponse;
 import com.ota.travi.dto.response.ComboResponse;
 import com.ota.travi.dto.response.HoSoKinhDoanhResponse;
+import com.ota.travi.dto.response.ApprovalComparisonResponse;
 import com.ota.travi.dto.response.KhachSanResponse;
 import com.ota.travi.dto.response.MonAnResponse;
 import com.ota.travi.dto.response.NhaHangResponse;
@@ -55,6 +56,31 @@ public class PartnerAssetMapper {
         );
     }
 
+    private ApprovalComparisonResponse toApprovalComparisonResponse(HoSoKinhDoanh hoSo) {
+        boolean hasOldData = hoSo.getOldMaSoThue() != null
+                || hoSo.getOldGiayPhepKinhDoanh() != null
+                || hoSo.getOldTenCoSo() != null;
+
+        if (!hasOldData) {
+            return null;
+        }
+
+        return new ApprovalComparisonResponse(
+                hoSo.getOldTenCoSo(),
+                hoSo.getOldSdtLienHe(),
+                hoSo.getOldLoaiDichVu(),
+                hoSo.getOldMaSoThue(),
+                hoSo.getOldGiayPhepKinhDoanh(),
+                hoSo.getOldToaDoGPS(),
+                hoSo.getTenCoSo(),
+                hoSo.getSdtLienHe(),
+                hoSo.getLoaiDichVu().name(),
+                hoSo.getMaSoThue(),
+                hoSo.getGiayPhepKinhDoanh(),
+                hoSo.getToaDoGPS()
+        );
+    }
+
     public AdminApprovalResponse toAdminApprovalResponse(HoSoKinhDoanh hoSo) {
         return new AdminApprovalResponse(
                 hoSo.getIdHoSo(),
@@ -71,7 +97,8 @@ public class PartnerAssetMapper {
                 hoSo.getThoiGianDangKy(),
                 hoSo.getThoiGianDuyet(),
                 toChinhSachResponse(hoSo.getChinhSach()),
-                hoSo.getDanhSachTaiSan().stream().map(this::toTaiSanResponse).toList()
+                hoSo.getDanhSachTaiSan().stream().map(this::toTaiSanResponse).toList(),
+                toApprovalComparisonResponse(hoSo)
         );
     }
 
@@ -184,7 +211,7 @@ public class PartnerAssetMapper {
         );
     }
 
-    private ComboResponse toComboResponse(Combo combo) {
+    public ComboResponse toComboResponse(Combo combo) {
         return new ComboResponse(
                 combo.getId(),
                 combo.getThucDon().getId(),

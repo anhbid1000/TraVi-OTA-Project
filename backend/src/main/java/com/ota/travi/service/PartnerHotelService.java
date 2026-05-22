@@ -46,6 +46,14 @@ public class PartnerHotelService {
         return partnerAssetMapper.toPhongResponse(phongRepository.save(phong));
     }
 
+    @Transactional(readOnly = true)
+    public List<PhongResponse> getRooms(String partnerId, String hotelId) {
+        requireOwnedHotel(partnerId, hotelId);
+        return phongRepository.findByKhachSan_IdTaiSan(hotelId).stream()
+                .map(partnerAssetMapper::toPhongResponse)
+                .toList();
+    }
+
     @Transactional
     public PhongResponse updateRoom(String partnerId, String hotelId, String roomId, PhongUpsertRequest request) {
         requireOwnedHotel(partnerId, hotelId);

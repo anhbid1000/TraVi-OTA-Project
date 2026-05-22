@@ -62,6 +62,18 @@ public class HoSoKinhDoanh {
     @Column(nullable = false, length = 20)
     private String sdtLienHe;
 
+    private String oldTenCoSo;
+
+    private String oldSdtLienHe;
+
+    private String oldLoaiDichVu;
+
+    private String oldMaSoThue;
+
+    private String oldGiayPhepKinhDoanh;
+
+    private String oldToaDoGPS;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TrangThaiKiemDuyet trangThaiKiemDuyet = TrangThaiKiemDuyet.CHO_DUYET;

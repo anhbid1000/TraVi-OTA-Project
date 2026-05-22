@@ -21,6 +21,7 @@ public record AdminApprovalResponse(
         LocalDateTime thoiGianDangKy,
         LocalDateTime thoiGianDuyet,
         ChinhSachResponse chinhSach,
-        List<TaiSanResponse> danhSachTaiSan
+        List<TaiSanResponse> danhSachTaiSan,
+        ApprovalComparisonResponse comparison
 ) {
 }

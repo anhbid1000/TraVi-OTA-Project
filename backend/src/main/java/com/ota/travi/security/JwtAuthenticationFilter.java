@@ -13,6 +13,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -20,6 +21,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 import static com.ota.travi.constant.ApiEndpoints.AUTH_PREFIX;
+import static com.ota.travi.constant.ApiEndpoints.PUBLIC_PREFIX;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -34,9 +36,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private CustomUserDetailsService userDetailsService; // lấy user từ Database
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String requestUri = request.getRequestURI();
-        return requestUri != null && requestUri.startsWith(AUTH_PREFIX);
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getServletPath();
+        return "OPTIONS".equalsIgnoreCase(request.getMethod())
+                || path.startsWith(AUTH_PREFIX)
+                || path.startsWith(PUBLIC_PREFIX)
+                || path.startsWith("/uploads/");
     }
 
     @Override
@@ -100,7 +105,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
             // Tìm khách này trong hệ thống máy chủ (Database)
-            UserDetails userDetails = userDetailsService.loadUserByUsernameValue(username);
+            UserDetails userDetails;
+            try {
+                userDetails = userDetailsService.loadUserByUsernameValue(username);
+            } catch (UsernameNotFoundException e) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json; charset=UTF-8");
+                response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Tai khoan trong token khong con ton tai.\"}");
+                return;
+            }
 
             // Kiểm tra thẻ từ có hợp lệ/chính chủ không
             if (jwtUtil.isTokenValid(jwtToken, userDetails)) {

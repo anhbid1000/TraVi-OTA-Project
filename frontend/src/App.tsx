@@ -11,6 +11,8 @@ import {
 } from './pages/auth'
 import { useAuth } from './hooks/useAuth'
 import { ForbiddenPage } from './pages/ForbiddenPage'
+import { PartnerDashboardPage } from './pages/partner'
+import { AdminApprovalsPage } from './pages/admin'
 import { AdminRoute, ProtectedRoute, StaffRoute } from './routes'
 import './App.css'
 
@@ -97,24 +99,6 @@ function PaymentPage() {
   )
 }
 
-function AdminDashboardPage() {
-  return (
-    <main>
-      <h1>Admin Dashboard</h1>
-      <p>Trang này chỉ dành cho quản trị viên.</p>
-    </main>
-  )
-}
-
-function PartnerDashboardPage() {
-  return (
-    <main>
-      <h1>Đối tác Dashboard</h1>
-      <p>Trang này chỉ dành cho đối tác.</p>
-    </main>
-  )
-}
-
 function NotFoundPage() {
   return (
     <main>
@@ -168,10 +152,10 @@ function App() {
         </Route>
 
         <Route element={<AdminRoute />}>
-          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin" element={<AdminApprovalsPage />} />
         </Route>
 
-        <Route element={<StaffRoute />}>
+        <Route element={<StaffRoute redirectTo="/partner/login" />}>
           <Route path="/partner" element={<PartnerDashboardPage />} />
         </Route>
 
