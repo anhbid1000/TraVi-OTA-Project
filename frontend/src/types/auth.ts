@@ -35,6 +35,11 @@ export type RegisterRequest = {
   loaiTaiKhoan: AccountType
 }
 
+export type GoogleAuthRequest = {
+  idToken: string
+  loaiTaiKhoan: AccountType
+}
+
 export type VerifyEmailRequest = {
   email: string
   confirmOTP: string
@@ -43,3 +48,14 @@ export type VerifyEmailRequest = {
 export type ResendOtpRequest = {
   email: string
 }
+
+export type ForgotPasswordRequest = {
+  email: string
+}
+
+export type ResetPasswordRequest = {
+  email: string
+  matKhauMoi: string
+  xacNhanMatKhau: string
+}
+

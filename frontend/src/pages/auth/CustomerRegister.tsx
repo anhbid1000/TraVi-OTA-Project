@@ -1,10 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { UserPlus } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 import { authService } from '../../services/authService'
+import { tokenStorage } from '../../services/tokenStorage'
 import type { RegisterRequest } from '../../types/auth'
+import { getDefaultPathByRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { AuthTextField } from './AuthTextField'
+import { GoogleAuthButton } from './GoogleAuthButton'
 import { isValidEmail, isValidPhoneNumber, validatePassword } from './authValidation'
 import {
   authAlertErrorClass,
@@ -42,6 +46,7 @@ const initialForm: CustomerRegisterFormValues = {
 
 export function CustomerRegister() {
   const navigate = useNavigate()
+  const { loginWithGoogle } = useAuth()
 
   const [form, setForm] = useState<CustomerRegisterFormValues>(initialForm)
   const [errors, setErrors] = useState<CustomerRegisterFormErrors>({})
@@ -145,6 +150,27 @@ export function CustomerRegister() {
       setSubmitError(
         getApiErrorMessage(error, 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.'),
       )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleRegister = async (idToken: string) => {
+    setLoading(true)
+    setSubmitError('')
+
+    try {
+      await loginWithGoogle({
+        idToken,
+        loaiTaiKhoan: 'KHACH_HANG',
+      })
+
+      const user = tokenStorage.getUserFromToken()
+      const defaultPath = getDefaultPathByRole(user?.role)
+
+      navigate(defaultPath, { replace: true })
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, 'Đăng ký Google thất bại.'))
     } finally {
       setLoading(false)
     }
@@ -268,6 +294,13 @@ export function CustomerRegister() {
           >
             {loading ? 'Đang đăng ký...' : 'Đăng ký'}
           </button>
+
+          <GoogleAuthButton
+            disabled={loading}
+            isLoading={loading}
+            onCredential={handleGoogleRegister}
+            onError={setSubmitError}
+          />
         </form>
 
         <div className={authFooterClass}>

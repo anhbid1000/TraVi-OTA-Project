@@ -1,10 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { Building2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 import { authService } from '../../services/authService'
+import { tokenStorage } from '../../services/tokenStorage'
 import type { RegisterRequest } from '../../types/auth'
+import { normalizeRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { AuthTextField } from './AuthTextField'
+import { GoogleAuthButton } from './GoogleAuthButton'
 import { isValidEmail, isValidPhoneNumber, validatePassword } from './authValidation'
 import {
   authAlertErrorClass,
@@ -42,6 +46,7 @@ const initialForm: PartnerRegisterFormValues = {
 
 export function PartnerRegister() {
   const navigate = useNavigate()
+  const { loginWithGoogle, logout } = useAuth()
 
   const [form, setForm] = useState<PartnerRegisterFormValues>(initialForm)
   const [errors, setErrors] = useState<PartnerRegisterFormErrors>({})
@@ -145,6 +150,33 @@ export function PartnerRegister() {
       setSubmitError(
         getApiErrorMessage(error, 'Đăng ký đối tác thất bại. Vui lòng kiểm tra lại thông tin.'),
       )
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleRegister = async (idToken: string) => {
+    setLoading(true)
+    setSubmitError('')
+
+    try {
+      await loginWithGoogle({
+        idToken,
+        loaiTaiKhoan: 'DOI_TAC',
+      })
+
+      const user = tokenStorage.getUserFromToken()
+      const role = normalizeRole(user?.role)
+
+      if (role !== 'DOI_TAC') {
+        await logout()
+        setSubmitError('Tài khoản này không có quyền truy cập khu vực đối tác.')
+        return
+      }
+
+      navigate('/partner', { replace: true })
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, 'Đăng ký Google thất bại.'))
     } finally {
       setLoading(false)
     }
@@ -268,6 +300,13 @@ export function PartnerRegister() {
           >
             {loading ? 'Đang đăng ký...' : 'Đăng ký đối tác'}
           </button>
+
+          <GoogleAuthButton
+            disabled={loading}
+            isLoading={loading}
+            onCredential={handleGoogleRegister}
+            onError={setSubmitError}
+          />
         </form>
 
         <div className={authFooterClass}>

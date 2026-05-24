@@ -2,9 +2,12 @@ import { api } from './api'
 import { tokenStorage } from './tokenStorage'
 import type {
   AuthResponse,
+  ForgotPasswordRequest,
+  GoogleAuthRequest,
   LoginRequest,
   RefreshTokenRequest,
   RegisterRequest,
+  ResetPasswordRequest,
   ResendOtpRequest,
   VerifyEmailRequest,
 } from '../types/auth'
@@ -48,6 +51,12 @@ export const authService = {
     return data
   },
 
+  async loginWithGoogle(payload: GoogleAuthRequest) {
+    const { data } = await api.post<AuthResponse>(`${AUTH_ENDPOINT}/google`, payload)
+    tokenStorage.setTokens(data)
+    return data
+  },
+
   async verifyEmail(payload: VerifyEmailRequest) {
     const { data } = await api.put<string>(`${AUTH_ENDPOINT}/verify-email`, payload)
     return data
@@ -55,6 +64,21 @@ export const authService = {
 
   async resendOtp(payload: ResendOtpRequest) {
     const { data } = await api.post<string>(`${AUTH_ENDPOINT}/resend-otp`, payload)
+    return data
+  },
+
+  async requestPasswordResetOtp(payload: ForgotPasswordRequest) {
+    const { data } = await api.post<string>(`${AUTH_ENDPOINT}/forgot-password/request-otp`, payload)
+    return data
+  },
+
+  async verifyPasswordResetOtp(payload: VerifyEmailRequest) {
+    const { data } = await api.post<string>(`${AUTH_ENDPOINT}/forgot-password/verify-otp`, payload)
+    return data
+  },
+
+  async resetPassword(payload: ResetPasswordRequest) {
+    const { data } = await api.post<string>(`${AUTH_ENDPOINT}/forgot-password/reset`, payload)
     return data
   },
 }

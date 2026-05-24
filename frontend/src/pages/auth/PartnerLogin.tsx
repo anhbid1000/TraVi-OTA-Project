@@ -7,6 +7,7 @@ import type { LoginRequest } from '../../types/auth'
 import { normalizeRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { AuthTextField } from './AuthTextField'
+import { GoogleAuthButton } from './GoogleAuthButton'
 import { isValidEmail } from './authValidation'
 import {
   authAlertErrorClass,
@@ -26,16 +27,18 @@ type LoginFormValues = Pick<LoginRequest, 'email' | 'matKhau'>
 type LoginFormErrors = Partial<Record<keyof LoginFormValues, string>>
 
 type LocationState = {
+  email?: string
   registerMessage?: string
 }
 
 export function PartnerLogin() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login, logout } = useAuth()
+  const { login, loginWithGoogle, logout } = useAuth()
+  const locationState = location.state as LocationState | null
 
   const [form, setForm] = useState<LoginFormValues>({
-    email: '',
+    email: locationState?.email ?? '',
     matKhau: '',
   })
 
@@ -43,7 +46,6 @@ export function PartnerLogin() {
   const [submitError, setSubmitError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const locationState = location.state as LocationState | null
   const registerMessage = locationState?.registerMessage
 
   const updateField = (field: keyof LoginFormValues, value: string) => {
@@ -110,6 +112,33 @@ export function PartnerLogin() {
     }
   }
 
+  const handleGoogleLogin = async (idToken: string) => {
+    setLoading(true)
+    setSubmitError('')
+
+    try {
+      await loginWithGoogle({
+        idToken,
+        loaiTaiKhoan: 'DOI_TAC',
+      })
+
+      const user = tokenStorage.getUserFromToken()
+      const role = normalizeRole(user?.role)
+
+      if (role !== 'DOI_TAC') {
+        await logout()
+        setSubmitError('Tài khoản này không có quyền truy cập khu vực đối tác.')
+        return
+      }
+
+      navigate('/partner', { replace: true })
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, 'Đăng nhập Google thất bại.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className={`${authLayoutClass} bg-gradient-to-br from-emerald-50 via-white to-teal-50`}>
       <div className={`${authCardClass} max-w-[420px] border-emerald-100`}>
@@ -165,9 +194,26 @@ export function PartnerLogin() {
           >
             {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
+
+          <GoogleAuthButton
+            disabled={loading}
+            isLoading={loading}
+            onCredential={handleGoogleLogin}
+            onError={setSubmitError}
+          />
         </form>
 
         <div className={authFooterClass}>
+          <div className="mb-3">
+            <Link
+              to="/partner/forgot-password"
+              state={{ email: form.email.trim() }}
+              className="font-medium text-emerald-600 hover:text-emerald-800"
+            >
+              Quên mật khẩu?
+            </Link>
+          </div>
+
           Chưa phải đối tác?{' '}
           <Link
             to="/partner/register"

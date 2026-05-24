@@ -21,8 +21,12 @@ public final class ApiEndpoints {
     public static final String AUTH_VERIFY_EMAIL = AUTH_PREFIX + "/verify-email";
     public static final String AUTH_RESEND_OTP = AUTH_PREFIX + "/resend-otp";
     public static final String AUTH_LOGIN = AUTH_PREFIX + "/login";
+    public static final String AUTH_GOOGLE = AUTH_PREFIX + "/google";
     public static final String AUTH_LOGOUT = AUTH_PREFIX + "/logout";
     public static final String AUTH_REFRESH = AUTH_PREFIX + "/refresh";
+    public static final String AUTH_FORGOT_PASSWORD_REQUEST_OTP = AUTH_PREFIX + "/forgot-password/request-otp";
+    public static final String AUTH_FORGOT_PASSWORD_VERIFY_OTP = AUTH_PREFIX + "/forgot-password/verify-otp";
+    public static final String AUTH_FORGOT_PASSWORD_RESET = AUTH_PREFIX + "/forgot-password/reset";
 
     // 2. USER - Authenticated user endpoints (ROLE: USER)
     public static final String USER_PREFIX = BASE_PREFIX + "/user";

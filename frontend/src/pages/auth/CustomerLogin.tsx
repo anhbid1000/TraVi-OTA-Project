@@ -3,9 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { tokenStorage } from '../../services/tokenStorage'
 import type { LoginRequest } from '../../types/auth'
-import { getDefaultPathByRole } from '../../routes/routeGuards'
+import { getDefaultPathByRole, normalizeRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { AuthTextField } from './AuthTextField'
+import { GoogleAuthButton } from './GoogleAuthButton'
 import { isValidEmail } from './authValidation'
 import {
   authAlertErrorClass,
@@ -28,16 +29,18 @@ type LocationState = {
   from?: {
     pathname?: string
   }
+  email?: string
   registerMessage?: string
 }
 
 export function CustomerLogin() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login } = useAuth()
+  const { login, loginWithGoogle, logout } = useAuth()
+  const locationState = location.state as LocationState | null
 
   const [form, setForm] = useState<LoginFormValues>({
-    email: '',
+    email: locationState?.email ?? '',
     matKhau: '',
   })
 
@@ -45,9 +48,21 @@ export function CustomerLogin() {
   const [submitError, setSubmitError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const locationState = location.state as LocationState | null
   const redirectPath = locationState?.from?.pathname
   const registerMessage = locationState?.registerMessage
+
+  const validateCustomerRole = async () => {
+    const user = tokenStorage.getUserFromToken()
+    const role = normalizeRole(user?.role)
+
+    if (role !== 'KHACH_HANG') {
+      await logout()
+      setSubmitError('Tài khoản này không thể đăng nhập ở cổng khách hàng. Vui lòng dùng đúng trang đăng nhập.')
+      return null
+    }
+
+    return getDefaultPathByRole(user?.role)
+  }
 
   const updateField = (field: keyof LoginFormValues, value: string) => {
     setForm((current) => ({
@@ -96,12 +111,37 @@ export function CustomerLogin() {
         matKhau: form.matKhau,
       })
 
-      const user = tokenStorage.getUserFromToken()
-      const defaultPath = getDefaultPathByRole(user?.role)
+      const defaultPath = await validateCustomerRole()
+      if (!defaultPath) {
+        return
+      }
 
       navigate(redirectPath || defaultPath, { replace: true })
     } catch (error) {
       setSubmitError(getApiErrorMessage(error, 'Email hoặc mật khẩu không chính xác.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleLogin = async (idToken: string) => {
+    setLoading(true)
+    setSubmitError('')
+
+    try {
+      await loginWithGoogle({
+        idToken,
+        loaiTaiKhoan: 'KHACH_HANG',
+      })
+
+      const defaultPath = await validateCustomerRole()
+      if (!defaultPath) {
+        return
+      }
+
+      navigate(redirectPath || defaultPath, { replace: true })
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, 'Đăng nhập Google thất bại.'))
     } finally {
       setLoading(false)
     }
@@ -158,9 +198,22 @@ export function CustomerLogin() {
           >
             {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
+
+          <GoogleAuthButton
+            disabled={loading}
+            isLoading={loading}
+            onCredential={handleGoogleLogin}
+            onError={setSubmitError}
+          />
         </form>
 
         <div className={authFooterClass}>
+          <div className="mb-3">
+            <Link to="/forgot-password" state={{ email: form.email.trim() }} className={authSmallLinkClass}>
+              Quên mật khẩu?
+            </Link>
+          </div>
+
           Chưa có tài khoản?{' '}
           <Link
             to="/register"

@@ -1,8 +1,11 @@
 package com.ota.travi.controller;
 
+import com.ota.travi.dto.request.ForgotPasswordRequest;
+import com.ota.travi.dto.request.GoogleAuthRequest;
 import com.ota.travi.dto.request.LoginRequest;
 import com.ota.travi.dto.request.RefreshTokenRequest;
 import com.ota.travi.dto.request.RegisterRequest;
+import com.ota.travi.dto.request.ResetPasswordRequest;
 import com.ota.travi.dto.request.ResendOtpRequest;
 import com.ota.travi.dto.request.VerifyOtpRequest;
 import com.ota.travi.dto.response.AuthResponse;
@@ -16,12 +19,14 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
-import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 
+import static com.ota.travi.constant.ApiEndpoints.AUTH_FORGOT_PASSWORD_REQUEST_OTP;
+import static com.ota.travi.constant.ApiEndpoints.AUTH_FORGOT_PASSWORD_RESET;
+import static com.ota.travi.constant.ApiEndpoints.AUTH_FORGOT_PASSWORD_VERIFY_OTP;
+import static com.ota.travi.constant.ApiEndpoints.AUTH_GOOGLE;
 import static com.ota.travi.constant.ApiEndpoints.AUTH_LOGIN;
 import static com.ota.travi.constant.ApiEndpoints.AUTH_LOGOUT;
 import static com.ota.travi.constant.ApiEndpoints.AUTH_REFRESH;
@@ -42,9 +47,6 @@ public class AuthController {
 
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
 
 
     // --- 1. API ĐĂNG KÝ (REGISTER) ---
@@ -83,7 +85,7 @@ public class AuthController {
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try{
             //1. Xử lý login, Tạo phản hồi và trả về cho client
-            AuthResponse authResponse = authService.login(authenticationManager, jwtUtil, request);
+            AuthResponse authResponse = authService.login(request);
             return new ResponseEntity<>(authResponse, HttpStatus.OK);
         } catch (DisabledException ex) {
             return new ResponseEntity<>("Tài khoản chưa kích hoạt hoặc đã bị vô hiệu hóa", HttpStatus.FORBIDDEN);
@@ -94,11 +96,54 @@ public class AuthController {
         }
     }
 
-    // --- 3. API ĐĂNG XUẤT (LOGOUT) ---
+    @PostMapping(AUTH_GOOGLE)
+    public ResponseEntity<?> loginWithGoogle(@Valid @RequestBody GoogleAuthRequest request) {
+        try {
+            AuthResponse authResponse = authService.loginWithGoogle(request);
+            return new ResponseEntity<>(authResponse, HttpStatus.OK);
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception ex) {
+            return new ResponseEntity<>("Đăng nhập Google thất bại", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    // --- 3. API Quên mật khẩu (Forget) ---
+    @PostMapping(AUTH_FORGOT_PASSWORD_REQUEST_OTP)
+    public ResponseEntity<?> requestForgotPasswordOtp(@Valid @RequestBody ForgotPasswordRequest request) {
+        try {
+            String message = authService.requestPasswordResetOtp(request.email());
+            return new ResponseEntity<>(message, HttpStatus.OK);
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping(AUTH_FORGOT_PASSWORD_VERIFY_OTP)
+    public ResponseEntity<?> verifyForgotPasswordOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        try {
+            String message = authService.verifyPasswordResetOtp(request.email(), request.confirmOTP());
+            return new ResponseEntity<>(message, HttpStatus.OK);
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping(AUTH_FORGOT_PASSWORD_RESET)
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        try {
+            String message = authService.resetPassword(request);
+            return new ResponseEntity<>(message, HttpStatus.OK);
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // --- 4. API ĐĂNG XUẤT (LOGOUT) ---
     @PostMapping(AUTH_LOGOUT)
     public ResponseEntity<Object> logout(
             HttpServletRequest request,
-            @Nullable @RequestBody(required = false) RefreshTokenRequest refreshTokenRequest
+            @RequestBody(required = false) RefreshTokenRequest refreshTokenRequest
     ) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -120,7 +165,7 @@ public class AuthController {
         return new ResponseEntity<>("Đăng xuất thành công!", HttpStatus.OK);
     }
 
-    // --- 4. API LÀM MỚI TOKEN (REFRESH TOKEN) ---
+    // --- 5. API LÀM MỚI TOKEN (REFRESH TOKEN) ---
     @PostMapping(AUTH_REFRESH)
     public ResponseEntity<Object> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         String refreshToken = request.refreshToken();
