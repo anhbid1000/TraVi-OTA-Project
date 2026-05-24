@@ -227,7 +227,7 @@ export function VerifyEmailPage() {
           <button
             type="submit"
             disabled={loading || resendLoading}
-            className={`${authButtonBaseClass} bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700`}
+            className={`${authButtonBaseClass} cursor-pointer bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700`}
           >
             {loading ? 'Đang xác minh...' : 'Xác minh tài khoản'}
           </button>
@@ -236,7 +236,7 @@ export function VerifyEmailPage() {
             type="button"
             disabled={loading || resendLoading || resendCooldown > 0}
             onClick={handleResendOtp}
-            className="mt-3 w-full rounded-lg border border-blue-100 bg-white px-4 py-3 text-sm font-semibold text-blue-600 transition hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="cursor-pointer mt-3 w-full rounded-lg border border-blue-100 bg-white px-4 py-3 text-sm font-semibold text-blue-600 transition hover:border-blue-200 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {resendLoading
               ? 'Đang gửi lại mã...'
@@ -247,11 +247,14 @@ export function VerifyEmailPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <Link to={loginPath} className={`${authSmallLinkClass} text-gray-400 hover:text-blue-600`}>
+          <Link
+            to={loginPath}
+            className={`${authSmallLinkClass} text-gray-400 hover:text-blue-600`}
+          >
             Quay lại đăng nhập
           </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

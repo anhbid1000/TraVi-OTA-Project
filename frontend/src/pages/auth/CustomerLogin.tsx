@@ -112,9 +112,7 @@ export function CustomerLogin() {
       <div className={`${authCardClass} max-w-[420px] border-blue-100`}>
         <div className="mb-8 text-center">
           <h2 className={authTitleClass}>Đăng nhập</h2>
-          <p className={authSubtitleClass}>
-            Khám phá những chuyến đi tuyệt vời cùng TraVi
-          </p>
+          <p className={authSubtitleClass}>Khám phá những chuyến đi tuyệt vời cùng TraVi</p>
         </div>
 
         {registerMessage && <div className={authAlertSuccessClass}>{registerMessage}</div>}
@@ -156,7 +154,7 @@ export function CustomerLogin() {
           <button
             type="submit"
             disabled={loading}
-            className={`${authButtonBaseClass} bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700`}
+            className={`${authButtonBaseClass} cursor-pointer bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700`}
           >
             {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
@@ -164,7 +162,10 @@ export function CustomerLogin() {
 
         <div className={authFooterClass}>
           Chưa có tài khoản?{' '}
-          <Link to="/register" className="font-bold text-blue-600 hover:text-blue-800">
+          <Link
+            to="/register"
+            className="cursor-pointer font-bold text-blue-600 hover:text-blue-800"
+          >
             Đăng ký ngay
           </Link>
         </div>
@@ -186,5 +187,5 @@ export function CustomerLogin() {
         </div>
       </div>
     </div>
-  )
+  );
 }

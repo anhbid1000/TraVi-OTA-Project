@@ -264,7 +264,7 @@ export function CustomerRegister() {
           <button
             type="submit"
             disabled={loading}
-            className={`${authButtonBaseClass} bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700`}
+            className={`${authButtonBaseClass} cursor-pointer bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700`}
           >
             {loading ? 'Đang đăng ký...' : 'Đăng ký'}
           </button>
