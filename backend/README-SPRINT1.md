@@ -1,63 +1,83 @@
-# TraVi-OTA Backend
+# TraVi-OTA Backend — Sprint 1
 
-Backend hiện tại của dự án **TraVi-OTA** được xây dựng bằng **Spring Boot** và tập trung vào các phần nền tảng quan trọng: xác thực người dùng, đăng ký tài khoản, gửi OTP qua email, xác minh OTP, đăng nhập bằng JWT, và phân quyền theo role.
-
-## 1. Mục tiêu của backend hiện tại
-
-Backend đang hoàn thiện các khối chức năng cốt lõi để hỗ trợ frontend và các module nghiệp vụ phía sau:
-
-- Đăng ký tài khoản mới
-- Gửi OTP xác minh qua email
-- Xác minh OTP do người dùng nhập
-- Kích hoạt tài khoản sau khi xác minh thành công
-- Đăng nhập và phát hành JWT
-- Bảo vệ API bằng Spring Security
-- Phân quyền theo role: `QUAN_TRI_VIEN`, `DOI_TAC`, `KHACH_HANG`
+Backend của dự án **TraVi-OTA** được xây dựng với **Spring Boot** và hoàn thiện toàn bộ lớp xác thực (Authentication): đăng ký, xác minh OTP, đăng nhập email/password, đăng nhập Google OAuth2, quên mật khẩu, làm mới token, đăng xuất và phân quyền theo role.
 
 ---
 
-## 2. Công nghệ đang dùng
+## 1. Mục tiêu backend Sprint 1
 
-- **Java 21**
-- **Spring Boot 4.0.5**
-- **Spring Web / WebMVC**
-- **Spring Security** (JWT Authentication)
-- **Spring Data JPA** (with Hibernate JOINED inheritance strategy)
-- **Spring Data Redis** (OTP storage, Token blacklist)
-- **Spring Mail** (SMTP Gmail)
-- **JWT** (`jjwt 0.11.5`)
-- **PostgreSQL**
-- **H2** (test database)
-- **Swagger/OpenAPI 3.0** (API Documentation)
-- **Lombok**
-- **Spring AI 2.0.0-M4** (OpenAI integration)
-- **Bucket4j 8.10.1** (Rate Limiting / Anti-spam)
-- **Flyway** (Database migrations)
+- Đăng ký tài khoản mới (khách hàng / đối tác)
+- Gửi OTP xác minh qua email (async)
+- Xác minh OTP & kích hoạt tài khoản
+- Gửi lại OTP khi hết hạn
+- Đăng nhập bằng email + mật khẩu → phát hành JWT
+- Đăng nhập / đăng ký bằng Google (Google Identity Services — ID Token)
+- Quên mật khẩu: yêu cầu OTP → xác minh OTP → đặt lại mật khẩu
+- Làm mới Access Token bằng Refresh Token
+- Đăng xuất an toàn (token blacklist Redis)
+- Bảo vệ API bằng Spring Security + JWT
+- Phân quyền theo role: `KHACH_HANG`, `DOI_TAC`, `QUAN_TRI_VIEN`
 
 ---
 
-## 3. Cấu trúc backend hiện tại
+## 2. Công nghệ sử dụng
+
+| Công nghệ | Phiên bản | Mục đích |
+|---|---|---|
+| Java | 21 | Ngôn ngữ chính |
+| Spring Boot | 4.0.5 | Framework |
+| Spring Web / WebMVC | — | REST API |
+| Spring Security | — | JWT Authentication & Authorization |
+| Spring Data JPA (Hibernate) | — | ORM, JOINED inheritance |
+| Spring Data Redis | — | OTP storage, Token blacklist |
+| Spring Mail (SMTP Gmail) | — | Gửi OTP email |
+| JJWT | 0.11.5 | JWT generation & validation |
+| PostgreSQL | 12+ | Database chính (dev/prod) |
+| H2 | — | In-memory DB (test) |
+| Swagger/OpenAPI | 3.0 | API Documentation |
+| Lombok | — | Boilerplate reduction |
+| Spring AI | 2.0.0-M4 | OpenAI integration (future) |
+| Bucket4j | 8.10.1 | Rate Limiting / Anti-spam |
+| Flyway | — | Database migrations |
+| Google API Client Library | ��� | Xác minh Google ID Token |
+
+---
+
+## 3. Cấu trúc backend
 
 ```text
 backend/
 ├── src/main/java/com/ota/travi
-│   ├── config/           # Cấu hình app, security, async, CORS
-│   │   ├── AppConfig.java              # Password encoder, RestTemplate
+│   ├── config/
+│   │   ├── AppConfig.java              # PasswordEncoder, RestTemplate
 │   │   ├── AsyncConfig.java            # @EnableAsync cho email async
+│   │   ├── DataInitializer.java        # Seed dữ liệu VaiTro khi khởi động
 │   │   └── SecurityConfig.java         # Spring Security, JWT filter, CORS
-│   ├── constant/         # Hằng số dùng chung
-│   │   └── ApiEndpoints.java           # Registry các endpoint auth đang triển khai
-│   ├── controller/       # REST API endpoints
-│   │   └── AuthController.java         # Register, Login, Logout, Refresh, Verify OTP
-│   ├── dto/              # Request/Response models
-│   │   ├── AuthResponse.java           # {accessToken, refreshToken, tokenType, message}
-│   │   ├── LoginRequest.java           # {email, matKhau}
-│   │   ├── RegisterRequest.java        # {username, email, hoTen, soDienThoai, matKhau, loaiTaiKhoan}
-│   │   ├── VerifyOtpRequest.java       # {email, confirmOTP}
-│   │   ├── RefreshTokenRequest.java    # {refreshToken}
-│   │   └── UserDto.java                # User representation
-│   ├── entity/           # JPA entities (Database models)
-│   │   ├── User.java                   # Abstract parent class (JOINED inheritance)
+│   │
+│   ├── constant/
+│   │   └── ApiEndpoints.java           # Registry tất cả endpoint (versioned)
+│   │
+│   ├── controller/
+│   │   └── AuthController.java         # Register, Login, Google, Logout, Refresh,
+│   │                                   # Verify OTP, Resend OTP, Forgot Password
+│   ├── dto/
+│   │   ├── request/
+│   │   │   ├── LoginRequest.java           # { email, matKhau }
+│   │   │   ├── RegisterRequest.java        # { username, email, hoTen,
+│   │   │   │                               #   soDienThoai, matKhau, loaiTaiKhoan }
+│   │   │   ├── GoogleAuthRequest.java      # { idToken, loaiTaiKhoan }
+│   │   │   ├── VerifyOtpRequest.java       # { email, confirmOTP }
+│   │   │   ├── ResendOtpRequest.java       # { email }
+│   │   │   ├── ForgotPasswordRequest.java  # { email }
+│   │   │   ├── ResetPasswordRequest.java   # { email, matKhauMoi, xacNhanMatKhau }
+│   │   │   └── RefreshTokenRequest.java    # { refreshToken }
+│   │   └── response/
+│   │       ├── AuthResponse.java           # { accessToken, refreshToken,
+│   │       │                               #   tokenType, message }
+│   │       └── UserDto.java                # User representation
+│   │
+│   ├── entity/
+│   │   ├── User.java                   # Abstract parent (JOINED inheritance)
 │   │   ├── KhachHang.java              # Customer (KHACH_HANG)
 │   │   ├── DoiTac.java                 # Partner (DOI_TAC)
 │   │   ├── QuanTriVien.java            # Admin (QUAN_TRI_VIEN)
@@ -65,44 +85,49 @@ backend/
 │   │   ├── SoThich.java                # Preferences
 │   │   ├── DanhMucSoThich.java         # Preference categories
 │   │   └── LichSuThaoTac.java          # Action history logs
-│   ├── enum/             # Enumerations
-│   │   ├── TrangThaiUser.java          # User status: CHUA_XAC_THUC, HOAT_DONG, BI_KHOA
-│   │   ├── GioiTinh.java               # Gender: NAM, NU, KHAC
-│   │   └── HangThanhVien.java          # Member tier: DONG, BAC, VANG, KIM_CUONG
-│   ├── repository/       # Spring Data JPA repositories
-│   │   └── UserRepository.java         # User CRUD operations
-│   ├── security/         # Authentication & Authorization
-│   │   ├── JwtUtil.java                # JWT token generation, validation, extraction
-│   │   ├── JwtAuthenticationFilter.java # Intercept requests, extract JWT, set authentication
-│   │   ├── CustomUserDetails.java      # User details implementation
-│   │   ├── CustomUserDetailsService.java# Load user from DB by email/username
-│   │   └── RateLimitFilter.java        # Rate limiting for login (5 req/min)
-│   ├── service/          # Business logic
-│   │   ├── AuthService.java            # Register, Login, Verify OTP
-│   │   ├── OTPService.java             # OTP generation, validation, email sending (@Async)
-│   │   └── TokenBlacklistService.java  # Token blacklist for logout
-│   ├── util/             # Utilities
-│   ├── ai/               # AI module (for future use)
+│   │
+│   ├── Enum/
+│   │   ├── TrangThaiUser.java          # CHUA_XAC_THUC, HOAT_DONG, BI_KHOA
+│   │   ├── GioiTinh.java               # NAM, NU, KHAC
+│   │   ├── HangThanhVien.java          # DONG, BAC, VANG, KIM_CUONG
+│   │   └── OtpPurpose.java             # REGISTER, RESET_PASSWORD
+│   │
+│   ├── repository/
+│   │   ├── UserRepository.java         # User CRUD operations
+│   │   └── VaiTroRepository.java       # Role lookup
+│   │
+│   ├── security/
+│   │   ├── JwtUtil.java                    # JWT generation, validation, extraction
+│   │   ├── JwtAuthenticationFilter.java    # Intercept requests, extract JWT
+│   │   ├── CustomUserDetails.java          # UserDetails implementation
+│   │   ├── CustomUserDetailsService.java   # Load user từ DB
+│   │   └── RateLimitFilter.java            # Rate limiting (Bucket4j)
+│   │
+│   ├── service/
+│   │   ├── AuthService.java                # Core business logic (register, login,
+│   │   │                                   # Google, OTP, forgot password)
+│   │   ├── OTPService.java                 # OTP generation, validation, email
+│   │   ├── GoogleTokenVerifierService.java # Verify Google ID Token
+│   │   └── TokenBlacklistService.java      # Redis token blacklist
+│   │
 │   └── TraViOtaApplication.java        # @SpringBootApplication entry point
 │
 ├── src/main/resources
-│   ├── application.properties           # Default profile config
-│   ├── application-dev.properties       # Dev environment (PostgreSQL local)
-│   ├── application-prod.properties      # Production environment
-│   ├── application-test.properties      # Test environment (H2)
+│   ├── application.properties           # Profile mặc định
+│   ├── application-dev.properties       # Dev (PostgreSQL local)
+│   ├── application-prod.properties      # Production
+│   ├── application-test.properties      # Test (H2)
 │   └── db/migration/
-│       └── v1__init_schema.sql          # Initial database schema (Flyway)
+│       └── v1__init_schema.sql          # Initial schema (Flyway)
 │
-└── pom.xml                              # Maven dependencies & plugins
+└── pom.xml
 ```
 
 ---
 
-## 4. Các phần đã làm được ở backend hiện tại
+## 4. Các chức năng đã hoàn thiện
 
-### 4.1. Đăng ký tài khoản (Register)
-
-Backend có luồng đăng ký tài khoản mới trong `AuthService`.
+### 4.1. Đăng ký tài khoản
 
 **Endpoint:** `POST /api/v1/auth/register`
 
@@ -114,51 +139,28 @@ Backend có luồng đăng ký tài khoản mới trong `AuthService`.
   "hoTen": "Nguyễn Văn A",
   "soDienThoai": "0912345678",
   "matKhau": "Password@123",
-  "loaiTaiKhoan": "KHACH_HANG"  
+  "loaiTaiKhoan": "KHACH_HANG"
 }
 ```
 
-**Luồng xử lý:**
+**Lu��ng:**
 ```
-1. Kiểm tra trùng username
-2. Kiểm tra trùng email
-3. Tạo entity theo loại tài khoản:
-   - KHACH_HANG: khởi tạo diemThanhVien=0, hangThanhVien=DONG
-   - DOI_TAC: khởi tạo tiLeChietKhau=0.0
-4. Gán trạng thái tài khoản = CHUA_XAC_THUC
-5. Mã hóa mật khẩu bằng BCrypt
-6. Lưu user xuống PostgreSQL
-7. Sau transaction commit, gửi OTP qua email (async)
-```
-
-### 4.2. Gửi OTP xác minh email
-
-`OTPService` đảm nhiệm:
-- Tạo OTP ngẫu nhiên 6 chữ số (000000-999999)
-- Lưu OTP vào **Redis** với TTL **4 phút**
-- Gửi OTP qua email bằng `@Async` (không chặn request)
-- Xóa OTP từ Redis khi xác minh thành công
-
-**Email Template:**
-```
-Xin chào <HỌ TÊN>,
-
-Mã xác minh tạo tài khoản TraVi của bạn là:
-
-<OTP-CODE>
-
-Mã OTP có hiệu lực trong vòng 4 phút.
-
-Nếu bạn không yêu cầu, vui lòng bỏ qua email này.
-
-Trân trọng!
+1. Kiểm tra trùng username / email
+2. Tạo entity theo loại (KhachHang hoặc DoiTac)
+   - KhachHang: diemThanhVien=0, hangThanhVien=DONG
+   - DoiTac: tiLeChietKhau=0.0
+3. Gán trạng thái CHUA_XAC_THUC, mã hóa mật khẩu (BCrypt)
+4. Lưu vào PostgreSQL
+5. [After commit] Gửi OTP 6 số qua email (async, Redis TTL 4 phút)
+→ Response: "Đăng ký thành công..."
 ```
 
-### 4.3. Xác minh OTP (Verify Email)
+---
+
+### 4.2. Xác minh email (OTP)
 
 **Endpoint:** `PUT /api/v1/auth/verify-email`
 
-**Request Body:**
 ```json
 {
   "email": "user@example.com",
@@ -166,21 +168,39 @@ Trân trọng!
 }
 ```
 
-**Luồng xử lý:**
+**Luồng:**
 ```
-1. Kiểm tra OTP rỗng → "OTP đã hết hạn"
-2. Kiểm tra OTP sai → "OTP không hợp lệ"
-3. Nếu OTP đúng:
-   - Xóa OTP khỏi Redis
-   - Cập nhật trạng thái user → HOAT_DONG
-   - Trả về: "Xác minh OTP thành công. Tài khoản đã được kích hoạt."
+1. Lấy OTP từ Redis (key: email + purpose=REGISTER)
+2. OTP rỗng → "OTP đã hết hạn"
+3. OTP sai → "OTP không hợp lệ"
+4. OTP đúng → xóa Redis, cập nhật trangThai = HOAT_DONG
+→ Response: "Xác minh OTP thành công. Tài khoản đã được kích hoạt."
 ```
 
-### 4.4. Đăng nhập bằng JWT
+---
+
+### 4.3. Gửi lại OTP
+
+**Endpoint:** `POST /api/v1/auth/resend-otp`
+
+```json
+{ "email": "user@example.com" }
+```
+
+**Luồng:**
+```
+1. Kiểm tra user tồn tại và còn CHUA_XAC_THUC
+2. Tạo OTP mới → lưu Redis (TTL 4 phút, ghi đè OTP cũ)
+3. Gửi email OTP async
+→ Response: "Mã OTP mới đã được gửi tới email của bạn."
+```
+
+---
+
+### 4.4. Đăng nhập bằng email + mật khẩu
 
 **Endpoint:** `POST /api/v1/auth/login`
 
-**Request Body:**
 ```json
 {
   "email": "user@example.com",
@@ -188,15 +208,13 @@ Trân trọng!
 }
 ```
 
-**Luồng xử lý:**
+**Luồng:**
 ```
-1. Spring Security kiểm tra email + mật khẩu
-2. CustomUserDetailsService load user từ DB
-3. isEnabled() kiểm tra: chỉ user HOAT_DONG mới đăng nhập được
-4. Nếu hợp lệ → sinh 2 token:
-   - Access Token (15 phút)
-   - Refresh Token (7 ngày)
-5. Trả về: {accessToken, refreshToken, tokenType: "Bearer", message}
+1. RateLimitFilter: >5 req/phút → HTTP 429
+2. Spring Security xác thực email + password
+3. isEnabled() = (trangThai == HOAT_DONG)
+4. Sinh Access Token (15 phút) + Refresh Token (7 ngày)
+→ Response: { accessToken, refreshToken, tokenType: "Bearer", message }
 ```
 
 **Response:**
@@ -209,272 +227,233 @@ Trân trọng!
 }
 ```
 
-### 4.5. Làm mới Token (Refresh)
+---
+
+### 4.5. Đăng nhập / đăng ký bằng Google OAuth2
+
+**Endpoint:** `POST /api/v1/auth/google`
+
+```json
+{
+  "idToken": "google-id-token-từ-frontend",
+  "loaiTaiKhoan": "KHACH_HANG"
+}
+```
+
+**Luồng:**
+```
+1. GoogleTokenVerifierService.verifyIdToken(idToken)
+   → Lấy email + tên từ Google API
+2. Email chưa tồn tại:
+   - Tạo user mới (KhachHang hoặc DoiTac theo loaiTaiKhoan)
+   - trangThai = HOAT_DONG ngay (Google đã xác minh email)
+3. Email tồn tại + CHUA_XAC_THUC → kích hoạt tài khoản
+4. Email tồn tại + HOAT_DONG → đăng nhập bình thường
+5. Sinh Access Token + Refresh Token
+→ Response: { accessToken, refreshToken, tokenType, message }
+```
+
+---
+
+### 4.6. Quên mật khẩu (3 bước)
+
+#### Bước 1 — Yêu cầu OTP
+
+**Endpoint:** `POST /api/v1/auth/forgot-password/request-otp`
+
+```json
+{ "email": "user@example.com" }
+```
+
+```
+1. Kiểm tra user tồn tại và HOAT_DONG
+2. Tạo OTP → Redis (key: email + purpose=RESET_PASSWORD, TTL 4 phút)
+3. Gửi email OTP async
+→ Response: "Mã OTP đặt lại mật khẩu đã được gửi tới email của bạn."
+```
+
+#### Bước 2 — Xác minh OTP
+
+**Endpoint:** `POST /api/v1/auth/forgot-password/verify-otp`
+
+```json
+{
+  "email": "user@example.com",
+  "confirmOTP": "123456"
+}
+```
+
+```
+1. Kiểm tra OTP từ Redis (purpose=RESET_PASSWORD)
+2. OTP đúng → đánh dấu phiên verified trong Redis
+→ Response: "OTP hợp lệ. Vui lòng nhập mật khẩu mới."
+```
+
+#### Bước 3 — Đặt lại mật khẩu
+
+**Endpoint:** `POST /api/v1/auth/forgot-password/reset`
+
+```json
+{
+  "email": "user@example.com",
+  "matKhauMoi": "NewPassword@456",
+  "xacNhanMatKhau": "NewPassword@456"
+}
+```
+
+```
+1. Kiểm tra phiên verified còn hiệu lực
+2. Kiểm tra hai mật khẩu khớp
+3. BCrypt encode → lưu DB, xóa phiên verified khỏi Redis
+→ Response: "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập lại."
+```
+
+---
+
+### 4.7. Làm mới Token
 
 **Endpoint:** `POST /api/v1/auth/refresh`
 
-**Request Body:**
 ```json
-{
-  "refreshToken": "eyJhbGc..."
-}
+{ "refreshToken": "eyJhbGc..." }
 ```
 
-**Luồng xử lý:**
+**Luồng:**
 ```
-1. Kiểm tra Refresh Token có bị blacklist (đăng xuất từ trước)?
-2. Nếu bị blacklist → "Thẻ đã bị vô hiệu hóa (Đăng xuất)."
-3. Nếu hợp lệ:
-   - Lấy username từ Refresh Token
-   - Load user mới nhất từ DB (kiểm tra quyền/khóa)
-   - Sinh Access Token mới
-   - Trả về: {newAccessToken, refreshToken (cũ hoặc mới), tokenType, message}
+1. Kiểm tra blacklist → "Thẻ đã bị vô hiệu hóa" nếu đã logout
+2. Lấy username → load user mới nhất từ DB
+3. Sinh Access Token mới (15 phút)
+→ Response: { newAccessToken, refreshToken (cũ), tokenType, message }
 ```
 
-### 4.6. Đăng xuất (Logout)
+---
+
+### 4.8. Đăng xuất
 
 **Endpoint:** `POST /api/v1/auth/logout`
 
-**Request Body (optional):**
-```json
-{
-  "refreshToken": "eyJhbGc..."
-}
-```
-
-**Luồng xử lý:**
-```
-1. Lấy JWT từ Authorization Header (Bearer token)
-2. Tính thời gian còn lại của JWT
-3. Ném JWT vào danh sách đen (Redis blacklist)
-4. Nếu có Refresh Token trong body, cũng ném vào blacklist
-5. Tokens sẽ tự động xóa khỏi Redis khi hết hạn
-6. Trả về: "Đăng xuất thành công!"
-```
-
-### 4.7. Phân quyền và bảo vệ API (Authorization)
-
-`SecurityConfig` cấu hình tiếp cận:
-
-| Route | Quyền | Mô tả |
-|---|---|---|
-| `/api/v1/auth/**` | Public | Đăng ký, Login, Logout, Verify OTP, Refresh |
-| `/api/hotels/public/**` | Public | Tìm kiếm khách sạn (chưa làm) |
-| `/api/restaurants/public/**` | Public | Tìm kiếm nhà hàng (chưa làm) |
-| `/api/admin/**` | QUAN_TRI_VIEN | Dashboard quản trị (chưa làm) |
-| `/api/partner/**` | DOI_TAC | Dashboard đối tác (chưa làm) |
-| Các API khác | Authenticated | Bắt buộc có JWT hợp lệ |
-
-### 4.8. Bảo mật bổ sung
-
-#### a) Rate Limiting (Chống Brute-force)
-- Giới hạn **5 requests/phút** cho `/api/v1/auth/login`
-- Trả về HTTP 429 (Too Many Requests) nếu vượt quá
-- Sử dụng **Bucket4j** library
-
-#### b) Token Blacklist
-- Khi logout, token được lưu vào **Redis blacklist**
-- Thời gian lưu = thời gian còn lại của token
-- Tự động xóa khỏi Redis khi token hết hạn
-- Ngăn chặn sử dụng lại token đã logout
-
-#### c) CORS (Cross-Origin Resource Sharing)
-- Chỉ cho phép requests từ `${FRONTEND_URL}` (mặc định: http://localhost:5173)
-- Methods: GET, POST, PUT, DELETE, OPTIONS
-- Headers: Authorization, Content-Type
-- Credentials: true
-
-#### d) Tài khoản chưa xác thực không đăng nhập được
-- `CustomUserDetails.isEnabled()` kiểm tra trạng thái
-- Chỉ user có `trangThai = HOAT_DONG` mới đăng nhập được
-- User đăng ký xong nhưng chưa verify OTP → chưa thể đăng nhập
-
-### 4.9. Entity Relationships (Database Schema)
+**Headers:** `Authorization: Bearer <accessToken>`  
+**Body (optional):** `{ "refreshToken": "..." }`
 
 ```
-User (Abstract parent - JOINED inheritance)
-├── KhachHang (Customer)
-│   └── many SoThich (Preferences)
-├── DoiTac (Partner)
-└── QuanTriVien (Admin)
-
-All Users have:
-├── VaiTro (Role) - many-to-one
-└── LichSuThaoTac (History logs)
+1. Access Token → ném vào Redis blacklist (TTL = thời gian còn lại)
+2. Refresh Token (nếu có) → cũng ném vào blacklist
+→ Response: "Đăng xuất thành công!"
 ```
 
-### 4.10. Trạng thái người dùng
+---
+
+### 4.9. Bảo mật bổ sung
+
+#### Rate Limiting (Bucket4j)
+- **5 requests/phút** cho `/api/v1/auth/login`
+- HTTP 429 nếu vượt quá
+
+#### Token Blacklist (Redis)
+- Logout lưu token vào Redis với TTL = thời gian còn lại
+- `JwtAuthenticationFilter` kiểm tra blacklist mỗi request
+
+#### CORS
+- Chỉ cho phép từ `${FRONTEND_URL}` (mặc định: `http://localhost:5173`)
+- Methods: GET, POST, PUT, DELETE, OPTIONS; Credentials: true
+
+#### Tài khoản chưa xác thực
+- `isEnabled()` = `trangThai == HOAT_DONG`
+- Tài khoản `CHUA_XAC_THUC` không thể đăng nhập email/password
+
+---
+
+### 4.10. Entity & Database Schema
+
+```
+User (Abstract — JOINED inheritance)
+├── KhachHang (KHACH_HANG)  → diemThanhVien, hangThanhVien
+│   └── [many] SoThich
+├── DoiTac (DOI_TAC)         → tiLeChietKhau
+└── QuanTriVien (QUAN_TRI_VIEN)
+
+User → VaiTro (many-to-one)
+User → LichSuThaoTac (one-to-many)
+```
+
+### 4.11. Trạng thái người dùng
 
 | Trạng thái | Mô tả |
 |---|---|
-| CHUA_XAC_THUC | Vừa đăng ký, chờ verify OTP |
-| HOAT_DONG | Đã kích hoạt, có thể đăng nhập |
-| BI_KHOA | Bị admin khóa (chưa làm) |
+| `CHUA_XAC_THUC` | Vừa đăng ký, chờ verify OTP |
+| `HOAT_DONG` | Đã kích hoạt, có thể đăng nhập |
+| `BI_KHOA` | Bị admin khóa (Sprint 2) |
 
 ---
 
-## 5. Quy trình nghiệp vụ chi tiết
+## 5. REST API Endpoints — Tổng hợp
 
-### 5.1. Đăng ký tài khoản
+| Method | Endpoint | Auth | Status | Mô tả |
+|---|---|---|---|---|
+| POST | `/api/v1/auth/register` | ❌ | ✅ | Đăng ký tài khoản mới |
+| PUT | `/api/v1/auth/verify-email` | ❌ | ✅ | Xác minh OTP kích hoạt |
+| POST | `/api/v1/auth/resend-otp` | ❌ | ✅ | Gửi lại OTP xác minh email |
+| POST | `/api/v1/auth/login` | ❌ | ✅ | Đăng nhập email + password |
+| POST | `/api/v1/auth/google` | ❌ | ✅ | Đăng nhập / đăng ký bằng Google |
+| POST | `/api/v1/auth/forgot-password/request-otp` | ❌ | ✅ | Yêu cầu OTP quên mật khẩu |
+| POST | `/api/v1/auth/forgot-password/verify-otp` | ❌ | ✅ | Xác minh OTP quên mật khẩu |
+| POST | `/api/v1/auth/forgot-password/reset` | ❌ | ✅ | Đặt lại mật khẩu |
+| POST | `/api/v1/auth/refresh` | ❌ | ✅ | Làm mới Access Token |
+| POST | `/api/v1/auth/logout` | ✅ JWT | ✅ | Đăng xuất (blacklist token) |
 
-**Endpoint:** `POST /api/v1/auth/register`
-
-**Luồng xử lý:**
-```
-Client gửi thông tin đăng ký
-→ AuthController.register(@Valid RegisterRequest)
-→ AuthService.register()
-    ├─ Kiểm tra trùng username
-    ├─ Kiểm tra trùng email
-    ├─ Tạo entity KhachHang hoặc DoiTac dựa trên loaiTaiKhoan
-    ├─ Gán trạng thái CHUA_XAC_THUC
-    ├─ Mã hóa mật khẩu (BCrypt)
-    └─ Lưu vào PostgreSQL
-→ [After commit] OTPService.sendVerificationRegister() (@Async)
-    ├─ Tạo OTP 6 số
-    ├─ Lưu vào Redis (TTL: 4 phút)
-    └─ Gửi OTP qua email SMTP Gmail
-→ Trả về: "Đăng ký thành công..."
-```
-
-### 5.2. Verify OTP
-
-**Endpoint:** `PUT /api/v1/auth/verify-email`
-
-**Luồng xử lý:**
-```
-Client gửi email + OTP
-→ AuthController.verifyEmail(@Valid VerifyOtpRequest)
-→ AuthService.verifyRegisterOtp(email, otp)
-    ├─ Tìm user qua email
-    └─ OTPService.checkOtp(email, confirmOTP)
-        ├─ Kiểm tra OTP rỗng → "OTP đã hết hạn"
-        ├─ Kiểm tra OTP sai → "OTP không hợp lệ"
-        └─ OTP đúng → Delete khỏi Redis
-→ Update user.trangThai → HOAT_DONG
-→ Trả về: "Xác minh OTP thành công..."
-```
-
-### 5.3. Đăng nhập
-
-**Endpoint:** `POST /api/v1/auth/login`
-
-**Luồng xử lý:**
-```
-Client gửi email + mật khẩu
-→ RateLimitFilter kiểm tra
-    └─ Nếu >5 lần/phút → HTTP 429
-→ AuthController.login(@Valid LoginRequest)
-→ AuthService.login()
-    ├─ AuthenticationManager.authenticate()
-    │   ├─ CustomUserDetailsService.loadUserByUsername()
-    │   ├─ Kiểm tra mật khẩu (PasswordEncoder)
-    │   └─ custom.isEnabled() = (user.trangThai == HOAT_DONG)
-    ├─ JwtUtil.generateToken() → Access Token (15 phút)
-    ├─ JwtUtil.generateRefreshToken() → Refresh Token (7 ngày)
-    └─ Trả về AuthResponse
-```
-
-### 5.4. Refresh Token
-
-**Endpoint:** `POST /api/v1/auth/refresh`
-
-**Luồng xử lý:**
-```
-Client gửi refreshToken
-→ AuthController.refreshToken(@Valid RefreshTokenRequest)
-→ TokenBlacklistService.isBlacklisted(token)?
-    └─ Có → Người dùng đã logout, trả lỗi
-→ JwtUtil.extractUsername(refreshToken) → Lấy tên user
-→ CustomUserDetailsService.loadUserByUsername()
-    ├─ Verify user chưa bị khóa/đổi quyền/hết hạn
-    └─ Lấy role hiện tại
-→ JwtUtil.generateToken() → Access Token mới (15 phút)
-→ Trả về: {newAccessToken, refreshToken (cũ), tokenType, message}
-```
-
-### 5.5. Đăng xuất
-
-**Endpoint:** `POST /api/v1/auth/logout`
-
-**Luồng xử lý:**
-```
-Client gửi request (Authorization header + optional refreshToken)
-→ AuthController.logout()
-→ TokenBlacklistService.addToBlacklist(accessToken, remainingMs)
-→ TokenBlacklistService.addToBlacklist(refreshToken, remainingMs) [nếu có]
-→ Redis tự động xóa token khi hết hạn
-→ Trả về: "Đăng xuất thành công!"
-```
+> ✅ = Đã hoàn thiện | ❌ Auth = Không cần JWT (public)
 
 ---
 
-## 6. REST API Endpoints
+## 6. Security Route Rules
 
-| Method | Endpoint | Xác thực | Quyền | Trạng thái | Mô tả |
-|---|---|---|---|---:|---|
-| POST | `/api/v1/auth/register` | ❌ | - | ✅ | Đăng ký tài khoản mới |
-| PUT | `/api/v1/auth/verify-email` | ❌ | - | ✅ | Xác minh OTP và kích hoạt tài khoản |
-| POST | `/api/v1/auth/login` | ❌ | - | ✅ | Đăng nhập và lấy JWT (Access + Refresh) |
-| POST | `/api/v1/auth/logout` | ✅ | - | ✅ | Đăng xuất (blacklist token) |
-| POST | `/api/v1/auth/refresh` | ❌ | - | ✅ | Làm mới Access Token bằng Refresh Token |
-
-> Hiện tại backend mới triển khai nhóm `auth`. Các route `user`, `partner`, `admin` và hệ thống tích hợp sẽ được bổ sung khi có controller/service tương ứng.
-
-> ✅ = Đã hoàn thiện  
-> ❌ = Không cần đăng nhập / public
+| Route | Quyền | Mô tả |
+|---|---|---|
+| `/api/v1/auth/**` | Public | Toàn bộ auth endpoints |
+| `/api/v1/public/**` | Public | Tìm kiếm công khai (Sprint 2) |
+| `/api/v1/admin/**` | `QUAN_TRI_VIEN` | Dashboard quản trị (Sprint 2) |
+| `/api/v1/partner/**` | `DOI_TAC` | Dashboard đối tác (Sprint 2) |
+| Các API còn lại | Authenticated | Bắt buộc JWT hợp lệ |
 
 ---
 
-## 7. Các Service chính
+## 7. Mô tả Service chính
 
-### `AuthService` (com.ota.travi.service)
-- `register(RegisterRequest)` → Đăng ký tài khoản mới
-- `login(AuthenticationManager, JwtUtil, LoginRequest)` → Đăng nhập và phát hành 2 token
-- `verifyRegisterOtp(email, otp)` → Xác minh OTP và kích hoạt tài khoản
-- Kiểm tra trùng username/email
-- Gán role, trạng thái người dùng
-- Xử lý entity inheritance (KhachHang vs DoiTac)
+### `AuthService`
+- `register(RegisterRequest)` → Đăng ký, gửi OTP
+- `login(LoginRequest)` → Xác thực, sinh JWT
+- `loginWithGoogle(GoogleAuthRequest)` → Google OAuth2 login/register
+- `verifyRegisterOtp(email, otp)` → Xác minh OTP đăng ký
+- `resendRegisterOtp(email)` → Gửi lại OTP đăng ký
+- `requestPasswordResetOtp(email)` → Yêu cầu OTP quên mật khẩu
+- `verifyPasswordResetOtp(email, otp)` → Xác minh OTP quên mật khẩu
+- `resetPassword(ResetPasswordRequest)` → Đặt lại mật khẩu
 
-### `OTPService` (com.ota.travi.service)
-- `createOtp(email)` → Tạo OTP 6 chữ số ngẫu nhiên
-- `checkOtp(email, confirmOTP)` → Xác minh OTP (throw RuntimeException nếu sai/hết hạn)
-- `sendVerificationRegister(user)` → Gửi email OTP **bất đồng bộ** (@Async)
-- Lưu OTP vào Redis (TTL: 4 phút)
-- Xóa OTP khỏi Redis sau khi xác minh thành công
+### `OTPService`
+- `createOtp(email, purpose)` → Tạo OTP, lưu Redis TTL 4 phút
+- `checkOtp(email, confirmOTP, purpose)` → Xác minh OTP
+- `sendVerificationRegister(user)` → Email OTP đăng ký (**@Async**)
+- `sendPasswordResetOtp(email, otp)` → Email OTP reset mật khẩu (**@Async**)
 
-### `TokenBlacklistService` (com.ota.travi.service)
-- `addToBlacklist(token, expirationDurationMs)` → Ném token vào danh sách đen (Redis)
-- `isBlacklisted(token)` → Kiểm tra token có bị logout hay không
-- Token tự động xóa khỏi Redis khi hết hạn (dùng TTL)
+### `GoogleTokenVerifierService`
+- `verifyIdToken(idToken)` → Gọi Google API, trả về `GoogleUserInfo(email, name)`
+- Throw exception nếu token không hợp lệ
 
-### `CustomUserDetailsService` (com.ota.travi.security)
-- `loadUserByUsername(email)` → Load user từ DB theo email để phục vụ đăng nhập
-- `loadUserByUsernameValue(username)` → Load user theo username để phục vụ JWT refresh / subject
-- Trả về `CustomUserDetails` chứa:
-    - username, email, password (hashed)
-    - isEnabled = (trangThai == HOAT_DONG)
-    - authorities = [role từ VaiTro]
+### `TokenBlacklistService`
+- `addToBlacklist(token, ttlMs)` → Lưu Redis blacklist
+- `isBlacklisted(token)` → Kiểm tra token đã logout chưa
 
-### `JwtUtil` (com.ota.travi.security)
-- `generateToken(username, role)` → Tạo Access Token (15 phút)
-- `generateRefreshToken(username)` → Tạo Refresh Token (7 ngày)
-- `extractUsername(token)` → Lấy username từ JWT
-- `validateToken(token)` → Xác minh JWT hợp lệ
-- `getRemainingExpirationTime(token)` → Tính thời gian còn lại
+### `JwtUtil`
+- `generateToken(username, role)` → Access Token (15 phút)
+- `generateRefreshToken(username)` → Refresh Token (7 ngày)
+- `extractUsername(token)`, `validateToken(token)`, `getRemainingExpirationTime(token)`
 
-### `JwtAuthenticationFilter` (com.ota.travi.security)
-- Chặn mỗi HTTP request
-- Lấy JWT từ Authorization header (`Bearer <token>`)
-- Xác minh signature + expiration
-- Kiểm tra token có trong blacklist không
+### `JwtAuthenticationFilter`
+- Extract Bearer token → validate signature + expiry + blacklist
 - Set `Authentication` vào `SecurityContextHolder`
 
-### `RateLimitFilter` (com.ota.travi.security)
-- Sử dụng **Bucket4j** để giới hạn request
-- Giới hạn: **5 requests/phút** cho `/api/v1/auth/login`
-- Trả về HTTP 429 nếu vượt quá
-- Bảo vệ chống brute-force attack
+### `RateLimitFilter`
+- **5 req/phút** cho `/api/v1/auth/login` → HTTP 429
 
 ---
 
@@ -483,22 +462,15 @@ Client gửi request (Authorization header + optional refreshToken)
 ### Biến môi trường bắt buộc
 
 ```bash
-# JWT Configuration
 JWT_SECRET_KEY=your-secret-key-at-least-32-chars-long
-JWT_EXPIRATION_TIME=900000  # 15 phút (ms)
-
-# Frontend URL (CORS)
+JWT_EXPIRATION_TIME=900000          # 15 phút (ms)
 FRONTEND_URL_ENV=http://localhost:5173
-
-# SMTP Gmail (Email OTP)
 MAIL_USERNAME=your-gmail@gmail.com
-MAIL_PASSWORD=your-gmail-app-password  # Use App Password, not account password
-
-# OpenAI (cho AI module)
-OPENAI_API_KEY=sk-your-openai-key
+MAIL_PASSWORD=your-gmail-app-password   # Gmail App Password
+OPENAI_API_KEY=sk-your-openai-key       # Optional — AI module
 ```
 
-### `application.properties` (mặc định)
+### `application.properties`
 
 ```properties
 spring.profiles.active=dev
@@ -510,141 +482,92 @@ JWT_EXPIRATION=${JWT_EXPIRATION_TIME}
 FRONTEND_URL=${FRONTEND_URL_ENV:http://localhost:5173}
 ```
 
-### `application-dev.properties` (Development - PostgreSQL địa phương)
+### `application-dev.properties`
 
 ```properties
-# Database
 spring.datasource.url=jdbc:postgresql://postgres:5432/travi_db
 spring.datasource.username=postgres
-spring.datasource.password=Lumitap2026
+spring.datasource.password=YOUR_DB_PASSWORD
 
-# JPA/Hibernate
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-spring.jpa.properties.hibernate.format_sql=true
 
-# Redis
 spring.data.redis.host=localhost
 spring.data.redis.port=6379
 
-# Email (SMTP Gmail)
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
 spring.mail.username=${MAIL_USERNAME}
 spring.mail.password=${MAIL_PASSWORD}
 
-# Spring AI / OpenAI
 spring.ai.openai.api-key=${OPENAI_API_KEY:sk-dummy-key-for-dev}
 spring.ai.openai.chat.options.model=gpt-4o-mini
-spring.ai.openai.chat.options.temperature=0.7
 
-# Swagger/Springdoc
 springdoc.swagger-ui.enabled=true
 springdoc.swagger-ui.path=/swagger-ui.html
 springdoc.api-docs.path=/v3/api-docs
 
-# Logging
-logging.level.root=INFO
 logging.level.com.ota.travi=DEBUG
-logging.level.org.springframework.web=DEBUG
-logging.level.org.hibernate.SQL=DEBUG
 ```
 
-### `application-test.properties` (Testing - H2 in-memory)
+### `application-prod.properties`
 
 ```properties
-# H2 embedded database
-spring.datasource.url=jdbc:h2:mem:testdb
-spring.datasource.driverClassName=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-
-# JPA
-spring.jpa.hibernate.ddl-auto=create-drop
-spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-```
-
-### `application-prod.properties` (Production)
-
-```properties
-# Database (từ biến môi trường)
 spring.datasource.url=${DB_URL}
 spring.datasource.username=${DB_USERNAME}
 spring.datasource.password=${DB_PASSWORD}
 
-# JPA
-spring.jpa.hibernate.ddl-auto=validate  # Chỉ validate, không tự tạo
+spring.jpa.hibernate.ddl-auto=validate
 spring.jpa.show-sql=false
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
-# Redis
 spring.data.redis.host=${REDIS_HOST}
 spring.data.redis.port=${REDIS_PORT}
 spring.data.redis.password=${REDIS_PASSWORD}
 
-# Email
-spring.mail.username=${MAIL_USERNAME}
-spring.mail.password=${MAIL_PASSWORD}
-
-# Spring AI
-spring.ai.openai.api-key=${OPENAI_API_KEY}
-
-# Disable Swagger in production
 springdoc.swagger-ui.enabled=false
 
-# Logging
 logging.level.root=WARN
 logging.level.com.ota.travi=INFO
 ```
 
 ### JWT Token Configuration
 
-| Tham số | Giá trị | Mô tả |
+| Tham số | Giá trị | Ghi chú |
 |---|---|---|
-| Access Token TTL | 15 phút (900 tế giây) | Thời gian sống của access token |
-| Refresh Token TTL | 7 ngày (604800 tế giây) | Thời gian sống của refresh token |
-| Signature Algorithm | HS256 | HMAC SHA-256 |
-| Secret Key | Min 32 chars | Mã hóa JWT |
+| Access Token TTL | 15 phút (900 000 ms) | |
+| Refresh Token TTL | 7 ngày (604 800 000 ms) | |
+| OTP TTL | 4 phút (Redis) | REGISTER & RESET_PASSWORD |
+| Algorithm | HS256 | HMAC SHA-256 |
 
-### Database Schema (Flyway v1__init_schema.sql)
+### Database Tables (Flyway `v1__init_schema.sql`)
 
-**Tables:**
-- `vai_tro` - Roles (KHACH_HANG, DOI_TAC, QUAN_TRI_VIEN)
-- `users` - Parent table (JOINED inheritance)
-- `khach_hang` - Customers
-- `doi_tac` - Partners
-- `quan_tri_vien` - Admins
-- `danh_muc_so_thich` - Preference categories
-- `so_thich` - User preferences
-- `khach_hang_so_thich` - M2M: Customer preferences
-- `lich_su_thao_tac` - Admin action logs
-
-**Constraints:**
-- Email, Username UNIQUE
-- User states: CHUA_XAC_THUC, HOAT_DONG, BI_KHOA
-- Customer tiers: DONG, BAC, VANG, KIM_CUONG
-- Gender: NAM, NU, KHAC
+| Table | Mô tả |
+|---|---|
+| `vai_tro` | Roles |
+| `users` | Parent (JOINED) |
+| `khach_hang` | Customers |
+| `doi_tac` | Partners |
+| `quan_tri_vien` | Admins |
+| `danh_muc_so_thich` | Preference categories |
+| `so_thich` | User preferences |
+| `khach_hang_so_thich` | M2M Customer ↔ Preferences |
+| `lich_su_thao_tac` | Action logs |
 
 ---
 
-## 9. Cách chạy Backend
+## 9. Cách chạy backend
 
 ### Yêu cầu
 
-- **Java 21** or higher
-- **Maven 3.8.1** or higher
-- **PostgreSQL 12** or higher (Dev mode)
-- **Redis 7.0** or higher (OTP & Token blacklist)
-- **SMTP Gmail account** (Send OTP emails)
+- **Java 21+** | **Maven 3.8.1+** | **PostgreSQL 12+** | **Redis 7.0+**
+- **Gmail App Password** (Gmail → Bảo mật → 2FA → App Passwords)
 
-### Chạy bằng Maven (Development)
+### Development (Maven)
 
-```bash
-# Navigate to backend folder
-cd D:\HKVI\Project-TraVi-OTA\backend
+```powershell
+cd backend
 
-# Set environment variables (PowerShell)
 $env:JWT_SECRET_KEY="your-secret-key-at-least-32-chars-long"
 $env:JWT_EXPIRATION_TIME="900000"
 $env:MAIL_USERNAME="your-gmail@gmail.com"
@@ -652,374 +575,276 @@ $env:MAIL_PASSWORD="your-gmail-app-password"
 $env:OPENAI_API_KEY="sk-your-openai-key"
 $env:FRONTEND_URL="http://localhost:5173"
 
-# Run Spring Boot application
 mvn spring-boot:run
-
-# Access Swagger UI: http://localhost:8080/swagger-ui.html
 ```
 
-### Chạy với Docker
+> Swagger UI: **http://localhost:8080/swagger-ui.html**
+
+### Docker
 
 ```bash
-# Build Docker image
 docker build -f Dockerfile -t travi-backend:latest .
 
-# Run container (link với PostgreSQL & Redis containers)
 docker run -d \
   --name travi-backend \
   -p 8080:8080 \
   -e DB_URL="jdbc:postgresql://postgres:5432/travi_db" \
   -e MAIL_USERNAME="your-gmail@gmail.com" \
-  -e MAIL_PASSWORD="your-gmail-app-password" \
+  -e MAIL_PASSWORD="your-app-password" \
   -e JWT_SECRET_KEY="your-secret-key" \
   --network travi-network \
   travi-backend:latest
 ```
 
-### Build kiểm tra (không chạy tests)
+### Build & Test
 
 ```powershell
-cd D:\HKVI\Project-TraVi-OTA\backend
-mvn compile -DskipTests
+mvn compile -DskipTests        # Build nhanh
+mvn test                       # Chạy unit tests
+mvn clean package -DskipTests  # Build JAR
 ```
 
-### Chạy Unit Tests
-
-```powershell
-cd D:\HKVI\Project-TraVi-OTA\backend
-mvn test
-```
-
-### Clean & Build Package
-
-```powershell
-cd D:\HKVI\Project-TraVi-OTA\backend
-mvn clean package -DskipTests
-```
-
-### Kiểm tra API bằng cURL
+### Kiểm tra API (cURL)
 
 ```bash
-# 1. Register
+# Đăng ký
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{
-    "username": "user123",
-    "email": "user@example.com",
-    "hoTen": "Nguyễn Văn A",
-    "soDienThoai": "0912345678",
-    "matKhau": "Password@123",
-    "loaiTaiKhoan": "KHACH_HANG"
-  }'
+  -d '{"username":"user123","email":"user@example.com","hoTen":"Nguyễn Văn A",
+       "soDienThoai":"0912345678","matKhau":"Password@123","loaiTaiKhoan":"KHACH_HANG"}'
 
-# 2. Verify OTP (sau khi nhận email)
+# Xác minh OTP
 curl -X PUT http://localhost:8080/api/v1/auth/verify-email \
   -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "confirmOTP": "123456"
-  }'
+  -d '{"email":"user@example.com","confirmOTP":"123456"}'
 
-# 3. Login
+# Gửi lại OTP
+curl -X POST http://localhost:8080/api/v1/auth/resend-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com"}'
+
+# Đăng nhập
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "matKhau": "Password@123"
-  }'
+  -d '{"email":"user@example.com","matKhau":"Password@123"}'
 
-# 4. Use Access Token
-curl -X GET http://localhost:8080/api/protected-route \
-  -H "Authorization: Bearer <accessToken>"
+# Đăng nhập Google
+curl -X POST http://localhost:8080/api/v1/auth/google \
+  -H "Content-Type: application/json" \
+  -d '{"idToken":"<google-id-token>","loaiTaiKhoan":"KHACH_HANG"}'
 
-# 5. Refresh Token
+# Quên mật khẩu — bước 1
+curl -X POST http://localhost:8080/api/v1/auth/forgot-password/request-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com"}'
+
+# Quên mật khẩu — bước 2
+curl -X POST http://localhost:8080/api/v1/auth/forgot-password/verify-otp \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","confirmOTP":"123456"}'
+
+# Quên mật khẩu — bước 3
+curl -X POST http://localhost:8080/api/v1/auth/forgot-password/reset \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","matKhauMoi":"NewPass@456","xacNhanMatKhau":"NewPass@456"}'
+
+# Làm mới token
 curl -X POST http://localhost:8080/api/v1/auth/refresh \
   -H "Content-Type: application/json" \
-  -d '{"refreshToken": "<refreshToken>"}'
+  -d '{"refreshToken":"<refreshToken>"}'
 
-# 6. Logout
+# Đăng xuất
 curl -X POST http://localhost:8080/api/v1/auth/logout \
   -H "Authorization: Bearer <accessToken>" \
   -H "Content-Type: application/json" \
-  -d '{"refreshToken": "<refreshToken>"}'
+  -d '{"refreshToken":"<refreshToken>"}'
 ```
 
 ---
 
-## 10. Trạng thái hiện tại của Backend
+## 10. Trạng thái hoàn thiện
 
-### ✅ Đã hoàn thiện
+### ✅ Đã xong (Sprint 1)
 
-#### Authentication & Security
-- [x] JWT generation & validation (Access + Refresh tokens)
+**Authentication & Security**
+- [x] JWT generation & validation (Access + Refresh)
 - [x] JWT Authentication Filter
 - [x] Spring Security configuration
-- [x] Rate Limiting (5 req/min cho login)
+- [x] Rate Limiting (5 req/min — Bucket4j)
 - [x] Token Blacklist (Redis)
-- [x] CORS configuration (Frontend whitelist)
+- [x] CORS configuration
 - [x] Password encoding (BCrypt)
-- [x] Role-based access control (@PreAuthorize)
+- [x] Role-based access control
 
-#### User Management
-- [x] User registration (Register endpoint)
-- [x] Email verification (OTP via Gmail)
-- [x] OTP generation & validation (Redis TTL: 4 phút)
-- [x] User account activation
-- [x] Login endpoint (JWT token generation)
-- [x] Logout endpoint (Token blacklist)
-- [x] Refresh token endpoint
-- [x] Async email sending (@Async)
+**User Management**
+- [x] Đăng ký tài khoản
+- [x] Xác minh email OTP
+- [x] Gửi lại OTP
+- [x] Đăng nhập email + password
+- [x] Đăng nhập / đăng ký Google OAuth2
+- [x] Quên mật khẩu (3 bước OTP)
+- [x] Đăng xuất + Token blacklist
+- [x] Làm mới Access Token
+- [x] Async email OTP (@Async)
 
-#### Database
-- [x] PostgreSQL integration (JPA/Hibernate)
-- [x] User inheritance strategy (JOINED)
-- [x] KhachHang entity (Customer)
-- [x] DoiTac entity (Partner)
-- [x] QuanTriVien entity (Admin)
+**Database**
+- [x] PostgreSQL + JPA/Hibernate (JOINED inheritance)
+- [x] KhachHang, DoiTac, QuanTriVien entities
 - [x] VaiTro entity (Role/Permission)
-- [x] Flyway migrations (v1__init_schema.sql)
+- [x] OtpPurpose enum (REGISTER / RESET_PASSWORD)
+- [x] Flyway migrations
+- [x] DataInitializer (seed Role khi khởi động)
 
-#### Infrastructure
-- [x] API endpoints (/api/auth/**)
-- [x] Swagger/OpenAPI documentation
+**Infrastructure**
+- [x] Swagger/OpenAPI docs
 - [x] Application profiles (dev, prod, test)
-- [x] Configuration management (environment variables)
-- [x] Docker support (Dockerfile)
-- [x] Maven build configuration
-- [x] Spring Boot Actuator (health & metrics)
+- [x] Docker support
+- [x] Maven build
+- [x] Spring Boot Actuator
+- [x] Unit tests (AuthServiceTest)
 - [x] DevTools (hot reload)
 
-### ⏳ Sắp làm (Sprint 2)
+### ⏳ Sprint 2
 
-#### Hotel Management
-- [ ] Hotel entity & repository
-- [ ] Hotel search/filter API
-- [ ] Hotel image management
-- [ ] Hotel availability calendar
-- [ ] `/api/hotels/public/**` endpoints
+- [ ] Hotel entity & Search API (`/api/v1/public/rooms/search`)
+- [ ] Restaurant entity & Menu management
+- [ ] Booking System & Payment integration
+- [ ] `/api/v1/user/**` — User dashboard APIs
+- [ ] `/api/v1/partner/**` — Partner dashboard APIs
+- [ ] `/api/v1/admin/**` — Admin dashboard APIs
+- [ ] User locking/unlocking by admin
 
-#### Restaurant Management
-- [ ] Restaurant entity & repository
-- [ ] Restaurant search/filter API
-- [ ] Menu management
-- [ ] Restaurant availability
-- [ ] `/api/restaurants/public/**` endpoints
+### 📋 Sprint 3+
 
-#### Booking System
-- [ ] Booking entity
-- [ ] Booking management API
-- [ ] Payment integration
-- [ ] Booking history
-
-#### Admin Dashboard
-- [ ] Admin panel API (`/api/admin/**`)
-- [ ] User management
-- [ ] Content moderation
-- [ ] Analytics & reports
-
-#### Partner Dashboard
-- [ ] Partner panel API (`/api/partner/**`)
-- [ ] Reservation management
-- [ ] Revenue tracking
-- [ ] Rating & reviews
-
-### 📋 Future Enhancements (Sprint 3+)
-
-- [ ] Payment gateway (Stripe, VNPay)
-- [ ] Notification system (Email, SMS, Push)
+- [ ] Payment gateway (VNPay, Stripe)
+- [ ] Notification (Email, SMS, Push)
 - [ ] Real-time chat (WebSocket)
 - [ ] AI recommendations (Spring AI)
-- [ ] Dynamic pricing
-- [ ] Advanced analytics
-- [ ] Multi-language support
 - [ ] Two-factor authentication (2FA)
+- [ ] Advanced analytics
+
+---
 
 ## 11. Kiến trúc bảo mật
 
 ### Authentication Flow
 
 ```
-┌─────────────┐
-│   Client    │
-└──────┬──────┘
-       │
-       │ 1. POST /api/auth/login
-       │    (email + password)
-       │
-       ▼
-┌─────────────────────────────┐
-│  RateLimitFilter            │ ◄─ Kiểm tra: 5 req/min?
-│  (Bucket4j)                 │
-└──────┬──────────────────────┘
-       │
-       ▼
-┌─────────────────────────────┐
-│  JwtAuthenticationFilter    │ ◄─ Bypass: /api/auth/*
-│  (Except /api/auth/*)       │
-└──────┬──────────────────────┘
-       │
-       ▼
-┌─────────────────────────────┐
-│  AuthenticationManager      │ ◄─ DaoAuthenticationProvider
-│                             │
-│  1. Load user by email      │
-│  2. Check password          │
-│  3. Check isEnabled()       │
-│     (trangThai == HOAT_DONG)
-└──────┬──────────────────────┘
-       │
-       ▼
-┌─────────────────────────────┐
-│  Generate JWT Tokens        │ ◄─ JwtUtil
-│  • accessToken (15 phút)    │
-│  • refreshToken (7 ngày)    │
-└──────┬──────────────────────┘
-       │
-       │ 2. Response with tokens
-       │
-       ▼
-┌─────────────┐
-│   Client    │ (Store tokens in localStorage/sessionStorage)
-└─────────────┘
+Client
+  │ POST /api/v1/auth/login (email + password)
+  ▼
+RateLimitFilter  ──────────────────── >5 req/min → HTTP 429
+  │
+  ▼
+JwtAuthenticationFilter (bypass /auth/*)
+  │
+  ▼
+AuthenticationManager
+  ├─ loadUserByUsername(email)
+  ├─ BCrypt password check
+  └─ isEnabled() = (trangThai == HOAT_DONG)
+  │
+  ▼
+JwtUtil.generateToken()       → Access Token (15 phút)
+JwtUtil.generateRefreshToken() → Refresh Token (7 ngày)
+  │
+  ▼
+Client → store tokens (localStorage)
 ```
 
 ### Authorization Flow
 
 ```
-┌─────────────┐
-│   Client    │
-│ Authorization: Bearer <token>
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────┐
-│  RateLimitFilter            │ (Pass through)
-└──────┬──────────────────────┘
-       │
-       ▼
-┌─────────────────────────────┐
-│  JwtAuthenticationFilter    │
-│  1. Extract JWT from header │
-│  2. Validate signature      │
-│  3. Check expiration        │
-│  4. Check blacklist (logout)│
-│  5. Load user & authorities │
-└──────┬──────────────────────┘
-       │
-       ▼ No errors
-┌─────────────────────────────┐
-│  SecurityContext            │
-│  Set Authentication         │
-└──────┬──────────────────────┘
-       │
-       ▼
-┌─────────────────────────────┐
-│  HttpSecurity.authorize()   │
-│  1. Check @PreAuthorize     │
-│  2. Check role requirements │
-│  3. Match request route     │
-└──────┬──────────────────────┘
-       │
-       ▼ Authorized
-┌──────────────────┐
-│  Controller API  │
-└──────────────────┘
+Client  Authorization: Bearer <token>
+  │
+  ▼
+JwtAuthenticationFilter
+  ├─ Extract JWT
+  ├─ Validate signature + expiry
+  ├─ Check Redis blacklist
+  └─ Set SecurityContextHolder
+  │
+  ▼
+HttpSecurity.authorize() → Check role rules → Controller
 ```
 
-## 12. Ví dụ Request/Response
+### Google OAuth2 Flow
 
-### Register Request
-```http
-POST /api/auth/register HTTP/1.1
-Host: localhost:8080
-Content-Type: application/json
-
-{
-  "username": "nguyenvana",
-  "email": "nguyenvana@example.com",
-  "hoTen": "Nguyễn Văn A",
-  "soDienThoai": "0912345678",
-  "matKhau": "Password@123456",
-  "loaiTaiKhoan": "KHACH_HANG"
-}
+```
+Frontend (Google Identity Services popup)
+  │ Nhận ID Token từ Google
+  ▼
+POST /api/v1/auth/google { idToken, loaiTaiKhoan }
+  │
+  ▼
+GoogleTokenVerifierService.verifyIdToken(idToken)
+  │ Google API → { email, name }
+  ▼
+AuthService.loginWithGoogle()
+  ├─ Email mới?         → Tạo user (HOAT_DONG ngay)
+  ├─ CHUA_XAC_THUC?    → Kích hoạt tài khoản
+  └─ HOAT_DONG?        �� Đăng nhập bình thường
+  │
+  ▼
+Sinh JWT → Trả về { accessToken, refreshToken, tokenType, message }
 ```
 
-### Register Response (201 Created)
-```json
-"Đăng ký thành công tài khoản: nguyenvana. Vui lòng kiểm tra email để lấy OTP xác minh."
+### Forgot Password Flow
+
+```
+[Bước 1] POST /forgot-password/request-otp  { email }
+  → Tạo OTP → Redis (purpose=RESET_PASSWORD, TTL 4 phút)
+  → Gửi email async
+
+[Bước 2] POST /forgot-password/verify-otp  { email, confirmOTP }
+  → Kiểm tra OTP Redis
+  → Đúng → đánh dấu verified session trong Redis
+
+[Bước 3] POST /forgot-password/reset  { email, matKhauMoi, xacNhanMatKhau }
+  → Kiểm tra verified session còn hiệu lực
+  → BCrypt encode mật khẩu mới → lưu DB
+  → Xóa verified session khỏi Redis
 ```
 
-### Login Request
-```http
-POST /api/auth/login HTTP/1.1
-Host: localhost:8080
-Content-Type: application/json
+---
 
-{
-  "email": "nguyenvana@example.com",
-  "matKhau": "Password@123456"
-}
-```
+## 12. Ghi chú kỹ thuật
 
-### Login Response (200 OK)
-```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "tokenType": "Bearer",
-  "message": "Đăng nhập thành công"
-}
-```
+1. **OtpPurpose enum**: Phân biệt OTP đăng ký (`REGISTER`) và OTP quên mật khẩu (`RESET_PASSWORD`) trong Redis key — tránh nhầm lẫn giữa 2 luồng
+2. **Google OAuth**: Backend chỉ nhận và verify ID Token — không tự mở popup. Toàn bộ Google flow UI nằm ở frontend (`GoogleAuthButton.tsx`)
+3. **Async email**: `@Async` → email gửi nền, lỗi email không fail request chính
+4. **JOINED inheritance**: Một `save()` insert cả `users` lẫn `khach_hang`/`doi_tac` trong cùng transaction
+5. **DataInitializer**: Seed 3 role vào `vai_tro` nếu chưa tồn tại → chạy mỗi lần app khởi động
+6. **Token Blacklist TTL**: = thời gian còn lại của token → Redis tự xóa, không lãng phí bộ nhớ
+7. **Flyway**: Tự động chạy migration khi Spring Boot khởi động
 
-### Protected API Request
-```http
-GET /api/some-protected-endpoint HTTP/1.1
-Host: localhost:8080
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
+---
 
-## 13. Ghi chú kỹ thuật quan trọng
+## 13. Kết luận
 
-1. **OTP TTL**: 4 phút (240 giây) trong Redis
-2. **Access Token TTL**: 15 phút
-3. **Refresh Token TTL**: 7 ngày
-4. **Rate Limiting**: 5 requests/phút cho `/api/auth/login`
-5. **CORS**: Chỉ cho phép từ `${FRONTEND_URL_ENV}`
-6. **Database Inheritance**: JOINED strategy (user + khach_hang/doi_tac trong cùng transaction)
-7. **Email**: Gửi async để không làm chậm request main
-8. **Token Blacklist**: Tự động xóa khỏi Redis khi hết hạn (sử dụng TTL)
-9. **isEnabled()**: Chỉ user HOAT_DONG mới đăng nhập được
-10. **Flyway**: Tự động chạy migration khi ứng dụng khởi động
+TraVi-OTA backend Sprint 1 đã hoàn thiện **toàn bộ lớp Identity & Authentication**:
 
-## 14. Kết luận
+| Tính năng | Trạng thái |
+|---|---|
+| Đăng ký + OTP email | ✅ |
+| Xác minh email + kích hoạt | ✅ |
+| Gửi lại OTP | ✅ |
+| Đăng nhập email/password + JWT | ✅ |
+| Đăng nhập Google OAuth2 | ✅ |
+| Qu��n mật khẩu (3 bước OTP) | ✅ |
+| Refresh Token | ✅ |
+| Logout + Token Blacklist | ✅ |
+| Rate Limiting (Bucket4j) | ✅ |
+| Spring Security + CORS | ✅ |
+| Swagger/OpenAPI docs | ✅ |
+| Docker + multi-env config | ✅ |
+| Unit Tests | ✅ |
 
-TraVi-OTA backend đã có một **nền tảng xác thực và bảo mật rất vững chắc**:
-
-### Điểm mạnh
-✅ JWT authentication với access + refresh tokens  
-✅ OTP email verification (async, Redis)  
-✅ Role-based access control (KHACH_HANG, DOI_TAC, QUAN_TRI_VIEN)  
-✅ Rate limiting chống brute-force  
-✅ Token blacklist cho logout an toàn  
-✅ CORS configuration cho frontend  
-✅ Database inheritance với JPA/Hibernate  
-✅ Spring Security configuration đầy đủ  
-✅ Swagger API documentation  
-✅ Docker support & multi-environment config
-
-### API Sẵn Sàng
-Các API này đã sẵn sàng để sử dụng:
-1. Register → Verify OTP → Activate Account
-2. Login → 2 Tokens (Access + Refresh)
-3. Protected APIs → JWT validation
-4. Logout → Token blacklist
-5. Refresh → New Access Token
-
-**Backend hiện tại đã đủ để phát triển các module con (Hotel, Restaurant, Booking)** trong Sprint 2. Chỉ cần extend các service & thêm các endpoint mới, Spring Security sẽ tự động bảo vệ chúng.
+**Backend đã sẵn sàng để phát triển các module Sprint 2** (Hotel, Restaurant, Booking) — chỉ cần thêm entity/service/endpoint mới, Spring Security tự bảo vệ theo cấu hình role hiện có.
 
 ---
 
 **Last Updated:** May 2026  
 **Version:** 1.0  
-**Status:** Complete for Sprint 1 ✅
+**Status:** Sprint 1 Complete ✅
 

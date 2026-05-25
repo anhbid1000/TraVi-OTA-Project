@@ -1,474 +1,406 @@
-# TraVi-OTA Frontend
+# TraVi-OTA Frontend — Sprint 1
 
-Ứng dụng Frontend cho nền tảng quản lý khách sạn và nhà hàng thông minh (TraVi-OTA). Được xây dựng với React 19, TypeScript, Vite, Tailwind CSS và các công nghệ hiện đại.
-
-## Tổng Quan Dự Án
-
-TraVi-OTA Frontend là một ứng dụng web toàn chức năng hỗ trợ ba loại người dùng chính:
-
-- **Khách hàng (KHACH_HANG)**: Đặt phòng, thanh toán
-- **Đối tác (DOI_TAC)**: Quản lý nhà hàng/khách sạn
-- **Quản trị viên (QUAN_TRI_VIEN)**: Quản lý hệ thống
+Ứng dụng Frontend cho nền tảng quản lý du lịch thông minh **TraVi-OTA**. Xây dựng với React 19, TypeScript, Vite và Tailwind CSS — tập trung hoàn thiện hệ thống Authentication đa vai trò trong Sprint 1.
 
 ---
 
-## 📦 Công Nghệ & Kỹ Thuật Sử Dụng
+## Tổng Quan
 
-### Core Framework
+TraVi-OTA Frontend hỗ trợ ba loại người dùng:
 
-- **React 19.2.4**: Framework UI component-based
-- **TypeScript 6.0**: Type-safe JavaScript
-- **Vite 8.0**: Build tool siêu nhanh (HMR, dev server)
+- **Khách hàng (KHACH_HANG)** — Đặt phòng, đặt nhà hàng
+- **Đối tác (DOI_TAC)** — Quản lý cơ sở lưu trú và dịch vụ
+- **Quản trị viên (QUAN_TRI_VIEN)** — Quản lý toàn hệ thống
+
+---
+
+## 📦 Công Nghệ Sử Dụng
+
+### Core
+
+| Package | Version | Mục đích |
+|---|---|---|
+| React | 19.2.4 | UI framework |
+| TypeScript | 6.0.2 | Type-safe JavaScript |
+| Vite | 8.0.4 | Build tool (HMR, dev server) |
 
 ### Styling & UI
 
-- **Tailwind CSS 4.2**: Utility-first CSS framework
-- **Lucide React 1.8**: Icon library
-- **clsx & tailwind-merge**: Utility cho CSS class composition
+| Package | Version | Mục đích |
+|---|---|---|
+| Tailwind CSS | 4.2.2 | Utility-first CSS |
+| Lucide React | 1.8.0 | Icon library |
+| clsx + tailwind-merge | — | CSS class composition |
 
-### State Management & Data
+### Routing & State
 
-- **React Context API**: Global state (Authentication)
-- **React Router 7.14**: Client-side routing
-- **Axios 1.15**: HTTP client với interceptor
+| Package | Version | Mục đích |
+|---|---|---|
+| React Router DOM | 7.14.0 | Client-side routing |
+| React Context API | — | Global Auth state |
+| Axios | 1.15.0 | HTTP client với interceptor |
 
 ### Form & Validation
 
-- **React Hook Form 7.72**: Form state management
-- **Zod 4.3**: Schema validation library
+| Package | Version | Mục đích |
+|---|---|---|
+| React Hook Form | 7.72.1 | Form state management |
+| Zod | 4.3.6 | Schema validation |
 
 ### Dev Tools
 
-- **ESLint 9.39**: Linting code
-- **Prettier 3.8**: Code formatter
-- **PostCSS 8.5 + Autoprefixer**: CSS processing
+| Package | Version | Mục đích |
+|---|---|---|
+| ESLint | 9.39.4 | Linting |
+| Prettier | 3.8.2 | Code formatter |
+| PostCSS + Autoprefixer | 8.5.x | CSS processing |
 
 ---
 
 ## 🏗️ Kiến Trúc & Luồng Ứng Dụng
 
-### 1. Luồng Khởi Động Ứng Dụng
+### Khởi Động Ứng Dụng
 
 ```
 main.tsx (Entry Point)
     ↓
-createRoot & render App
+createRoot & render
     ↓
-AuthProvider (Context Provider)
+GoogleOAuthProviderWrapper  ← inject VITE_GOOGLE_CLIENT_ID vào <Script>
+    ↓
+AuthProvider (Global auth state)
     ↓
 BrowserRouter (Routing)
     ↓
-App Component (Routes & Pages)
+App (Routes & Pages)
 ```
 
-**File chính**: `src/main.tsx`
-
-```typescript
-- Khởi tạo React DOM root
-- Bọc AuthProvider để quản lý authentication
-- Render App component
-```
-
-### 2. Authentication Flow (Luồng Xác Thực)
+### Authentication Flow
 
 #### A. Đăng Nhập (Login)
 
 ```
-Login Page (/login, /partner/login, /admin/login)
+Trang đăng nhập (/login, /partner/login, /admin/login)
     ↓
-User nhập email & password
+Nhập email + password → validate
     ↓
-Validation (email format, password required)
+useAuth().login(payload)
     ↓
-authService.login(payload)
+authService.login()  →  POST /v1/auth/login
     ↓
-API POST /v1/auth/login
+tokenStorage.setTokens() → lưu localStorage
     ↓
-Backend trả về: token, refreshToken, type
+AuthProvider sync session
     ↓
-tokenStorage.setTokens() - Lưu localStorage
-    ↓
-AuthProvider cập nhật state (user, accessToken)
-    ↓
-Redirect theo role (Admin → /admin, Partner → /partner, Customer → /)
+Redirect theo role:
+  QUAN_TRI_VIEN → /admin
+  DOI_TAC       → /partner
+  KHACH_HANG    → /
 ```
-
-**Key Points**:
-
-- Email validation: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
-- Token được lưu trong localStorage
-- User info được decode từ JWT token payload
-- Automatic redirect dựa trên role
 
 #### B. Đăng Ký (Register)
 
 ```
-Register Page (/register, /partner/register)
+/register hoặc /partner/register
     ↓
-User điền form (username, email, name, phone, password)
+Điền form: username, hoTen, email, soDienThoai, matKhau, confirmPassword
     ↓
-Validation:
-  - Username: ≥4 ký tự, chỉ a-z, 0-9, _, .
-  - Họ tên: ≥2 ký tự
-  - Email: valid format
-  - Phone: format (0|+84) + 9 chữ số
-  - Password: ≥9 ký tự, ≤20 ký tự, 1 hoa, 1 thường, 1 số, 1 ký tự đặc biệt (@$!%*?&)
-  - Confirm Password: phải khớp
+Validate:
+  - username: ≥4 ký tự, chỉ [a-zA-Z0-9_.]
+  - hoTen: ≥2 ký tự
+  - email: format hợp lệ
+  - soDienThoai: (0|+84) + 9 chữ số
+  - matKhau: 9–20 ký tự, 1 hoa, 1 thường, 1 số, 1 ký tự đặc biệt
+  - confirmPassword: khớp với matKhau
     ↓
-authService.register(payload)
+authService.register(payload)  →  POST /v1/auth/register
     ↓
-API POST /v1/auth/register
+Redirect → /verify-email (truyền email qua state)
     ↓
-Backend trả về message hoặc success
+Nhập OTP từ email
     ↓
-Redirect → VerifyEmailPage (/verify-email)
+authService.verifyEmail()  →  PUT /v1/auth/verify-email
     ↓
-User nhập OTP từ email
-    ↓
-authService.verifyEmail(payload)
-    ↓
-API PUT /v1/auth/verify-email
-    ↓
-Redirect → Login page
+Redirect → trang đăng nhập tương ứng
 ```
 
-**Password Validation Rules**:
-
-- Độ dài: 9-20 ký tự
-- Bắt buộc: 1 chữ hoa [A-Z], 1 chữ thường [a-z], 1 số [0-9], 1 ký tự đặc biệt
-- Chỉ cho phép: A-Za-z, 0-9, @$!%\*?&
-
-#### C. Token Refresh Flow
+#### C. Đăng Nhập Google (OAuth2)
 
 ```
-API Request được gửi
+Click "Tiếp tục với Google" → Google Identity Services popup
     ↓
-axios interceptor kiểm tra token trong localStorage
+Google trả về ID Token cho frontend
     ↓
-Thêm Authorization header: "Bearer {token}"
+useAuth().loginWithGoogle({ idToken, loaiTaiKhoan })
     ↓
-Response có lỗi 401?
+authService.loginWithGoogle()  →  POST /v1/auth/google
     ↓
-YES: Gọi refreshAccessToken()
+Backend: verify ID Token, tạo/kích hoạt user, sinh JWT
     ↓
-API POST /v1/auth/refresh { refreshToken }
+tokenStorage.setTokens() → lưu localStorage
     ↓
-Backend trả về token mới
-    ↓
-tokenStorage.setTokens() - Update localStorage
-    ↓
-Retry request ban đầu với token mới
-    ↓
-NO: Trả về response bình thường
+Redirect theo role
 ```
 
-**Deduplication**: Nếu nhiều request 401 cùng lúc, chỉ refresh 1 lần (sử dụng `refreshPromise`)
+**Lưu ý:** Google Identity Services được khởi tạo bởi `GoogleOAuthProviderWrapper` inject script từ `VITE_GOOGLE_CLIENT_ID`. `GoogleAuthButton` render nút ẩn của Google và dùng button tự tạo để trigger popup — đảm bảo UI nhất quán với toàn bộ design system.
 
-#### D. Logout Flow
+#### D. Quên Mật Khẩu
 
 ```
-User click Logout
+Click "Quên mật khẩu?" → /forgot-password (hoặc /partner/forgot-password)
     ↓
-authService.logout()
+[Bước 1] Nhập email → authService.requestPasswordResetOtp()
+    → POST /v1/auth/forgot-password/request-otp
     ↓
-API POST /v1/auth/logout { refreshToken }
+[Bước 2] Nhập OTP → authService.verifyPasswordResetOtp()
+    → POST /v1/auth/forgot-password/verify-otp
     ↓
-tokenStorage.clearTokens() - Xóa localStorage
+[Bước 3] Nhập mật khẩu mới → authService.resetPassword()
+    → POST /v1/auth/forgot-password/reset
+    ↓
+Redirect → trang đăng nhập
+```
+
+`ForgotPasswordPage` quản lý cả 3 bước trong một component, chuyển đổi bằng `step` state (`request` → `verify` → `reset`).
+
+#### E. Token Refresh (Auto)
+
+```
+Axios request interceptor thêm Authorization: Bearer <token>
+    ↓
+Response 401?
+    ↓
+YES → refreshAccessToken()
+    → POST /v1/auth/refresh { refreshToken }
+    → tokenStorage.setTokens() → retry request gốc
+NO  → Response bình thường
+
+Deduplication: nhiều request 401 đồng thời → chỉ gọi refresh 1 lần
+```
+
+#### F. Đăng Xuất
+
+```
+useAuth().logout()
+    ↓
+authService.logout()  →  POST /v1/auth/logout { refreshToken }
+    ↓
+tokenStorage.clearTokens()
+    ↓
+clearSession() → reset AuthProvider state
     ↓
 Dispatch event 'auth:logout'
-    ↓
-AuthProvider xóa state (user, tokens)
-    ↓
-Redirect → /login hoặc home
 ```
 
 ---
 
-## 🛣️ Routing & Authorization (Định Tuyến & Phân Quyền)
+## 🛣️ Routing & Authorization
 
 ### Route Structure
 
 ```
-/ (Home Page - Public)
-├── /login (Customer Login)
-├── /register (Customer Register)
-├── /verify-email (Email Verification)
-├── /partner/login (Partner Login)
-├── /partner/register (Partner Register)
-├── /admin/login (Admin Login)
-├── /403 (Forbidden - Unauthorized Access)
-├── Protected Routes (Require Authentication)
-│   └── /payment (Customer - Protected)
-├── Admin Routes (Require QUAN_TRI_VIEN role)
-│   └── /admin (Admin Dashboard)
-├── Partner Routes (Require DOI_TAC role)
-│   └── /partner (Partner Dashboard)
-└── * (404 Not Found)
+/ (Home — Public)
+├── /login                     (Customer Login)
+├── /register                  (Customer Register)
+├── /verify-email              (Email OTP Verification)
+├── /forgot-password           (Customer Forgot Password)
+├── /partner/login             (Partner Login)
+├── /partner/register          (Partner Register)
+├── /partner/forgot-password   (Partner Forgot Password)
+├── /admin/login               (Admin Login)
+├── /403                       (Forbidden Page)
+├── Protected Routes (isAuthenticated required)
+│   └── /payment               (Customer)
+├── Admin Routes (QUAN_TRI_VIEN only)
+│   └── /admin                 (Admin Dashboard)
+├── Partner Routes (DOI_TAC only)
+│   └── /partner               (Partner Dashboard)
+└── * (404)
 ```
 
-### Route Guards Implementation
+### Route Guards
 
-#### ProtectedRoute
+| Guard | File | Điều kiện | Action khi fail |
+|---|---|---|---|
+| `ProtectedRoute` | `routes/ProtectedRoute.tsx` | `isAuthenticated` | Redirect `/login` (lưu previous path) |
+| `RoleRoute` | `routes/RoleRoute.tsx` | `isAuthenticated` + role | Redirect `/403` hoặc `/login` |
+| `AdminRoute` | `routes/AdminRoute.tsx` | role = `QUAN_TRI_VIEN` | Redirect `/403` |
+| `StaffRoute` | `routes/StaffRoute.tsx` | role = `DOI_TAC` | Redirect `/403` |
 
-- Kiểm tra: `isAuthenticated`
-- Nếu chưa login → Redirect `/login` (với state lưu previous page)
-- Có loading state → Render `null` khi loading
-
-**File**: `src/routes/ProtectedRoute.tsx`
-
-#### RoleRoute
-
-- Kiểm tra: `isAuthenticated` + user's role
-- Normalize role: loại bỏ "ROLE\_" prefix, convert uppercase
-- Nếu chưa login → Redirect `/login`
-- Nếu không có quyền → Redirect `/403` (Forbidden)
-- Hỗ trợ multiple roles: `allowedRoles` array
-
-**File**: `src/routes/RoleRoute.tsx`
-
-#### AdminRoute & StaffRoute
-
-- Admin: chỉ cho phép `QUAN_TRI_VIEN`
-- Staff/Partner: chỉ cho phép `DOI_TAC`
-- Customize redirect paths qua props
-
-**Files**:
-
-- `src/routes/AdminRoute.tsx`
-- `src/routes/StaffRoute.tsx`
-
-#### Route Guards Utilities
-
-**File**: `src/routes/routeGuards.ts`
+### Route Guard Utilities (`routes/routeGuards.ts`)
 
 ```typescript
 normalizeRole(role: string): RoleName
-  - Remove "ROLE_" or "ROLE-" prefix
-  - Convert to uppercase
-  - Trim whitespace
+  // Xóa prefix "ROLE_", uppercase, trim
 
 hasAllowedRole(user, allowedRoles): boolean
-  - Kiểm tra user role có trong allowedRoles array hay không
+  // Kiểm tra role có trong danh sách
 
 getDefaultPathByRole(role: string): string
-  - QUAN_TRI_VIEN → /admin
-  - DOI_TAC → /partner
-  - KHACH_HANG → /
-  - Default → /
+  // QUAN_TRI_VIEN → /admin
+  // DOI_TAC       → /partner
+  // KHACH_HANG    → /
 ```
 
 ---
 
-## 🔐 Authentication Context & State Management
+## 🔐 Authentication Context & State
 
-### AuthContext (Global State)
-
-**File**: `src/contexts/authContext.ts`
+### AuthContext (`contexts/authContext.ts`)
 
 ```typescript
 type AuthContextValue = {
-  user: AuthUser | null; // User info từ JWT
-  accessToken: string | null; // Access token
-  refreshToken: string | null; // Refresh token
-  isAuthenticated: boolean; // Is valid token?
-  isLoading: boolean; // Loading state
-  login: (payload: LoginRequest) => Promise<AuthResponse>;
-  logout: () => Promise<void>;
-  refreshSession: () => Promise<AuthResponse>;
-};
+  user: AuthUser | null
+  accessToken: string | null
+  refreshToken: string | null
+  isAuthenticated: boolean      // accessToken tồn tại & chưa hết hạn
+  isLoading: boolean
+  login: (payload: LoginRequest) => Promise<AuthResponse>
+  loginWithGoogle: (payload: GoogleAuthRequest) => Promise<AuthResponse>
+  logout: () => Promise<void>
+  refreshSession: () => Promise<AuthResponse>
+}
 ```
 
-### AuthProvider (Context Provider)
+### AuthProvider (`contexts/AuthContext.tsx`)
 
-**File**: `src/contexts/AuthContext.tsx`
+**Khởi tạo:**
+- Đọc tokens từ `localStorage` khi app mount
+- Decode JWT lấy user info
+- Kiểm tra expiry
 
-**Initialization**:
+**Methods:**
+- `login(payload)` → `authService.login()` → `syncSessionFromStorage()`
+- `loginWithGoogle(payload)` → `authService.loginWithGoogle()` → sync
+- `logout()` → `authService.logout()` → `clearSession()`
+- `refreshSession()` → `authService.refreshToken()` → sync
 
-- Đọc tokens từ localStorage (app khởi động)
-- Decode JWT để lấy user info
-- Kiểm tra token expiry
-
-**State Management**:
-
-- `user`: AuthUser object (từ JWT payload)
-- `accessToken`: JWT token từ login response
-- `refreshToken`: Refresh token để lấy token mới
-- `isLoading`: Loading flag cho login/logout
-
-**Methods**:
-
-1. `login(payload)`:
-   - Call authService.login()
-   - Tự động sync session từ localStorage
-   - Throw error nếu fail
-
-2. `logout()`:
-   - Call authService.logout()
-   - Clear tokens từ localStorage
-   - Reset state
-
-3. `refreshSession()`:
-   - Call authService.refreshToken()
-   - Update localStorage & state
-
-**Auto-Refresh Logic**:
-
+**Auto-refresh & Events:**
 ```typescript
+// Auto-refresh khi accessToken đã hết hạn
 useEffect(() => {
-  if (!accessToken || !tokenStorage.isAccessTokenExpired()) {
-    return;
-  }
-  // Token expired → attempt refresh
-  refreshSession().catch(clearSession);
-}, [accessToken]);
+  if (!accessToken || !tokenStorage.isAccessTokenExpired()) return
+  void refreshSession().catch(clearSession)
+}, [accessToken])
+
+// Multi-tab sync
+window.addEventListener('auth:logout', clearSession)
+window.addEventListener('auth:refresh', syncSessionFromStorage)
 ```
 
-**Event Listeners**:
-
-- `auth:logout` → force logout (ví dụ: token revoked)
-- `auth:refresh` → sync session từ localStorage (multi-tab)
-
-### Token Storage Service
-
-**File**: `src/services/tokenStorage.ts`
+### Token Storage (`services/tokenStorage.ts`)
 
 ```typescript
 tokenStorage.getAccessToken(): string | null
 tokenStorage.getRefreshToken(): string | null
-tokenStorage.getTokenType(): string (default: "Bearer")
 tokenStorage.setTokens(auth: AuthResponse): void
 tokenStorage.clearTokens(): void
 
 tokenStorage.getUserFromToken(): AuthUser | null
-  - Decode JWT manually (không cần jwt-decode library)
-  - Parse Base64URL payload
-  - Extract user object
+  // Decode JWT Base64URL payload thủ công (không cần lib)
+  // Trả về: { username, email, role, exp, iat }
 
 tokenStorage.isAccessTokenExpired(): boolean
-  - Check user.exp (expiry timestamp)
-  - Compare với Date.now()
+  // So sánh user.exp (Unix timestamp) với Date.now()
 ```
 
-**JWT Decoding**:
+### GoogleOAuthProviderWrapper (`contexts/GoogleOAuthProviderWrapper.tsx`)
 
-```typescript
-// Format: header.payload.signature
-// Payload là Base64URL encoded JSON
-const decodeBase64Url = (value: string) => {
-  const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
-  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
-  return atob(padded);
-};
-```
+- Inject `<script src="https://accounts.google.com/gsi/client">` vào DOM khi mount
+- Truyền `VITE_GOOGLE_CLIENT_ID` vào context cho `GoogleAuthButton`
+- Bọc toàn bộ App để Google Identity Services sẵn sàng trước khi render form
 
-### useAuth Hook
-
-**File**: `src/hooks/useAuth.ts`
+### useAuth Hook (`hooks/useAuth.ts`)
 
 ```typescript
 function useAuth(): AuthContextValue
-  - Access authentication context
-  - Throw error nếu không được wrapped trong AuthProvider
-  - Use này ở tất cả components cần auth data
+  // Throw error nếu dùng ngoài AuthProvider
+  // Dùng trong mọi component cần auth data
 ```
 
 ---
 
 ## 📡 API & HTTP Client
 
-### Axios Configuration
+### Axios Instance (`services/api.ts`)
 
-**File**: `src/services/api.ts`
+**Base URL Resolution (theo thứ tự ưu tiên):**
+1. `VITE_API_BASE_URL`
+2. `VITE_API_URL`
+3. Default: `http://localhost:8080/api`
 
-**Base URL Resolution**:
+**Request Interceptor:**
+```
+Thêm Authorization: "Bearer <accessToken>" nếu có token
+```
+
+**Response Interceptor (401 Auto-Refresh):**
+```
+1. Status 401 + không phải /auth/login, /auth/refresh + chưa retry?
+2. Gọi refreshAccessToken()
+3. Update header → Retry request gốc
+4. Nếu refresh fail → clearTokens() → dispatch 'auth:logout'
+
+Deduplication: dùng refreshPromise singleton để tránh gọi refresh nhiều lần
+```
+
+### Auth Service (`services/authService.ts`)
 
 ```typescript
-Priority:
-1. VITE_API_BASE_URL environment variable
-2. VITE_API_URL environment variable
-3. Default: http://localhost:8080/api
+authService.login(payload: LoginRequest)
+  → POST /v1/auth/login  →  setTokens()
 
-Normalized: Đảm bảo kết thúc bằng /api
+authService.loginWithGoogle(payload: GoogleAuthRequest)
+  → POST /v1/auth/google  →  setTokens()
+
+authService.logout()
+  → POST /v1/auth/logout { refreshToken }  →  clearTokens()
+
+authService.refreshToken()
+  → POST /v1/auth/refresh { refreshToken }  →  setTokens()
+
+authService.register(payload: RegisterRequest)
+  → POST /v1/auth/register  →  trả về message string
+
+authService.verifyEmail(payload: VerifyEmailRequest)
+  → PUT /v1/auth/verify-email { email, confirmOTP }
+
+authService.resendOtp(payload: ResendOtpRequest)
+  → POST /v1/auth/resend-otp { email }
+
+authService.requestPasswordResetOtp(payload: ForgotPasswordRequest)
+  → POST /v1/auth/forgot-password/request-otp { email }
+
+authService.verifyPasswordResetOtp(payload: VerifyEmailRequest)
+  → POST /v1/auth/forgot-password/verify-otp { email, confirmOTP }
+
+authService.resetPassword(payload: ResetPasswordRequest)
+  → POST /v1/auth/forgot-password/reset { email, matKhauMoi, xacNhanMatKhau }
 ```
 
-**Default Headers**:
-
-```
-Content-Type: application/json
-```
-
-### Request Interceptor
+### TypeScript Types (`types/auth.ts`)
 
 ```typescript
-- Thêm Authorization header với access token
-- Format: "Bearer {token}" hoặc "{tokenType} {token}"
-- Nếu không có token, không thêm header
+AuthUser          // { username, email, role, exp, iat }
+LoginRequest      // { email, matKhau, nhoMatKhau? }
+AuthResponse      // { token, refreshToken, type, message }
+RegisterRequest   // { username, email, hoTen, soDienThoai, matKhau, loaiTaiKhoan }
+GoogleAuthRequest // { idToken, loaiTaiKhoan }
+VerifyEmailRequest // { email, confirmOTP }
+ResendOtpRequest  // { email }
+ForgotPasswordRequest // { email }
+ResetPasswordRequest  // { email, matKhauMoi, xacNhanMatKhau }
+RefreshTokenRequest   // { refreshToken }
+AccountType       // 'KHACH_HANG' | 'DOI_TAC'
 ```
 
-### Response Interceptor (Token Refresh Logic)
-
-```
-1. Check status: 401 Unauthorized?
-2. Check: Không phải /auth/login, /auth/refresh request?
-3. Check: Chưa retry request này?
-4. Nếu tất cả true:
-   - Set _retry flag = true
-   - Call refreshAccessToken()
-   - Update Authorization header
-   - Retry original request
-5. Nếu refresh fail:
-   - Clear tokens
-   - Dispatch auth:logout event
-   - Reject error
-
-Deduplication:
-- Nếu refreshPromise đang pending → await current
-- Không call API lần nữa
-```
-
-### Auth Service
-
-**File**: `src/services/authService.ts`
-
-```typescript
-authService.login(payload: LoginRequest): Promise<AuthResponse>
-  - POST /v1/auth/login
-  - Payload: { email, matKhau, nhoMatKhau? }
-  - Tự động lưu tokens vào localStorage
-
-authService.logout(): Promise<void>
-  - POST /v1/auth/logout
-  - Payload: { refreshToken } (nếu có)
-  - Tự động xóa tokens từ localStorage
-
-authService.refreshToken(): Promise<AuthResponse>
-  - POST /v1/auth/refresh
-  - Payload: { refreshToken }
-  - Tự động update tokens
-
-authService.register(payload: RegisterRequest): Promise<string>
-  - POST /v1/auth/register
-  - Trả về message
-
-authService.verifyEmail(payload: VerifyEmailRequest): Promise<string>
-  - PUT /v1/auth/verify-email
-  - Payload: { email, confirmOTP }
-
-authService.resendOtp(payload: ResendOtpRequest): Promise<string>
-  - POST /v1/auth/resend-otp
-  - Payload: { email }
-```
-
-### Error Handling
-
-**File**: `src/utils/apiError.ts`
+### Error Handling (`utils/apiError.ts`)
 
 ```typescript
 getApiErrorMessage(error, fallbackMessage): string
-  - Check axios error response
-  - Extract message từ: data.message || data.error || data.details
-  - Special case 401: "Email hoặc mật khẩu không đúng."
-  - Fallback nếu không lấy được message
+  // Lấy message từ: response.data.message || .error || .details
+  // Special case 401 → "Email hoặc mật khẩu không đúng."
+  // Fallback nếu không parse được
 ```
 
 ---
@@ -477,95 +409,170 @@ getApiErrorMessage(error, fallbackMessage): string
 
 ```
 frontend/
-├── src/
-│   ├── main.tsx                          # Entry point
-│   ├── App.tsx                           # Main component với routes
-│   ├── App.css                           # App styling
-│   ├── index.css                         # Global styling
+├���─ src/
+│   ├── main.tsx                         # Entry point
+│   ├── App.tsx                          # Routes
+│   ├── App.css / index.css              # Global styles
+│   │
+│   ├── features/                        # Feature-scoped modules
+│   │   └── auth/
+│   │       ├── components/              # Shared auth UI components
+│   │       │   ├── index.ts             # Barrel export
+│   │       │   ├── AuthTextField.tsx    # Input với icon, label, toggle password
+│   │       │   ├── GoogleAuthButton.tsx # Social button Google (Google Identity Services)
+│   │       │   └── LoginTemplate.tsx    # Layout 2 cột (hero + form card)
+│   │       └── utils/                   # Shared auth utilities
+│   │           ├── index.ts             # Barrel export
+│   │           ├── authUi.ts            # Tailwind class constants
+│   │           └── authValidation.ts    # Validation functions
+│   │
+│   ├── pages/
+│   │   ├── ForbiddenPage.tsx            # 403 page
+│   │   └── auth/
+│   │       ├── index.ts                 # Barrel export pages
+│   │       ├── CustomerLogin.tsx        # Đăng nhập khách hàng
+│   │       ├── CustomerRegister.tsx     # Đăng ký khách hàng
+│   │       ├── PartnerLogin.tsx         # Đăng nhập đối tác
+│   │       ├── PartnerRegister.tsx      # Đăng ký đối tác
+│   │       ├── AdminLogin.tsx           # Đăng nhập quản trị
+│   │       ├── VerifyEmailPage.tsx      # Xác minh email OTP
+│   │       └── ForgotPasswordPage.tsx   # Quên mật khẩu (3 bước)
 │   │
 │   ├── contexts/
-│   │   ├── authContext.ts               # Context definition
-│   │   └── AuthContext.tsx              # Context provider component
+│   │   ├── authContext.ts               # AuthContext definition + types
+│   │   ├── AuthContext.tsx              # AuthProvider component
+│   │   └── GoogleOAuthProviderWrapper.tsx # Google Identity Services script injection
 │   │
 │   ├── hooks/
 │   │   └── useAuth.ts                   # useAuth hook
 │   │
 │   ├── routes/
-│   │   ├── index.ts                     # Exports
-│   │   ├── routeGuards.ts               # Guard utilities
-│   │   ├── ProtectedRoute.tsx           # Authentication guard
+│   │   ├── index.ts                     # Barrel export
+│   │   ├── routeGuards.ts               # normalizeRole, hasAllowedRole, getDefaultPathByRole
+│   │   ├── ProtectedRoute.tsx           # isAuthenticated guard
 │   │   ├── RoleRoute.tsx                # Role-based guard
-│   │   ├── AdminRoute.tsx               # Admin-only route
-│   │   └── StaffRoute.tsx               # Partner-only route
-│   │
-│   ├── pages/
-│   │   ├── ForbiddenPage.tsx            # 403 page
-│   │   └── auth/
-│   │       ├── index.ts                 # Exports
-│   │       ├── CustomerLogin.tsx        # Customer login page
-│   │       ├── CustomerRegister.tsx     # Customer register page
-│   │       ├── PartnerLogin.tsx         # Partner login page
-│   │       ├── PartnerRegister.tsx      # Partner register page
-│   │       ├── AdminLogin.tsx           # Admin login page
-│   │       ├── VerifyEmailPage.tsx      # Email verification page
-│   │       ├── AuthTextField.tsx        # Input component
-│   │       ├── authValidation.ts        # Validation rules
-│   │       └── authUi.ts                # Tailwind class constants
+│   │   ├── AdminRoute.tsx               # QUAN_TRI_VIEN only
+│   │   └── StaffRoute.tsx               # DOI_TAC only
 │   │
 │   ├── services/
 │   │   ├── api.ts                       # Axios instance + interceptors
-│   │   ├── authService.ts               # Auth API calls
-│   │   └── tokenStorage.ts              # Token management
+│   │   ├── authService.ts               # Tất cả auth API calls
+│   │   └── tokenStorage.ts              # Token get/set/clear + JWT decode
 │   │
 │   ├── types/
-│   │   └── auth.ts                      # TypeScript interfaces
+│   │   └── auth.ts                      # TypeScript interfaces & types
 │   │
 │   ├── utils/
-│   │   └── apiError.ts                  # Error message extraction
+│   │   └── apiError.ts                  # API error message extractor
 │   │
-│   ├── assets/                          # Images, icons, etc.
-│   ├── features/                        # Feature modules (future)
-│   └── store/                           # State management (future)
+│   ├── assets/
+│   │   └── hero.png                     # Ảnh hero trên trang login
+│   │
+│   ├── features/                        # (Future: hotel, booking, ...)
+│   └── store/                           # (Future: Redux/Zustand)
 │
-├── public/                              # Static files
-├── index.html                           # HTML entry point
+├── public/
+│   ├── favicon.svg
+│   └── icons.svg
+├── index.html
 │
-├── vite.config.ts                       # Vite configuration
-├── tailwind.config.js                   # Tailwind configuration
-├── tsconfig.json                        # TypeScript config (React)
-├── tsconfig.app.json                    # App-specific TS config
-├── tsconfig.node.json                   # Node-specific TS config
-├── eslint.config.js                     # ESLint configuration
-├── postcss.config.js                    # PostCSS configuration
-│
-├── package.json                         # Dependencies & scripts
-└── README.md                            # This file
+├── vite.config.ts
+├── tailwind.config.js
+├── tsconfig.json / tsconfig.app.json / tsconfig.node.json
+├── eslint.config.js
+├── postcss.config.js
+└── package.json
 ```
 
 ---
 
-## 🎨 Validation & UI Patterns
+## 🎨 Auth Feature — Components & Utilities
 
-### Form Validation
+### `LoginTemplate` (`features/auth/components/LoginTemplate.tsx`)
 
-**File**: `src/pages/auth/authValidation.ts`
+Layout 2 cột dùng chung cho tất cả trang auth:
+
+- **Cột trái** (ẩn trên mobile): Ảnh hero + branding TraVi OTA
+- **Cột phải**: Form card với:
+  - Badge portal (Khách hàng / Đối tác / Quản trị)
+  - Tab chuyển đổi vai trò (3 tabs: Customer / Partner / Admin)
+  - Title + Subtitle động
+  - Scrollable khi form dài (đăng ký)
+
+**Props:**
+```typescript
+activeRole: 'KHACH_HANG' | 'DOI_TAC' | 'QUAN_TRI_VIEN'
+title?: string
+subtitle?: string
+children: ReactNode
+```
+
+### `AuthTextField` (`features/auth/components/AuthTextField.tsx`)
+
+Input component tái sử dụng:
+
+- Icon bên trái (mail, lock, user, phone, key)
+- `labelAction` — slot cho link bên phải label (dùng cho "Quên mật khẩu?")
+- Toggle hiện/ẩn mật khẩu
+- Tone màu: `blue` (khách hàng), `emerald` (đối tác), `slate` (admin)
+- Hiển thị lỗi validation bên dưới
+
+**Props:**
+```typescript
+id, name, label: string
+labelAction?: ReactNode   // Link "Quên mật khẩu?" nằm cạnh label
+type?, value, placeholder?, autoComplete?
+error?: string
+icon?: 'key' | 'lock' | 'mail' | 'phone' | 'user'
+tone?: 'blue' | 'emerald' | 'slate'
+showPasswordToggle?: boolean
+onChange: (value: string) => void
+```
+
+### `GoogleAuthButton` (`features/auth/components/GoogleAuthButton.tsx`)
+
+- Render nút ẩn của Google Identity Services (`renderButton`)
+- Hiển thị custom button "Tiếp tục với Google" với SVG logo Google
+- Khi click → trigger click vào nút Google ẩn → mở popup Google
+- `disabled` khi form đang submit
+- Hiển thị loader khi đang xác thực
+
+### Auth UI Constants (`features/auth/utils/authUi.ts`)
+
+```typescript
+authButtonBaseClass    // Base class cho submit button
+authFormGroupClass     // mb-5 spacing giữa các field
+authLastFormGroupClass // mb-7 cho field cuối trước nút submit
+authFooterClass        // Container link footer (đăng ký / đăng nhập)
+authSmallLinkClass     // Link nhỏ (quên mật khẩu, back)
+authAlertErrorClass    // Alert lỗi đỏ
+authAlertSuccessClass  // Alert thành công xanh
+authInputBaseClass, authInputWrapperClass, authInputIconClass
+authLabelClass, authErrorClass
+// ... (authLayoutClass, authCardClass, authIconBoxClass, authTitleClass,
+//      authSubtitleClass — dùng cho VerifyEmailPage)
+```
+
+### Auth Validation (`features/auth/utils/authValidation.ts`)
 
 ```typescript
 isValidEmail(email: string): boolean
-  - Pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  // Pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 isValidPhoneNumber(phone: string): boolean
-  - Pattern: /^(0|\+84)\d{9}$/
-  - Bắt đầu: 0 hoặc +84, theo sau 9 chữ số
+  // Pattern: /^(0|\+84)\d{9}$/
 
-validatePassword(password: string): string (error message hoặc empty)
-  - Length: 9-20 ký tự
-  - Bắt buộc: 1 hoa [A-Z], 1 thường [a-z], 1 số [0-9]
-  - Bắt buộc: 1 ký tự đặc biệt (@$!%*?&)
-  - Không cho phép: ký tự đặc biệt khác
+validatePassword(password: string): string   // '' nếu hợp lệ, message nếu sai
+  // Độ dài: 9–20 ký tự
+  // Bắt buộc: 1 hoa, 1 thường, 1 số, 1 ký tự đặc biệt (@$!%*?&)
+  // Chỉ cho phép A-Za-z0-9@$!%*?&
 ```
 
-### Form State Pattern
+---
+
+## 🔄 Form State Pattern
+
+Tất cả form auth dùng cùng một pattern:
 
 ```typescript
 const [form, setForm] = useState<FormValues>(initialState)
@@ -573,331 +580,228 @@ const [errors, setErrors] = useState<FormErrors>({})
 const [submitError, setSubmitError] = useState('')
 const [loading, setLoading] = useState(false)
 
-// Clear errors khi user chỉnh sửa field
+// Xóa error khi user sửa field
 const updateField = (field: keyof FormValues, value: string) => {
-  setForm(...)
+  setForm(current => ({ ...current, [field]: value }))
   setErrors(current => ({ ...current, [field]: undefined }))
   setSubmitError('')
 }
 
-// Validation before submit
-const validateForm = (): boolean => {
-  // Build nextErrors object
-  // setErrors(nextErrors)
-  // return isEmpty(nextErrors)
-}
-
-// Handle submit
 const handleSubmit = async (e: FormEvent) => {
   e.preventDefault()
   if (!validateForm()) return
-
   setLoading(true)
   setSubmitError('')
-
   try {
-    // Call API
+    // gọi API
   } catch (error) {
-    setSubmitError(getApiErrorMessage(...))
+    setSubmitError(getApiErrorMessage(error, 'Fallback message'))
   } finally {
     setLoading(false)
   }
 }
 ```
 
-### UI/Styling Patterns
+---
 
-**File**: `src/pages/auth/authUi.ts`
+## 🔒 Security Considerations
 
-Các Tailwind class constants được định nghĩa để:
-
-- Tái sử dụng styling consistent
-- Dễ maintain và update theme
-- Ví dụ:
-  ```typescript
-  authCardClass = 'w-full max-w-[480px] bg-white/90 backdrop-blur-xl...';
-  authButtonBaseClass = 'h-12 w-full border-none text-white...';
-  authErrorClass = 'mt-2 text-sm font-medium text-red-600';
-  ```
-
-**Tailwind Features Used**:
-
-- Backdrop blur: `backdrop-blur-xl`
-- Transparency: `bg-white/90`
-- Responsive: `px-4 py-10`
-- Dark mode ready (có thể extend)
-- Smooth transitions: `transition-all`
-- Hover effects: `hover:-translate-y-0.5`
-- Disabled states: `disabled:opacity-70`
+| Điểm | Hiện tại | Ghi chú |
+|---|---|---|
+| Token Storage | localStorage | Đơn giản; có thể upgrade sang httpOnly cookie |
+| XSS | ✅ React auto-escapes | Không dùng `dangerouslySetInnerHTML` |
+| CORS | ✅ Backend controlled | Frontend không tự config |
+| Password Validation | ✅ Client + Server | Kiểm tra cả 2 phía |
+| Auto Token Refresh | ✅ Axios interceptor | Retry request sau khi refresh |
+| Google OAuth | ✅ ID Token verified phía backend | Frontend không decode token Google |
 
 ---
 
 ## 🚀 Development & Build
 
-### Scripts
-
-```bash
-# Development server (hot reload)
-npm run dev
-# http://localhost:5173
-
-# Type checking
-npm run build
-# Compiles TypeScript + bundles with Vite
-
-# Preview production build locally
-npm run preview
-
-# Linting
-npm run lint
-# ESLint check .ts, .tsx files
-# --max-warnings 0 (fail nếu có warning)
-
-# Format code
-npm run format
-# Prettier: src/**/*.{ts,tsx,css,md}
-```
-
 ### Environment Variables
 
 ```bash
 # .env hoặc .env.local
-VITE_API_BASE_URL=http://localhost:8080/api
-# hoặc
-VITE_API_URL=http://localhost:8080/api
+VITE_API_BASE_URL=http://localhost:8080/api   # Backend URL
+VITE_GOOGLE_CLIENT_ID=your-google-client-id  # Google OAuth Client ID
+```
 
-# Default: http://localhost:8080/api
+> `VITE_GOOGLE_CLIENT_ID` là bắt buộc để nút đăng nhập Google hoạt động.  
+> Lấy tại: [console.cloud.google.com](https://console.cloud.google.com) → OAuth 2.0 Client IDs
+
+### Scripts
+
+```bash
+npm run dev      # Dev server (http://localhost:5173)
+npm run build    # TypeScript check + Vite bundle → dist/
+npm run preview  # Preview production build (http://localhost:4173)
+npm run lint     # ESLint --max-warnings 0
+npm run format   # Prettier: src/**/*.{ts,tsx,css,md}
 ```
 
 ### TypeScript Configuration
 
-**tsconfig.json**: Global settings
+- `tsconfig.json` → Global settings (ESNext, DOM, ES2020)
+- `tsconfig.app.json` → App source (`src/**`)
+- `tsconfig.node.json` → Build tools (`vite.config.ts`, `eslint.config.js`)
 
-- Target: ES2020
-- Module: ESNext
-- Lib: ES2020 + DOM
-
-**tsconfig.app.json**: App-specific
-
-- Include: src/\*\*
-- Exclude: node_modules, dist
-
-**tsconfig.node.json**: Build tools
-
-- Include: vite.config.ts, eslint.config.js
-
-### Vite Configuration
-
-**File**: `vite.config.ts`
+### Vite Configuration (`vite.config.ts`)
 
 ```typescript
-- Plugin: @vitejs/plugin-react (Oxc/SWC transpilation)
-- Server: { watch: { usePolling: true } } (Docker compatibility)
-- Default port: 5173
-```
-
-### Tailwind Configuration
-
-**File**: `tailwind.config.js`
-
-```javascript
-- Content: index.html + src/**/*.{js,ts,jsx,tsx}
-- Theme: extend (standard theme + custom)
-- Plugins: (none currently)
+plugins: [@vitejs/plugin-react]             // Oxc/SWC transpilation
+server:  { watch: { usePolling: true } }    // Docker compatibility
+port:    5173 (default)
 ```
 
 ---
 
-## 🔄 Component Lifecycle & Data Flow
+## 🔧 Hướng Dẫn Mở Rộng
 
-### Component Hierarchy
+### Thêm trang đăng nhập cho vai trò mới
 
-```
-App
-├── BrowserRouter
-│   └── Routes
-│       ├── Route: / (HomePage)
-│       ├── Route: /login (CustomerLogin)
-│       ├── Route: /register (CustomerRegister)
-│       ├── Route: /verify-email (VerifyEmailPage)
-│       ├── Route: /partner/login (PartnerLogin)
-│       ├── Route: /partner/register (PartnerRegister)
-│       ├── Route: /admin/login (AdminLogin)
-│       ├── Route: /403 (ForbiddenPage)
-│       ├── Route: /payment (ProtectedRoute → PaymentPage)
-│       ├── Route: /admin (AdminRoute → AdminDashboardPage)
-│       └── Route: /partner (StaffRoute → PartnerDashboardPage)
+1. Tạo `src/pages/auth/[Role]Login.tsx`
+2. Dùng `<LoginTemplate activeRole="...">` + `<AuthTextField>` + `<GoogleAuthButton>`
+3. Thêm route vào `App.tsx`
+4. Tạo `src/routes/[Role]Route.tsx` nếu cần guard riêng.
+
+### Thêm Protected Route mới
+
+```tsx
+// App.tsx
+<Route element={<ProtectedRoute />}>
+  <Route path="/new-feature" element={<NewFeaturePage />} />
+</Route>
 ```
 
-### Data Flow Pattern
+### Sửa Validation Rules
 
-**Login Component**:
+Chỉnh sửa `src/features/auth/utils/authValidation.ts` — tất cả form auth dùng chung file này.
 
-```
-User Input
-    ↓
-updateField() → Update form state, clear errors
-    ↓
-handleSubmit() → Validate, call useAuth().login()
-    ↓
-useAuth().login() → Call authService.login(payload)
-    ↓
-authService.login() → POST API, tokenStorage.setTokens()
-    ↓
-AuthProvider updated → Context value changed
-    ↓
-All useAuth() hooks re-render với dữ liệu mới
-    ↓
-ProtectedRoute/RoleRoute check isAuthenticated
-    ↓
-Redirect dựa trên role
-```
+### Đổi Backend URL
+
+Đặt `VITE_API_BASE_URL` trong `.env.local` hoặc sửa `src/services/api.ts`.
 
 ---
 
-## 🔒 Security Considerations
-
-1. **Token Storage**:
-   - localStorage (không secure nhất nhưng simple)
-   - Có thể upgrade sang httpOnly cookies (cần backend support)
-
-2. **CORS**:
-   - Controlled bởi backend CORS headers
-   - Frontend không cần config
-
-3. **XSS Protection**:
-   - React auto-escapes output
-   - Không dùng dangerouslySetInnerHTML
-
-4. **CSRF**:
-   - Backend nên implement CSRF token hoặc SameSite cookie
-
-5. **Password Validation**:
-   - Strong password requirements implemented
-   - Front-end validation + backend validation
-
-6. **Token Expiry**:
-   - Access token expiry checked via JWT exp claim
-   - Auto-refresh trước expiry
-   - Graceful logout nếu refresh fail
-
----
-
-## 📦 Dependencies Overview
-
-| Package          | Version | Purpose           |
-| ---------------- | ------- | ----------------- |
-| react            | 19.2.4  | UI framework      |
-| react-router-dom | 7.14.0  | Routing           |
-| axios            | 1.15.0  | HTTP client       |
-| react-hook-form  | 7.72.1  | Form state        |
-| zod              | 4.3.6   | Schema validation |
-| tailwindcss      | 4.2.2   | CSS framework     |
-| lucide-react     | 1.8.0   | Icons             |
-| typescript       | 6.0.2   | Type safety       |
-| vite             | 8.0.4   | Build tool        |
-| eslint           | 9.39.4  | Linting           |
-| prettier         | 3.8.2   | Code formatter    |
-
----
-
-## 🎯 Key Design Patterns
-
-1. **Context API**: Global auth state (thay vì Redux cho đơn giản)
-2. **Custom Hooks**: `useAuth()` để access auth context
-3. **Higher-Order Components**: Route guards (ProtectedRoute, RoleRoute)
-4. **Interceptors**: Axios để auto-refresh token
-5. **Event-based Communication**: Window events cho multi-tab sync
-6. **Composition**: Route components bọc nhau (AdminRoute → RoleRoute)
-7. **Type Safety**: Full TypeScript usage
-
----
-
-## 🚀 Deployment
+## 🚢 Deployment
 
 ### Production Build
 
 ```bash
 npm run build
-# Output: dist/ folder
-
-# Test locally:
-npm run preview
-# http://localhost:4173
+# Output: dist/
+npm run preview    # Test tại http://localhost:4173
 ```
 
-### Environment Setup
+### Environment (Production)
 
 ```bash
-# Production .env
 VITE_API_BASE_URL=https://api.travi-ota.com/api
+VITE_GOOGLE_CLIENT_ID=your-production-google-client-id
 ```
 
-### Docker (in root project)
+### Docker (từ root project)
 
-```dockerfile
-Frontend được build vào Docker container
-- Base: node:20-alpine
-- Build stage: npm install + npm run build
-- Runtime: nginx để serve static files
+Frontend được build thành static files:
+- **Build stage**: `node:20-alpine` → `npm install` + `npm run build`
+- **Runtime stage**: Nginx serve `dist/`
+
+---
+
+## 📋 Component Hierarchy
+
+```
+App
+└── BrowserRouter
+    └── Routes
+        ├── / (HomePage)
+        ├── /login                   → CustomerLogin
+        ├── /register                → CustomerRegister
+        ├── /verify-email            → VerifyEmailPage
+        ├── /forgot-password         → ForgotPasswordPage (tone=blue)
+        ├── /partner/login           → PartnerLogin
+        ├── /partner/register        → PartnerRegister
+        ├── /partner/forgot-password → ForgotPasswordPage (tone=emerald)
+        ├── /admin/login             → AdminLogin
+        ├── /403                     → ForbiddenPage
+        ├── ProtectedRoute → /payment
+        ├── AdminRoute    → /admin
+        └── StaffRoute    → /partner
 ```
 
 ---
 
-## 🔧 Common Tasks
+## 🎯 Key Design Patterns
 
-### Add New Authentication Provider
+1. **Feature-first structure**: Components, utils tái sử dụng trong auth nằm ở `features/auth/` — tách khỏi page-level
+2. **Barrel exports**: Mỗi folder có `index.ts` → import gọn qua `@features/auth/components`
+3. **Context API**: Global auth state thay vì Redux (đủ đơn giản cho Sprint 1)
+4. **Custom Hook**: `useAuth()` cung cấp API đồng nhất cho mọi component
+5. **HOC Route Guards**: `ProtectedRoute` / `RoleRoute` bọc nhau (composition)
+6. **Axios Interceptors**: Auto-attach token + auto-refresh 401
+7. **Window Events**: `auth:logout`, `auth:refresh` cho multi-tab sync
+8. **Type Safety**: TypeScript full-coverage trên toàn bộ auth layer
+9. **Controlled inputs + inline validation**: Clear lỗi ngay khi user sửa field
 
-1. Tạo login page tại `src/pages/auth/[Provider]Login.tsx`
-2. Implement form validation + submission
-3. Thêm route vào `App.tsx`
-4. Thêm route guard nếu cần (tạo `[Provider]Route.tsx`)
+---
 
-### Add New Protected Route
+## 📊 Trạng Thái Hoàn Thiện
 
-1. Tạo page component
-2. Thêm route vào `App.tsx` bọc với guard:
-   ```tsx
-   <Route element={<ProtectedRoute />}>
-     <Route path="/path" element={<Component />} />
-   </Route>
-   ```
+### ✅ Sprint 1
 
-### Modify Validation Rules
+**Authentication UI**
+- [x] CustomerLogin — đăng nhập email/password + Google
+- [x] CustomerRegister — đăng ký (6 fields)
+- [x] PartnerLogin — đăng nhập email/password + Google
+- [x] PartnerRegister — đăng ký (6 fields)
+- [x] AdminLogin — đăng nhập email/password
+- [x] VerifyEmailPage — nhập OTP + gửi lại OTP
+- [x] ForgotPasswordPage — 3 bước (request OTP → verify → reset)
+- [x] LoginTemplate — layout 2 cột dùng chung
+- [x] AuthTextField — input component với tone/icon/labelAction
+- [x] GoogleAuthButton — nút Google OAuth (Google Identity Services)
+- [x] GoogleOAuthProviderWrapper — inject Google script
 
-1. Update rules trong `src/pages/auth/authValidation.ts`
-2. Update error messages (tiếng Việt)
-3. Test validation flow
+**Infrastructure**
+- [x] AuthProvider + AuthContext + useAuth hook
+- [x] tokenStorage (JWT decode thủ công, expiry check)
+- [x] authService (10 methods bao phủ toàn bộ auth flow)
+- [x] Axios interceptors (auto-token + 401 refresh + dedup)
+- [x] Route guards (ProtectedRoute, RoleRoute, AdminRoute, StaffRoute)
+- [x] routeGuards utils (normalizeRole, hasAllowedRole, getDefaultPathByRole)
+- [x] Feature-first folder refactor (`features/auth/components` + `features/auth/utils`)
 
-### Change API Base URL
+### ⏳ Sprint 2
 
-1. Set environment variable `VITE_API_BASE_URL`
-2. Hoặc modify `src/services/api.ts`
-3. Vite tự reload khi .env thay đổi
+- [ ] Hotel search & listing UI
+- [ ] Restaurant search & listing UI
+- [ ] Booking flow (khách hàng)
+- [ ] Partner dashboard (quản lý khách sạn/nhà hàng)
+- [ ] Admin dashboard (quản lý user, nội dung)
+- [ ] Payment flow
+
+### 📋 Sprint 3+
+
+- [ ] Code splitting (`React.lazy` + `Suspense`)
+- [ ] Unit tests (Vitest + Testing Library)
+- [ ] Dark mode
+- [ ] PWA support
+- [ ] Internationalization (i18n)
+- [ ] httpOnly Cookie (nâng cao bảo mật token)
 
 ---
 
 ## 📝 Notes
 
-- **Multi-language**: Currently Vietnamese (Vi) - dễ extend sang multi-lang
-- **Responsive**: Mobile-first design với Tailwind
-- **Accessibility**: Semantic HTML, proper form labels (có thể improve)
-- **Performance**: Code splitting via React.lazy() + Vite (chưa implement)
-- **Testing**: Unit tests chưa implement (add Jest/Vitest)
+- **Ngôn ngữ**: Tiếng Việt (dễ mở rộng i18n)
+- **Responsive**: Mobile-first với Tailwind
+- **Accessibility**: Semantic HTML, form labels, ARIA (có thể cải thiện thêm)
+- **Validation**: Double-validation — frontend (UX) + backend (security)
 
 ---
 
-## 👥 Team & Contributing
+**Last Updated:** May 2026  
+**Version:** 1.0.0  
+**Status:** Sprint 1 Complete ✅
 
-Xem [CONTRIBUTING.md](../CONTRIBUTING.md) nếu có.
-
----
-
-## 📄 License
-
-[Xem LICENSE file](../LICENSE)
-
----
-
-**Last Updated**: May 2026
-**Version**: 1.0.0
