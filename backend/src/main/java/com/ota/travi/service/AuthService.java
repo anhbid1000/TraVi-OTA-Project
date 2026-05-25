@@ -1,20 +1,17 @@
 package com.ota.travi.service;
 
-import com.ota.travi.Enum.HangThanhVien;
-import com.ota.travi.Enum.OtpPurpose;
-import com.ota.travi.Enum.TrangThaiUser;
+import com.ota.travi.enums.HangThanhVien;
+import com.ota.travi.enums.OtpPurpose;
+import com.ota.travi.enums.TrangThaiUser;
 import com.ota.travi.dto.request.GoogleAuthRequest;
 import com.ota.travi.dto.response.AuthResponse;
 import com.ota.travi.dto.request.LoginRequest;
 import com.ota.travi.dto.request.RegisterRequest;
 import com.ota.travi.dto.request.ResetPasswordRequest;
-import com.ota.travi.dto.response.AuthResponse;
 import com.ota.travi.entity.DoiTac;
 import com.ota.travi.entity.KhachHang;
 import com.ota.travi.entity.User;
 import com.ota.travi.entity.VaiTro;
-import com.ota.travi.enums.HangThanhVien;
-import com.ota.travi.enums.TrangThaiUser;
 import com.ota.travi.repository.UserRepository;
 import com.ota.travi.repository.VaiTroRepository;
 import com.ota.travi.security.CustomUserDetails;
@@ -192,7 +189,7 @@ public class AuthService {
                 .orElseGet(() -> createGoogleUser(email, hoTen, normalizedAccountType));
 
         User savedUser = userRepository.save(user);
-        return createAuthResponse(savedUser, "Đăng nhập Google thành công");
+        return createAuthResponse(savedUser);
     }
 
     private String normalizeAccountType(String accountType) {
@@ -220,7 +217,7 @@ public class AuthService {
             throw new RuntimeException("Email này đã đăng ký với vai trò khác. Vui lòng dùng đúng cổng đăng nhập.");
         }
 
-        if (user.getTrangThai() == TrangThaiUser.BI_KHOA) {
+        if (isRestrictedFromSelfService(user.getTrangThai())) {
             throw new RuntimeException("Tài khoản đã bị khóa, không thể đăng nhập bằng Google");
         }
 
@@ -313,11 +310,11 @@ public class AuthService {
         return "Google@" + Math.abs(email.hashCode()) + System.nanoTime() + "Aa";
     }
 
-    private AuthResponse createAuthResponse(User user, String message) {
+    private AuthResponse createAuthResponse(User user) {
         String role = "ROLE_" + user.getVaiTro().getTen();
         String accessToken = jwtUtil.generateToken(user.getUsername(), role);
         String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
-        return new AuthResponse(accessToken, refreshToken, "Bearer", message);
+        return new AuthResponse(accessToken, refreshToken, "Bearer", "Đăng nhập Google thành công");
     }
 
 
@@ -382,9 +379,16 @@ public class AuthService {
             throw new RuntimeException("Tài khoản chưa được kích hoạt. Vui lòng xác minh email trước khi đặt lại mật khẩu.");
         }
 
-        if (user.getTrangThai() == TrangThaiUser.BI_KHOA) {
+        if (isRestrictedFromSelfService(user.getTrangThai())) {
             throw new RuntimeException("Tài khoản đã bị khóa. Không thể đặt lại mật khẩu.");
         }
+    }
+
+    private boolean isRestrictedFromSelfService(TrangThaiUser trangThai) {
+        return trangThai == TrangThaiUser.TAM_VO_HIEU_HOA
+                || trangThai == TrangThaiUser.BI_KHOA_TAM_THOI
+                || trangThai == TrangThaiUser.BI_CAM_VINH_VIEN
+                || trangThai == TrangThaiUser.DA_XOA;
     }
 
 

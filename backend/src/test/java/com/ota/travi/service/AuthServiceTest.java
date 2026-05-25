@@ -1,6 +1,6 @@
 package com.ota.travi.service;
 
-import com.ota.travi.Enum.TrangThaiUser;
+import com.ota.travi.enums.TrangThaiUser;
 import com.ota.travi.dto.request.GoogleAuthRequest;
 import com.ota.travi.dto.request.ResetPasswordRequest;
 import com.ota.travi.dto.response.AuthResponse;
@@ -22,7 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
-import static com.ota.travi.Enum.OtpPurpose.PASSWORD_RESET;
+import static com.ota.travi.enums.OtpPurpose.PASSWORD_RESET;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;

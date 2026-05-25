@@ -1,6 +1,6 @@
 package com.ota.travi.service;
 
-import com.ota.travi.Enum.OtpPurpose;
+import com.ota.travi.enums.OtpPurpose;
 import com.ota.travi.entity.User;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { BadgeCheck } from 'lucide-react'
+import { cn } from '../../utils/cn'
 import { authService } from '../../services/authService'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { AuthTextField } from '../../features/auth/components'
@@ -175,10 +176,10 @@ export function VerifyEmailPage() {
   }
 
   return (
-    <div className={`${authLayoutClass} bg-gradient-to-br from-blue-50 via-white to-indigo-50`}>
-      <div className={`${authCardClass} max-w-[420px] border-blue-100`}>
+    <div className={cn(authLayoutClass, 'bg-linear-to-br from-blue-50 via-white to-indigo-50')}>
+      <div className={cn(authCardClass, 'max-w-105 border-blue-100')}>
         <div className="mb-8 text-center">
-          <div className={`${authIconBoxClass} bg-blue-50 border-blue-100 text-blue-600`}>
+          <div className={cn(authIconBoxClass, 'bg-blue-50 border-blue-100 text-blue-600')}>
             <BadgeCheck size={30} strokeWidth={2.1} aria-hidden="true" />
           </div>
 
@@ -227,7 +228,10 @@ export function VerifyEmailPage() {
           <button
             type="submit"
             disabled={loading || resendLoading}
-            className={`${authButtonBaseClass} cursor-pointer bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700`}
+            className={cn(
+              authButtonBaseClass,
+              'cursor-pointer bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700',
+            )}
           >
             {loading ? 'Đang xác minh...' : 'Xác minh tài khoản'}
           </button>
@@ -249,7 +253,7 @@ export function VerifyEmailPage() {
         <div className="mt-6 text-center">
           <Link
             to={loginPath}
-            className={`${authSmallLinkClass} text-gray-400 hover:text-blue-600`}
+            className={cn(authSmallLinkClass, 'text-gray-400 hover:text-blue-600')}
           >
             Quay lại đăng nhập
           </Link>

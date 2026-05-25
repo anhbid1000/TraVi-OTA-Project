@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { cn } from '../../utils/cn'
 import { useAuth } from '../../hooks/useAuth'
 import { tokenStorage } from '../../services/tokenStorage'
 import type { LoginRequest } from '../../types/auth'
@@ -197,7 +198,10 @@ export function CustomerLogin() {
         <button
           type="submit"
           disabled={loading}
-          className={`${authButtonBaseClass} cursor-pointer bg-blue-500 shadow-[0_12px_30px_rgba(0,59,27,0.16)] hover:bg-blue-600`}
+          className={cn(
+            authButtonBaseClass,
+            'cursor-pointer bg-blue-500 shadow-[0_12px_30px_rgba(0,59,27,0.16)] hover:bg-blue-600',
+          )}
         >
           {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </button>
@@ -212,7 +216,7 @@ export function CustomerLogin() {
 
       <div className={authFooterClass}>
         Chưa có tài khoản?{' '}
-        <Link to="/register" className="cursor-pointer font-bold text-blue-500 hover:text-blue-600">
+        <Link to="/register" className={cn('cursor-pointer font-bold text-blue-500 hover:text-blue-600')}>
           Đăng ký ngay
         </Link>
       </div>

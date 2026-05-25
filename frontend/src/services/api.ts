@@ -34,16 +34,6 @@ export const api = axios.create({
 
 let refreshPromise: Promise<FlexibleAuthResponse> | null = null;
 
-function isAuthEndpoint(requestUrl: string) {
-  return (
-    requestUrl.includes('/auth/login') ||
-    requestUrl.includes('/auth/register') ||
-    requestUrl.includes('/auth/verify-email') ||
-    requestUrl.includes('/auth/resend-otp') ||
-    requestUrl.includes('/auth/refresh')
-  );
-}
-
 function getAccessTokenFromAuthResponse(auth: FlexibleAuthResponse) {
   return auth.token || auth.accessToken || auth.access_token || '';
 }
@@ -133,7 +123,9 @@ api.interceptors.response.use(
       const newAccessToken = getAccessTokenFromAuthResponse(auth);
 
       if (!newAccessToken) {
-        throw new Error('Refresh thành công nhưng backend không trả access token mới.');
+        tokenStorage.clearTokens();
+        window.dispatchEvent(new Event('auth:logout'));
+        return Promise.reject(new Error('Refresh thành công nhưng backend không trả access token mới.'));
       }
 
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;

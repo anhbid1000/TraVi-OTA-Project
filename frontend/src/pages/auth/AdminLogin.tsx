@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { cn } from '../../utils/cn'
 import { useAuth } from '../../hooks/useAuth'
 import { tokenStorage } from '../../services/tokenStorage'
 import type { LoginRequest } from '../../types/auth'
@@ -139,7 +140,10 @@ export function AdminLogin() {
         <button
           type="submit"
           disabled={loading}
-          className={`${authButtonBaseClass} bg-[#334155] shadow-[0_12px_30px_rgba(51,65,85,0.18)] hover:bg-[#0f172a]`}
+          className={cn(
+            authButtonBaseClass,
+            'bg-[#334155] shadow-[0_12px_30px_rgba(51,65,85,0.18)] hover:bg-[#0f172a]',
+          )}
         >
           {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </button>

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { cn } from '../../utils/cn'
 import { useAuth } from '../../hooks/useAuth'
 import { authService } from '../../services/authService'
 import { tokenStorage } from '../../services/tokenStorage'
@@ -284,7 +285,10 @@ export function PartnerRegister() {
           <button
             type="submit"
             disabled={loading}
-            className={`${authButtonBaseClass} bg-emerald-600 shadow-lg shadow-emerald-200 hover:bg-emerald-700`}
+            className={cn(
+              authButtonBaseClass,
+              'bg-emerald-600 shadow-lg shadow-emerald-200 hover:bg-emerald-700',
+            )}
           >
             {loading ? 'Đang đăng ký...' : 'Đăng ký đối tác'}
           </button>
