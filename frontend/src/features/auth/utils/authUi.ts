@@ -41,10 +41,11 @@ export const authFooterClass =
   'mt-6 text-base font-medium text-center text-gray-500'
 
 export const authSmallLinkClass =
-  'text-sm font-medium transition-colors'
+  'text-sm font-medium transition-colors text-blue-500 transition-all  hover:-translate-y-0.5 hover:text-blue-600'
 
 export const authFormGroupClass =
   'mb-5'
 
 export const authLastFormGroupClass =
   'mb-7'
+

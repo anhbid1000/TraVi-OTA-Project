@@ -1,26 +1,19 @@
 import { useState, type FormEvent } from 'react'
-import { Building2 } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { tokenStorage } from '../../services/tokenStorage'
 import type { LoginRequest } from '../../types/auth'
 import { normalizeRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
-import { AuthTextField } from './AuthTextField'
-import { GoogleAuthButton } from './GoogleAuthButton'
-import { isValidEmail } from './authValidation'
+import { AuthTextField, GoogleAuthButton, LoginTemplate } from '../../features/auth/components'
 import {
   authAlertErrorClass,
   authAlertSuccessClass,
   authButtonBaseClass,
-  authCardClass,
   authFooterClass,
   authFormGroupClass,
-  authIconBoxClass,
-  authLayoutClass,
-  authSubtitleClass,
-  authTitleClass,
-} from './authUi'
+  isValidEmail,
+} from '../../features/auth/utils'
 
 type LoginFormValues = Pick<LoginRequest, 'email' | 'matKhau'>
 
@@ -140,98 +133,79 @@ export function PartnerLogin() {
   }
 
   return (
-    <div className={`${authLayoutClass} bg-gradient-to-br from-emerald-50 via-white to-teal-50`}>
-      <div className={`${authCardClass} max-w-[420px] border-emerald-100`}>
-        <div className="mb-8 text-center">
-          <div className={`${authIconBoxClass} bg-emerald-50 border-emerald-100 text-emerald-600`}>
-            <Building2 size={30} strokeWidth={2.1} aria-hidden="true" />
-          </div>
+    <LoginTemplate
+      activeRole="DOI_TAC"
+      title="Chào mừng đối tác"
+      subtitle="Đăng nhập để quản lý cơ sở lưu trú và dịch vụ trên TraVi"
+    >
+      {registerMessage && <div className={authAlertSuccessClass}>{registerMessage}</div>}
+      {submitError && <div className={authAlertErrorClass}>{submitError}</div>}
 
-          <h2 className={authTitleClass}>Đối tác TraVi</h2>
-          <p className={authSubtitleClass}>Dành cho khách sạn và nhà hàng</p>
-        </div>
-
-        {registerMessage && <div className={authAlertSuccessClass}>{registerMessage}</div>}
-        {submitError && <div className={authAlertErrorClass}>{submitError}</div>}
-
-        <form onSubmit={handleSubmit} noValidate>
-          <div className={authFormGroupClass}>
-            <AuthTextField
-              id="partner-email"
-              name="email"
-              label="Email đăng nhập"
-              type="email"
-              value={form.email}
-              placeholder="doitac@gmail.com"
-              autoComplete="email"
-              error={errors.email}
-              icon="mail"
-              tone="emerald"
-              onChange={(value) => updateField('email', value)}
-            />
-          </div>
-
-          <div className="mb-6">
-            <AuthTextField
-              id="partner-password"
-              name="matKhau"
-              label="Mật khẩu"
-              type="password"
-              value={form.matKhau}
-              placeholder="Nhập mật khẩu"
-              autoComplete="current-password"
-              error={errors.matKhau}
-              icon="lock"
-              tone="emerald"
-              onChange={(value) => updateField('matKhau', value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`${authButtonBaseClass} bg-emerald-600 shadow-lg shadow-emerald-200 hover:bg-emerald-700`}
-          >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-          </button>
-
-          <GoogleAuthButton
-            disabled={loading}
-            isLoading={loading}
-            onCredential={handleGoogleLogin}
-            onError={setSubmitError}
+      <form onSubmit={handleSubmit} noValidate>
+        <div className={authFormGroupClass}>
+          <AuthTextField
+            id="partner-email"
+            name="email"
+            label="Email đối tác"
+            type="email"
+            value={form.email}
+            placeholder="name@example.com"
+            autoComplete="email"
+            error={errors.email}
+            icon="mail"
+            tone="emerald"
+            onChange={(value) => updateField('email', value)}
           />
-        </form>
-
-        <div className={authFooterClass}>
-          <div className="mb-3">
-            <Link
-              to="/partner/forgot-password"
-              state={{ email: form.email.trim() }}
-              className="font-medium text-emerald-600 hover:text-emerald-800"
-            >
-              Quên mật khẩu?
-            </Link>
-          </div>
-
-          Chưa phải đối tác?{' '}
-          <Link
-            to="/partner/register"
-            className="font-bold text-emerald-600 hover:text-emerald-800"
-          >
-            Đăng ký ngay
-          </Link>
         </div>
 
-        <div className="mt-6 text-center">
-          <Link
-            to="/login"
-            className="text-base font-medium text-gray-400 transition-colors hover:text-gray-600"
-          >
-            ← Quay lại trang khách hàng
-          </Link>
+        <div className="mb-6">
+          <AuthTextField
+            id="partner-password"
+            name="matKhau"
+            label="Mật khẩu"
+            type="password"
+            value={form.matKhau}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            error={errors.matKhau}
+            icon="lock"
+            tone="emerald"
+            labelAction={
+              <Link
+                to="/partner/forgot-password"
+                state={{ email: form.email.trim() }}
+                className="text-sm font-medium text-emerald-600 transition-all hover:-translate-y-0.5"
+              >
+                Quên mật khẩu?
+              </Link>
+            }
+            showPasswordToggle
+            onChange={(value) => updateField('matKhau', value)}
+          />
         </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className={`${authButtonBaseClass} bg-emerald-600 shadow-[0_12px_30px_rgba(0,108,73,0.16)] hover:bg-emerald-700`}
+        >
+          {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        </button>
+
+        <GoogleAuthButton
+          disabled={loading}
+          isLoading={loading}
+          onCredential={handleGoogleLogin}
+          onError={setSubmitError}
+        />
+      </form>
+
+      <div className={authFooterClass}>
+        Chưa phải đối tác?{' '}
+        <Link to="/partner/register" className="font-bold text-emerald-600 hover:text-emerald-700">
+          Đăng ký ngay
+        </Link>
       </div>
-    </div>
-  )
+    </LoginTemplate>
+  );
 }

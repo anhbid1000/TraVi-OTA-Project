@@ -1,23 +1,19 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { BadgeHelp, Building2, LoaderCircle } from 'lucide-react'
+import { LoaderCircle } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { authService } from '../../services/authService'
 import { getApiErrorMessage } from '../../utils/apiError'
-import { AuthTextField } from './AuthTextField'
-import { isValidEmail, validatePassword } from './authValidation'
+import { AuthTextField, LoginTemplate } from '../../features/auth/components'
 import {
   authAlertErrorClass,
   authAlertSuccessClass,
   authButtonBaseClass,
-  authCardClass,
   authFormGroupClass,
-  authIconBoxClass,
   authLastFormGroupClass,
-  authLayoutClass,
   authSmallLinkClass,
-  authSubtitleClass,
-  authTitleClass,
-} from './authUi'
+  isValidEmail,
+  validatePassword,
+} from '../../features/auth/utils'
 
 type AuthTone = 'blue' | 'emerald'
 type ForgotPasswordStep = 'request' | 'verify' | 'reset'
@@ -44,26 +40,21 @@ type ForgotPasswordErrors = Partial<Record<keyof ForgotPasswordForm, string>>
 
 const RESEND_COOLDOWN_SECONDS = 60
 
-const toneClasses: Record<AuthTone, { button: string; icon: string; iconText: string; border: string }> = {
+const toneClasses: Record<AuthTone, { button: string }> = {
   blue: {
-    button: 'bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700',
-    icon: 'bg-blue-50 border-blue-100',
-    iconText: 'text-blue-600',
-    border: 'border-blue-100',
+    button: 'bg-blue-500 shadow-lg shadow-blue-200 hover:bg-blue-600',
   },
   emerald: {
     button: 'bg-emerald-600 shadow-lg shadow-emerald-200 hover:bg-emerald-700',
-    icon: 'bg-emerald-50 border-emerald-100',
-    iconText: 'text-emerald-600',
-    border: 'border-emerald-100',
   },
-}
+};
 
 export function ForgotPasswordPage({ loginPath, tone, title, subtitle }: ForgotPasswordPageProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const locationState = location.state as ForgotPasswordLocationState | null
   const styles = toneClasses[tone]
+  const activeRole = tone === 'blue' ? 'KHACH_HANG' : 'DOI_TAC'
 
   const [step, setStep] = useState<ForgotPasswordStep>('request')
   const [form, setForm] = useState<ForgotPasswordForm>({
@@ -251,31 +242,15 @@ export function ForgotPasswordPage({ loginPath, tone, title, subtitle }: ForgotP
   }
 
   return (
-    <div
-      className={`${authLayoutClass} ${
-        tone === 'blue'
-          ? 'bg-gradient-to-br from-blue-50 via-white to-indigo-50'
-          : 'bg-gradient-to-br from-emerald-50 via-white to-teal-50'
-      }`}
+    <LoginTemplate
+      activeRole={activeRole}
+      title={title}
+      subtitle={subtitle}
     >
-      <div className={`${authCardClass} max-w-[440px] ${styles.border}`}>
-        <div className="mb-8 text-center">
-          <div className={`${authIconBoxClass} ${styles.icon} ${styles.iconText}`}>
-            {tone === 'blue' ? (
-              <BadgeHelp size={30} strokeWidth={2.1} aria-hidden="true" />
-            ) : (
-              <Building2 size={30} strokeWidth={2.1} aria-hidden="true" />
-            )}
-          </div>
+      {submitSuccess && <div className={authAlertSuccessClass}>{submitSuccess}</div>}
+      {submitError && <div className={authAlertErrorClass}>{submitError}</div>}
 
-          <h2 className={authTitleClass}>{title}</h2>
-          <p className={authSubtitleClass}>{subtitle}</p>
-        </div>
-
-        {submitSuccess && <div className={authAlertSuccessClass}>{submitSuccess}</div>}
-        {submitError && <div className={authAlertErrorClass}>{submitError}</div>}
-
-        <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit} noValidate>
           <div className={authFormGroupClass}>
             <AuthTextField
               id="forgot-password-email"
@@ -323,6 +298,7 @@ export function ForgotPasswordPage({ loginPath, tone, title, subtitle }: ForgotP
                   error={errors.matKhauMoi}
                   icon="lock"
                   tone={tone}
+                  showPasswordToggle
                   onChange={(value) => updateField('matKhauMoi', value)}
                 />
               </div>
@@ -339,6 +315,7 @@ export function ForgotPasswordPage({ loginPath, tone, title, subtitle }: ForgotP
                   error={errors.xacNhanMatKhau}
                   icon="lock"
                   tone={tone}
+                  showPasswordToggle
                   onChange={(value) => updateField('xacNhanMatKhau', value)}
                 />
               </div>
@@ -374,15 +351,14 @@ export function ForgotPasswordPage({ loginPath, tone, title, subtitle }: ForgotP
                   : 'Gửi lại mã OTP'}
             </button>
           )}
-        </form>
+      </form>
 
-        <div className="mt-6 text-center">
-          <Link to={loginPath} state={{ email: form.email.trim() }} className={authSmallLinkClass}>
-            Quay lại đăng nhập
-          </Link>
-        </div>
+      <div className="mt-6 text-center">
+        <Link to={loginPath} state={{ email: form.email.trim() }} className={authSmallLinkClass}>
+          Quay lại đăng nhập
+        </Link>
       </div>
-    </div>
+    </LoginTemplate>
   )
 }
 

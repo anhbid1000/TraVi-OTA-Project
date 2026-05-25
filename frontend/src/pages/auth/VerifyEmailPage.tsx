@@ -3,8 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { BadgeCheck } from 'lucide-react'
 import { authService } from '../../services/authService'
 import { getApiErrorMessage } from '../../utils/apiError'
-import { AuthTextField } from './AuthTextField'
-import { isValidEmail } from './authValidation'
+import { AuthTextField } from '../../features/auth/components'
 import {
   authAlertErrorClass,
   authAlertSuccessClass,
@@ -16,7 +15,8 @@ import {
   authSmallLinkClass,
   authSubtitleClass,
   authTitleClass,
-} from './authUi'
+  isValidEmail,
+} from '../../features/auth/utils'
 
 type VerifyEmailLocationState = {
   email?: string

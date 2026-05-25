@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from 'react'
-import { UserPlus } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { authService } from '../../services/authService'
@@ -7,22 +6,17 @@ import { tokenStorage } from '../../services/tokenStorage'
 import type { RegisterRequest } from '../../types/auth'
 import { getDefaultPathByRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
-import { AuthTextField } from './AuthTextField'
-import { GoogleAuthButton } from './GoogleAuthButton'
-import { isValidEmail, isValidPhoneNumber, validatePassword } from './authValidation'
+import { AuthTextField, GoogleAuthButton, LoginTemplate } from '../../features/auth/components'
 import {
   authAlertErrorClass,
   authButtonBaseClass,
-  authCardClass,
   authFooterClass,
   authFormGroupClass,
-  authIconBoxClass,
   authLastFormGroupClass,
-  authLayoutClass,
-  authSmallLinkClass,
-  authSubtitleClass,
-  authTitleClass,
-} from './authUi'
+  isValidEmail,
+  isValidPhoneNumber,
+  validatePassword,
+} from '../../features/auth/utils'
 
 type CustomerRegisterFormValues = {
   username: string
@@ -177,19 +171,11 @@ export function CustomerRegister() {
   }
 
   return (
-    <div className={`${authLayoutClass} bg-gradient-to-br from-blue-50 via-white to-indigo-50`}>
-      <div className={`${authCardClass} border-blue-100`}>
-        <div className="mb-8 text-center">
-          <div className={`${authIconBoxClass} bg-blue-50 border-blue-100 text-blue-600`}>
-            <UserPlus size={30} strokeWidth={2.1} aria-hidden="true" />
-          </div>
-
-          <h2 className={authTitleClass}>Đăng ký tài khoản</h2>
-          <p className={authSubtitleClass}>
-            Tạo tài khoản khách hàng để đặt phòng và sử dụng dịch vụ TraVi
-          </p>
-        </div>
-
+    <LoginTemplate
+      activeRole="KHACH_HANG"
+      title="Đăng ký tài khoản"
+      subtitle="Tạo tài khoản khách hàng để đặt phòng và sử dụng dịch vụ TraVi"
+    >
         {submitError && <div className={authAlertErrorClass}>{submitError}</div>}
 
         <form onSubmit={handleSubmit} noValidate>
@@ -267,6 +253,7 @@ export function CustomerRegister() {
               error={errors.matKhau}
               icon="lock"
               tone="blue"
+              showPasswordToggle
               onChange={(value) => updateField('matKhau', value)}
             />
           </div>
@@ -283,6 +270,7 @@ export function CustomerRegister() {
               error={errors.confirmPassword}
               icon="lock"
               tone="blue"
+              showPasswordToggle
               onChange={(value) => updateField('confirmPassword', value)}
             />
           </div>
@@ -290,7 +278,7 @@ export function CustomerRegister() {
           <button
             type="submit"
             disabled={loading}
-            className={`${authButtonBaseClass} cursor-pointer bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700`}
+            className={`${authButtonBaseClass} cursor-pointer bg-blue-500 shadow-[0_12px_30px_rgba(0,59,27,0.16)] hover:bg-blue-600`}
           >
             {loading ? 'Đang đăng ký...' : 'Đăng ký'}
           </button>
@@ -305,20 +293,10 @@ export function CustomerRegister() {
 
         <div className={authFooterClass}>
           Đã có tài khoản?{' '}
-          <Link to="/login" className="font-bold text-blue-600 hover:text-blue-800">
+          <Link to="/login" className="font-bold text-blue-500 hover:text-blue-600">
             Đăng nhập
           </Link>
         </div>
-
-        <div className="pt-6 mt-6 text-center border-t border-gray-100">
-          <Link
-            to="/partner/register"
-            className={`${authSmallLinkClass} text-gray-400 hover:text-emerald-600`}
-          >
-            Đăng ký tài khoản đối tác
-          </Link>
-        </div>
-      </div>
-    </div>
+    </LoginTemplate>
   )
 }
