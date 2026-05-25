@@ -58,7 +58,9 @@ public class PartnerRestaurantService {
         NhaHang nhaHang = requireOwnedRestaurant(partnerId, restaurantId);
         Ban ban = new Ban();
         ban.setNhaHang(nhaHang);
+        ban.setTenBan(request.tenBan());
         ban.setViTriSanh(request.viTriSanh());
+        ban.setMoTa(request.moTa());
         ban.setSoChoNgoi(request.soChoNgoi());
         ban.setTrangThai(request.trangThai() == null ? 1 : request.trangThai());
         return partnerAssetMapper.toBanResponse(banRepository.save(ban));
@@ -76,7 +78,9 @@ public class PartnerRestaurantService {
     public BanResponse updateTable(String partnerId, String restaurantId, String tableId, BanRequest request) {
         requireOwnedRestaurant(partnerId, restaurantId);
         Ban ban = requireTableInRestaurant(restaurantId, tableId);
+        ban.setTenBan(request.tenBan());
         ban.setViTriSanh(request.viTriSanh());
+        ban.setMoTa(request.moTa());
         ban.setSoChoNgoi(request.soChoNgoi());
         ban.setTrangThai(request.trangThai() == null ? 1 : request.trangThai());
         return partnerAssetMapper.toBanResponse(banRepository.save(ban));
@@ -86,7 +90,9 @@ public class PartnerRestaurantService {
     public void deleteTable(String partnerId, String restaurantId, String tableId) {
         requireOwnedRestaurant(partnerId, restaurantId);
         Ban ban = requireTableInRestaurant(restaurantId, tableId);
-        banRepository.delete(ban);
+        ban.setDeleted(true);
+        ban.setTrangThai(0);
+        banRepository.save(ban);
     }
 
     @Transactional
@@ -122,7 +128,9 @@ public class PartnerRestaurantService {
         if (hasPreorderedMenuItem(itemId)) {
             throw new BusinessConflictException("Khong the xoa vi dang co don khach dat");
         }
-        monAnRepository.delete(monAn);
+        monAn.setDeleted(true);
+        monAn.setTrangThai(TrangThaiMonAn.NGUNG_BAN);
+        monAnRepository.save(monAn);
     }
 
     @Transactional
@@ -204,9 +212,11 @@ public class PartnerRestaurantService {
 
     private void applyMonAn(MonAn monAn, MonAnRequest request) {
         monAn.setTenMon(request.tenMon());
+        monAn.setMoTa(request.moTa());
         monAn.setGiaBan(request.giaBan());
+        monAn.setDanhMucMon(request.danhMucMon());
         monAn.setDuongDanUrl(request.duongDanUrl());
-        monAn.setTrangThai(request.trangThai() == null ? TrangThaiMonAn.CO_SAN : request.trangThai());
+        monAn.setTrangThai(request.trangThai() == null ? TrangThaiMonAn.DANG_BAN : request.trangThai());
         monAn.setTheNguCanh(request.theNguCanh() == null ? new ArrayList<>() : new ArrayList<>(request.theNguCanh()));
     }
 

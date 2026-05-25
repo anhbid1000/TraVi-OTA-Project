@@ -18,9 +18,13 @@ public interface HoSoKinhDoanhRepository extends JpaRepository<HoSoKinhDoanh, St
 
     List<HoSoKinhDoanh> findByTrangThaiKiemDuyet(TrangThaiKiemDuyet trangThaiKiemDuyet);
 
+    List<HoSoKinhDoanh> findByTrangThaiKiemDuyetAndDeletedFalse(TrangThaiKiemDuyet trangThaiKiemDuyet);
+
     List<HoSoKinhDoanh> findByLoaiDichVu(LoaiDichVu loaiDichVu);
 
     List<HoSoKinhDoanh> findByDoiTac_Id(String doiTacId);
+
+    List<HoSoKinhDoanh> findByDoiTac_IdAndDeletedFalse(String doiTacId);
 
     List<HoSoKinhDoanh> findByDoiTac_IdAndTrangThaiKiemDuyet(
             String doiTacId,

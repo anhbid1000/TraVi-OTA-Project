@@ -5,6 +5,7 @@ import com.ota.travi.dto.response.AdminApprovalResponse;
 import com.ota.travi.entity.HoSoKinhDoanh;
 import com.ota.travi.enums.ApprovalDecisionStatus;
 import com.ota.travi.enums.TrangThaiKiemDuyet;
+import com.ota.travi.enums.TrangThaiHoatDong;
 import com.ota.travi.exception.ResourceNotFoundException;
 import com.ota.travi.exception.ValidationException;
 import com.ota.travi.repository.HoSoKinhDoanhRepository;
@@ -29,7 +30,7 @@ public class AdminApprovalService {
 
     @Transactional(readOnly = true)
     public List<AdminApprovalResponse> getPendingApprovals() {
-        return hoSoKinhDoanhRepository.findByTrangThaiKiemDuyet(TrangThaiKiemDuyet.CHO_DUYET)
+        return hoSoKinhDoanhRepository.findByTrangThaiKiemDuyetAndDeletedFalse(TrangThaiKiemDuyet.CHO_DUYET)
                 .stream()
                 .map(partnerAssetMapper::toAdminApprovalResponse)
                 .toList();
@@ -60,7 +61,9 @@ public class AdminApprovalService {
     }
 
     private void approveBusinessProfile(HoSoKinhDoanh hoSo) {
-        hoSo.setTrangThaiKiemDuyet(TrangThaiKiemDuyet.DANG_HOAT_DONG);
+        hoSo.setTrangThaiKiemDuyet(TrangThaiKiemDuyet.DA_DUYET);
+        hoSo.setTrangThaiHoatDong(TrangThaiHoatDong.DANG_HOAT_DONG);
+        hoSo.setLyDoTuChoiGanNhat(null);
         hoSo.setThoiGianDuyet(LocalDateTime.now());
         businessApprovalMailService.sendApprovalEmail(
                 hoSo.getDoiTac().getEmail(),
@@ -74,6 +77,8 @@ public class AdminApprovalService {
             throw new ValidationException("Ly do tu choi khong duoc de trong");
         }
         hoSo.setTrangThaiKiemDuyet(TrangThaiKiemDuyet.BI_TU_CHOI);
+        hoSo.setTrangThaiHoatDong(TrangThaiHoatDong.CHUA_HOAT_DONG);
+        hoSo.setLyDoTuChoiGanNhat(reason);
         hoSo.setThoiGianDuyet(LocalDateTime.now());
         businessApprovalMailService.sendRejectionEmail(
                 hoSo.getDoiTac().getEmail(),

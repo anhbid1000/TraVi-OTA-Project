@@ -1,7 +1,10 @@
 package com.ota.travi.entity;
 
+import com.ota.travi.enums.TrangThaiKiemDuyet;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,42 +17,43 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ban")
+@Table(name = "lich_su_kiem_duyet_ho_so")
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Ban {
+public class LichSuKiemDuyetHoSo {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "nha_hang_id", nullable = false)
-    private NhaHang nhaHang;
+    @JoinColumn(name = "ho_so_kinh_doanh_id", nullable = false)
+    private HoSoKinhDoanh hoSoKinhDoanh;
 
-    private String tenBan;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id")
+    private QuanTriVien admin;
 
-    private String viTriSanh;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TrangThaiKiemDuyet trangThaiCu;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TrangThaiKiemDuyet trangThaiMoi;
 
     @Column(length = 1000)
-    private String moTa;
+    private String lyDo;
 
-    private Integer trangThai;
-
-    private Integer soChoNgoi;
-
-    @Column(nullable = false)
-    private Boolean deleted = false;
+    @Column(length = 1000)
+    private String ghiChuNoiBo;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 }
+

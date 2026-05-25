@@ -33,6 +33,10 @@ public record NhaHangRequest(
         LocalTime gioMoCua,
 
         @NotNull(message = "Giờ đóng cửa không được để trống")
-        LocalTime gioDongCua
+        LocalTime gioDongCua,
+
+        Boolean coDatBanTruoc,
+
+        Boolean coDatMonTruoc
 ) {
 }

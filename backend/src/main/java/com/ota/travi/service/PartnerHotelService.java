@@ -70,7 +70,9 @@ public class PartnerHotelService {
         if (hasFutureBookingForRoom(roomId)) {
             throw new BusinessConflictException("Khong the xoa phong vi dang co don dat cho trong tuong lai");
         }
-        phongRepository.delete(phong);
+        phong.setDeleted(true);
+        phong.setTrangThai(TrangThaiPhong.NGUNG_KINH_DOANH);
+        phongRepository.save(phong);
     }
 
     private KhachSan requireOwnedHotel(String partnerId, String hotelId) {
@@ -100,10 +102,15 @@ public class PartnerHotelService {
 
     private void applyPhong(Phong phong, PhongRequest request) {
         phong.setSoPhong(request.soPhong());
+        phong.setTenPhong((request.tenPhong() == null || request.tenPhong().isBlank()) ? request.soPhong() : request.tenPhong());
         phong.setLoaiPhong(request.loaiPhong());
+        phong.setMoTa(request.moTa());
         phong.setSucChuaToiDa(request.sucChuaToiDa());
         phong.setDienTich(request.dienTich());
-        phong.setTrangThai(request.trangThai() == null ? TrangThaiPhong.SAN_SANG : request.trangThai());
+        phong.setSoGiuong(request.soGiuong() == null ? 1 : request.soGiuong());
+        phong.setGiaCoBan(request.giaCoBan() == null ? 0.0 : request.giaCoBan());
+        phong.setSoLuongPhong(request.soLuongPhong() == null ? 1 : request.soLuongPhong());
+        phong.setTrangThai(request.trangThai() == null ? TrangThaiPhong.DANG_BAN : request.trangThai());
         phong.setTienIch(request.tienIch() == null ? new HashSet<>() : new HashSet<>(request.tienIch()));
         phong.setPhanTramGiamGia(request.phanTramGiamGia() == null ? 0.0f : request.phanTramGiamGia());
     }

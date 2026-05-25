@@ -19,6 +19,9 @@ public record KhachSanRequest(
         @Max(value = 5, message = "Hạng sao phải từ 1 đến 5")
         Integer hangSao,
 
+        @Size(max = 100, message = "Loại khách sạn không được vượt quá 100 ký tự")
+        String loaiKhachSan,
+
         @Size(max = 1000, message = "Mô tả không được vượt quá 1000 ký tự")
         String moTa,
 
@@ -33,6 +36,16 @@ public record KhachSanRequest(
 
         @NotNull(message = "Giờ trả phòng không được để trống")
         LocalTime gioTraPhong,
+
+        LocalTime gioNhanPhongMacDinh,
+
+        LocalTime gioTraPhongMacDinh,
+
+        @Min(value = 1, message = "Số tầng phải lớn hơn hoặc bằng 1")
+        Integer soTang,
+
+        @Min(value = 1, message = "Tổng số phòng phải lớn hơn hoặc bằng 1")
+        Integer tongSoPhong,
 
         Set<String> tienIchIds
 ) {

@@ -32,6 +32,12 @@ public class NhaHang extends TaiSan {
 
     private Integer sucChua;
 
+    @Column(nullable = false)
+    private Boolean coDatBanTruoc = true;
+
+    @Column(nullable = false)
+    private Boolean coDatMonTruoc = true;
+
     @OneToMany(mappedBy = "nhaHang", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ban> danhSachBan = new ArrayList<>();
 

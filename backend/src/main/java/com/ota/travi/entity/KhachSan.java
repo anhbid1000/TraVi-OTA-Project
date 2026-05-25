@@ -31,9 +31,19 @@ public class KhachSan extends TaiSan {
 
     private Integer hangSao;
 
+    private String loaiKhachSan;
+
     private LocalTime gioNhanPhong;
 
     private LocalTime gioTraPhong;
+
+    private LocalTime gioNhanPhongMacDinh;
+
+    private LocalTime gioTraPhongMacDinh;
+
+    private Integer soTang;
+
+    private Integer tongSoPhong;
 
     @OneToMany(mappedBy = "khachSan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Phong> danhSachPhong = new ArrayList<>();

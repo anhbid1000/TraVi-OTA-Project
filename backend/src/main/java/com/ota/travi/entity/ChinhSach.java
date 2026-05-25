@@ -13,8 +13,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "chinh_sach")
@@ -34,6 +38,35 @@ public class ChinhSach {
     private String noiDung;
 
     private LocalDate ngayApDung;
+
+    private LocalTime gioNhanPhong;
+
+    private LocalTime gioTraPhong;
+
+    private LocalTime gioMoCua;
+
+    private LocalTime gioDongCua;
+
+    @Column(columnDefinition = "TEXT")
+    private String chinhSachHuy;
+
+    @Column(columnDefinition = "TEXT")
+    private String chinhSachHoanTien;
+
+    @Column(columnDefinition = "TEXT")
+    private String quyDinhTreEm;
+
+    @Column(columnDefinition = "TEXT")
+    private String quyDinhVatNuoi;
+
+    @Column(columnDefinition = "TEXT")
+    private String ghiChuKhac;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ho_so_kinh_doanh_id", nullable = false, unique = true)

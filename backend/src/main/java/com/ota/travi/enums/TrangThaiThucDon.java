@@ -1,14 +1,12 @@
 package com.ota.travi.enums;
 
-public enum TrangThaiMonAn {
-    DANG_BAN("Đang bán"),
-    CO_SAN("Có sẵn"),
-    TAM_HET("Tạm hết"),
-    NGUNG_BAN("Ngừng bán");
+public enum TrangThaiThucDon {
+    DANG_HIEN_THI("Đang hiển thị"),
+    TAM_AN("Tạm ẩn");
 
     private final String displayName;
 
-    TrangThaiMonAn(String displayName) {
+    TrangThaiThucDon(String displayName) {
         this.displayName = displayName;
     }
 
@@ -16,3 +14,4 @@ public enum TrangThaiMonAn {
         return displayName;
     }
 }
+

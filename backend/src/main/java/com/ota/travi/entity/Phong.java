@@ -19,7 +19,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -47,11 +50,23 @@ public class Phong {
     private String soPhong;
 
     @Column(nullable = false)
+    private String tenPhong;
+
+    @Column(nullable = false)
     private String loaiPhong;
+
+    @Column(length = 1000)
+    private String moTa;
 
     private Integer sucChuaToiDa;
 
+    private Integer soGiuong;
+
     private Float dienTich;
+
+    private Double giaCoBan;
+
+    private Integer soLuongPhong;
 
     @Enumerated(EnumType.STRING)
     private TrangThaiPhong trangThai = TrangThaiPhong.SAN_SANG;
@@ -63,6 +78,15 @@ public class Phong {
     private Set<TienIchPhong> tienIch = new HashSet<>();
 
     private Float phanTramGiamGia = 0.0f;
+
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "phong", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnhPhong> danhSachAnh = new ArrayList<>();

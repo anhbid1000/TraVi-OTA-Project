@@ -19,6 +19,7 @@ import com.ota.travi.entity.TienIchKhachSan;
 import com.ota.travi.entity.TienIchNhaHang;
 import com.ota.travi.enums.LoaiDichVu;
 import com.ota.travi.enums.TrangThaiKiemDuyet;
+import com.ota.travi.enums.TrangThaiHoatDong;
 import com.ota.travi.exception.BusinessConflictException;
 import com.ota.travi.exception.ForbiddenOperationException;
 import com.ota.travi.exception.ResourceNotFoundException;
@@ -68,6 +69,7 @@ public class PartnerBusinessProfileService {
         hoSo.setDoiTac(doiTac);
         applyBusinessProfileFields(hoSo, request);
         hoSo.setTrangThaiKiemDuyet(TrangThaiKiemDuyet.CHO_DUYET);
+        hoSo.setTrangThaiHoatDong(TrangThaiHoatDong.CHUA_HOAT_DONG);
         hoSo.setThoiGianDuyet(null);
 
         ChinhSach chinhSach = toChinhSach(request.hoSo().chinhSach(), hoSo);
@@ -80,7 +82,7 @@ public class PartnerBusinessProfileService {
     @Transactional(readOnly = true)
     public List<HoSoKinhDoanhResponse> getBusinessProfiles(String partnerId) {
         requirePartner(partnerId);
-        return hoSoKinhDoanhRepository.findByDoiTac_Id(partnerId).stream()
+        return hoSoKinhDoanhRepository.findByDoiTac_IdAndDeletedFalse(partnerId).stream()
                 .map(partnerAssetMapper::toHoSoResponse)
                 .toList();
     }
@@ -110,6 +112,7 @@ public class PartnerBusinessProfileService {
 
         if (sensitiveChanged) {
             hoSo.setTrangThaiKiemDuyet(TrangThaiKiemDuyet.CHO_DUYET);
+            hoSo.setTrangThaiHoatDong(TrangThaiHoatDong.CHUA_HOAT_DONG);
             hoSo.setThoiGianDuyet(null);
             notifyAdminProfileNeedsReview(hoSo);
         }
@@ -135,6 +138,13 @@ public class PartnerBusinessProfileService {
     private void applyBusinessProfileFields(HoSoKinhDoanh hoSo, PartnerBusinessProfileRequest request) {
         hoSo.setTenCoSo(request.hoSo().tenCoSo());
         hoSo.setSdtLienHe(request.hoSo().sdtLienHe());
+        hoSo.setEmailLienHe(request.hoSo().emailLienHe());
+        hoSo.setDiaChi(request.hoSo().diaChi());
+        hoSo.setThanhPho(request.hoSo().thanhPho());
+        hoSo.setQuanHuyen(request.hoSo().quanHuyen());
+        hoSo.setPhuongXa(request.hoSo().phuongXa());
+        hoSo.setKinhDo(request.hoSo().kinhDo());
+        hoSo.setViDo(request.hoSo().viDo());
         hoSo.setLoaiDichVu(request.hoSo().loaiDichVu());
         hoSo.setMaSoThue(request.hoSo().maSoThue());
         hoSo.setGiayPhepKinhDoanh(request.hoSo().giayPhepKinhDoanh());
@@ -161,6 +171,15 @@ public class PartnerBusinessProfileService {
         chinhSach.setLoaiChinhSach(request.loaiChinhSach());
         chinhSach.setNoiDung(request.noiDung());
         chinhSach.setNgayApDung(request.ngayApDung());
+        chinhSach.setGioNhanPhong(request.gioNhanPhong());
+        chinhSach.setGioTraPhong(request.gioTraPhong());
+        chinhSach.setGioMoCua(request.gioMoCua());
+        chinhSach.setGioDongCua(request.gioDongCua());
+        chinhSach.setChinhSachHuy(request.chinhSachHuy());
+        chinhSach.setChinhSachHoanTien(request.chinhSachHoanTien());
+        chinhSach.setQuyDinhTreEm(request.quyDinhTreEm());
+        chinhSach.setQuyDinhVatNuoi(request.quyDinhVatNuoi());
+        chinhSach.setGhiChuKhac(request.ghiChuKhac());
     }
 
     private void addPrimaryAsset(HoSoKinhDoanh hoSo, PartnerBusinessProfileRequest request) {
@@ -236,11 +255,16 @@ public class PartnerBusinessProfileService {
     private void applyKhachSan(KhachSan khachSan, KhachSanRequest request) {
         khachSan.setTen(request.ten());
         khachSan.setHangSao(request.hangSao());
+        khachSan.setLoaiKhachSan(request.loaiKhachSan());
         khachSan.setMoTa(request.moTa());
         khachSan.setGiaCoBan(request.giaCoBan());
         khachSan.setIsDynamicPricing(Boolean.TRUE.equals(request.isDynamicPricing()));
         khachSan.setGioNhanPhong(request.gioNhanPhong());
         khachSan.setGioTraPhong(request.gioTraPhong());
+        khachSan.setGioNhanPhongMacDinh(request.gioNhanPhongMacDinh());
+        khachSan.setGioTraPhongMacDinh(request.gioTraPhongMacDinh());
+        khachSan.setSoTang(request.soTang());
+        khachSan.setTongSoPhong(request.tongSoPhong());
     }
 
     private void applyNhaHang(NhaHang nhaHang, NhaHangRequest request) {
@@ -252,6 +276,8 @@ public class PartnerBusinessProfileService {
         nhaHang.setSucChua(request.sucChua());
         nhaHang.setGioMoCua(request.gioMoCua());
         nhaHang.setGioDongCua(request.gioDongCua());
+        nhaHang.setCoDatBanTruoc(request.coDatBanTruoc() == null || request.coDatBanTruoc());
+        nhaHang.setCoDatMonTruoc(request.coDatMonTruoc() == null || request.coDatMonTruoc());
     }
 
     private void replaceHotelImages(KhachSan khachSan, List<AnhRequest> requests) {

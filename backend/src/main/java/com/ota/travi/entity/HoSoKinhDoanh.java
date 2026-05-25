@@ -19,8 +19,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import com.ota.travi.enums.LoaiDichVu;
+import com.ota.travi.enums.TrangThaiHoatDong;
 import com.ota.travi.enums.TrangThaiKiemDuyet;
 
 import java.time.LocalDateTime;
@@ -62,6 +64,25 @@ public class HoSoKinhDoanh {
     @Column(nullable = false, length = 20)
     private String sdtLienHe;
 
+    @Column(length = 255)
+    private String emailLienHe;
+
+    @Column(length = 255)
+    private String diaChi;
+
+    @Column(length = 100)
+    private String thanhPho;
+
+    @Column(length = 100)
+    private String quanHuyen;
+
+    @Column(length = 100)
+    private String phuongXa;
+
+    private Double kinhDo;
+
+    private Double viDo;
+
     private String oldTenCoSo;
 
     private String oldSdtLienHe;
@@ -78,14 +99,30 @@ public class HoSoKinhDoanh {
     @Column(nullable = false)
     private TrangThaiKiemDuyet trangThaiKiemDuyet = TrangThaiKiemDuyet.CHO_DUYET;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TrangThaiHoatDong trangThaiHoatDong = TrangThaiHoatDong.CHUA_HOAT_DONG;
+
+    @Column(length = 1000)
+    private String lyDoTuChoiGanNhat;
+
     @CreationTimestamp
     private LocalDateTime thoiGianDangKy;
 
+    @UpdateTimestamp
+    private LocalDateTime thoiGianCapNhat;
+
     private LocalDateTime thoiGianDuyet;
+
+    @Column(nullable = false)
+    private Boolean deleted = false;
 
     @OneToOne(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
     private ChinhSach chinhSach;
 
     @OneToMany(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TaiSan> danhSachTaiSan = new ArrayList<>();
+
+    @OneToMany(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LichSuKiemDuyetHoSo> lichSuKiemDuyet = new ArrayList<>();
 }

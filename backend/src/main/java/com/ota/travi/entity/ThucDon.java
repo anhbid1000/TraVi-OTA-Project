@@ -1,7 +1,10 @@
 package com.ota.travi.entity;
 
+import com.ota.travi.enums.TrangThaiThucDon;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,7 +17,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +39,18 @@ public class ThucDon {
     @JoinColumn(name = "nha_hang_id", nullable = false)
     private NhaHang nhaHang;
 
+    private String tenThucDon;
+
     private String phanLoai;
+
+    @Enumerated(EnumType.STRING)
+    private TrangThaiThucDon trangThai = TrangThaiThucDon.DANG_HIEN_THI;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "thucDon", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MonAn> monAn = new ArrayList<>();

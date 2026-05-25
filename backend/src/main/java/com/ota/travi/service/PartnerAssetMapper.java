@@ -186,7 +186,18 @@ public class PartnerAssetMapper {
                 chinhSach.getHoSoKinhDoanh().getIdHoSo(),
                 chinhSach.getLoaiChinhSach(),
                 chinhSach.getNoiDung(),
-                chinhSach.getNgayApDung()
+                chinhSach.getNgayApDung(),
+                chinhSach.getGioNhanPhong(),
+                chinhSach.getGioTraPhong(),
+                chinhSach.getGioMoCua(),
+                chinhSach.getGioDongCua(),
+                chinhSach.getChinhSachHuy(),
+                chinhSach.getChinhSachHoanTien(),
+                chinhSach.getQuyDinhTreEm(),
+                chinhSach.getQuyDinhVatNuoi(),
+                chinhSach.getGhiChuKhac(),
+                chinhSach.getCreatedAt(),
+                chinhSach.getUpdatedAt()
         );
     }
 

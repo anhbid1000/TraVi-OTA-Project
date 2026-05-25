@@ -17,6 +17,25 @@ public record HoSoKinhDoanhRequest(
         @Pattern(regexp = "^(\\+84|0)\\d{9}$", message = "Số điện thoại liên hệ không hợp lệ")
         String sdtLienHe,
 
+        @Size(max = 255, message = "Email liên hệ không được vượt quá 255 ký tự")
+        String emailLienHe,
+
+        @Size(max = 255, message = "Địa chỉ không được vượt quá 255 ký tự")
+        String diaChi,
+
+        @Size(max = 100, message = "Thành phố không được vượt quá 100 ký tự")
+        String thanhPho,
+
+        @Size(max = 100, message = "Quận/huyện không được vượt quá 100 ký tự")
+        String quanHuyen,
+
+        @Size(max = 100, message = "Phường/xã không được vượt quá 100 ký tự")
+        String phuongXa,
+
+        Double kinhDo,
+
+        Double viDo,
+
         @NotNull(message = "Loại dịch vụ không được để trống")
         LoaiDichVu loaiDichVu,
 
