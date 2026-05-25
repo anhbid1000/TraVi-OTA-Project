@@ -8,7 +8,7 @@ import {
 import { authService } from '../services/authService'
 import { tokenStorage } from '../services/tokenStorage'
 import { AuthContext, type AuthContextValue } from './authContext'
-import type { AuthUser, LoginRequest } from '../types/auth'
+import type { AuthUser, GoogleAuthRequest, LoginRequest } from '../types/auth'
 
 type AuthProviderProps = {
   children: ReactNode
@@ -39,6 +39,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       try {
         const auth = await authService.login(payload)
+        syncSessionFromStorage()
+        return auth
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [syncSessionFromStorage],
+  )
+
+  const loginWithGoogle = useCallback(
+    async (payload: GoogleAuthRequest) => {
+      setIsLoading(true)
+
+      try {
+        const auth = await authService.loginWithGoogle(payload)
         syncSessionFromStorage()
         return auth
       } finally {
@@ -99,10 +114,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isAuthenticated: Boolean(accessToken && !tokenStorage.isAccessTokenExpired()),
       isLoading,
       login,
+      loginWithGoogle,
       logout,
       refreshSession,
     }),
-    [accessToken, isLoading, login, logout, refreshSession, refreshToken, user],
+    [accessToken, isLoading, login, loginWithGoogle, logout, refreshSession, refreshToken, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

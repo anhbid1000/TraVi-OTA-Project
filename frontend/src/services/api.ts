@@ -29,6 +29,23 @@ export const api = axios.create({
 
 let refreshPromise: Promise<AuthResponse> | null = null
 
+const normalizeRequestUrl = (url?: string) => {
+  if (!url) {
+    return ''
+  }
+
+  return url.startsWith('http') ? url.replace(API_BASE_URL, '') : url
+}
+
+const isPublicAuthRequest = (url?: string) => {
+  const normalizedUrl = normalizeRequestUrl(url)
+
+  return (
+    normalizedUrl.startsWith('/v1/auth/') &&
+    normalizedUrl !== '/v1/auth/logout'
+  )
+}
+
 const refreshAccessToken = async () => {
   const refreshToken = tokenStorage.getRefreshToken()
 
@@ -55,7 +72,7 @@ const refreshAccessToken = async () => {
 api.interceptors.request.use((config) => {
   const token = tokenStorage.getAccessToken()
 
-  if (token) {
+  if (token && !isPublicAuthRequest(config.url)) {
     config.headers.Authorization = `${tokenStorage.getTokenType()} ${token}`
   }
 
@@ -67,8 +84,7 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetriableRequestConfig | undefined
     const status = error.response?.status
-    const requestUrl = originalRequest?.url ?? ''
-    const isAuthRequest = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/refresh')
+    const isAuthRequest = isPublicAuthRequest(originalRequest?.url)
 
     if (status !== 401 || !originalRequest || originalRequest._retry || isAuthRequest) {
       return Promise.reject(error)

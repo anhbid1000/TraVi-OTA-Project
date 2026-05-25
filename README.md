@@ -62,8 +62,7 @@ Project-TraVi-OTA/
 4. Cách chạy Local
    Chạy Backend:
    cd backend
-   ./mvnw clean compile -DskipTests // clean + compile bỏ test | Dành cho dev khi chỉ cần compile nhanh để chạy | Nếu ko có thể dùng mvnw clean install ==> clean+ compile + test+ đóng gói JAR ==> để đi deploy luôn
-   ./mvnw clean spring-boot:run "-Dspring-boot.run.profiles=dev"
+   ./mvnw clean spring-boot:run -Dspring-boot.run.profiles=dev
    Chạy Frontend:
    cd frontend
    npm install
