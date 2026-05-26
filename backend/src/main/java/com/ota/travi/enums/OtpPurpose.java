@@ -1,4 +1,4 @@
-package com.ota.travi.Enum;
+package com.ota.travi.enums;
 
 public enum OtpPurpose {
     REGISTER_VERIFICATION,

@@ -1,12 +1,13 @@
 package com.ota.travi.entity;
 
 
-import com.ota.travi.Enum.HangThanhVien;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
 import java.util.Set;
+
+import com.ota.travi.enums.HangThanhVien;
 
 @Entity
 @Table(name = "khach_hang")
