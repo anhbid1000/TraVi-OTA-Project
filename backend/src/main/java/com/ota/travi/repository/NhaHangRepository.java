@@ -4,13 +4,14 @@ import com.ota.travi.entity.NhaHang;
 import com.ota.travi.enums.TrangThaiTaiSan;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface NhaHangRepository extends JpaRepository<NhaHang, String> {
+public interface NhaHangRepository extends JpaRepository<NhaHang, String>, JpaSpecificationExecutor<NhaHang> {
     List<NhaHang> findByHoSoKinhDoanh_IdHoSo(String hoSoKinhDoanhId);
 
     List<NhaHang> findByTrangThai(TrangThaiTaiSan trangThai);
