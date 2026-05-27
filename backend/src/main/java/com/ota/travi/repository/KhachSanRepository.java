@@ -16,4 +16,6 @@ public interface KhachSanRepository extends JpaRepository<KhachSan, String> {
     List<KhachSan> findByTrangThai(TrangThaiTaiSan trangThai);
 
     Optional<KhachSan> findByIdTaiSanAndHoSoKinhDoanh_IdHoSo(String khachSanId, String hoSoKinhDoanhId);
+
+    boolean existsByIdTaiSanAndHoSoKinhDoanh_IdHoSo(String khachSanId, String hoSoKinhDoanhId);
 }

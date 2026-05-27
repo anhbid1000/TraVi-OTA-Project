@@ -16,4 +16,6 @@ public interface NhaHangRepository extends JpaRepository<NhaHang, String> {
     List<NhaHang> findByTrangThai(TrangThaiTaiSan trangThai);
 
     Optional<NhaHang> findByIdTaiSanAndHoSoKinhDoanh_IdHoSo(String nhaHangId, String hoSoKinhDoanhId);
+
+    boolean existsByIdTaiSanAndHoSoKinhDoanh_IdHoSo(String nhaHangId, String hoSoKinhDoanhId);
 }

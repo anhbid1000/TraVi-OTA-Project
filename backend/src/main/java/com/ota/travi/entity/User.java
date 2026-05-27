@@ -60,6 +60,9 @@ public abstract class User {
     @UpdateTimestamp
     protected LocalDateTime ngayCapNhat;
 
+    @Version
+    protected Long version;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vai_tro_id")
     protected VaiTro vaiTro;

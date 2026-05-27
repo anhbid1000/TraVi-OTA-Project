@@ -50,6 +50,7 @@ CREATE TABLE users (
                        lan_cuoi_dang_nhap TIMESTAMP,
                        ngay_tao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                        ngay_cap_nhat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       version BIGINT NOT NULL DEFAULT 0,
                        vai_tro_id VARCHAR(36) REFERENCES vai_tro(id) ON DELETE SET NULL
 );
 

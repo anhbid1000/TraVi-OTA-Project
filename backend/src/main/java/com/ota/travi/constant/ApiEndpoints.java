@@ -4,7 +4,6 @@ public final class ApiEndpoints {
 
     private ApiEndpoints() {
     }
-
     // Base & Versioning
     public static final String API_PREFIX = "/api";
     public static final String API_VERSION = "/v1";
@@ -34,6 +33,10 @@ public final class ApiEndpoints {
     public static final String USER_BOOKINGS = USER_PREFIX + "/bookings";
     public static final String USER_REVIEWS = USER_PREFIX + "/reviews";
     public static final String USER_RECOMMENDATIONS = USER_PREFIX + "/recommendations"; // AI hints
+    public static final String CUSTOMERS_PREFIX = BASE_PREFIX + "/customers";
+    public static final String CUSTOMER_LOYALTY = CUSTOMERS_PREFIX + "/me/loyalty";
+    public static final String CUSTOMER_LOYALTY_EXCHANGEABLE_VOUCHERS = CUSTOMER_LOYALTY + "/exchangeable-vouchers";
+    public static final String CUSTOMER_LOYALTY_EXCHANGE = CUSTOMER_LOYALTY + "/exchange";
 
     // 3. PARTNER - Partner / Vendor endpoints (ROLE: PARTNER)
     public static final String PARTNER_LEGACY_PREFIX = API_PREFIX + "/partner";
@@ -43,6 +46,8 @@ public final class ApiEndpoints {
     public static final String PARTNER_HOTELS = PARTNER_PREFIX + "/hotels"; // manage partner hotels
     public static final String PARTNER_RESTAURANTS = PARTNER_PREFIX + "/restaurants";
     public static final String PARTNER_PROMOTIONS = PARTNER_PREFIX + "/promotions";
+    public static final String PARTNER_PROMOTIONS_PAUSE = PARTNER_PROMOTIONS + "/{id}/pause";
+    public static final String PARTNER_PROMOTIONS_RESUME = PARTNER_PROMOTIONS + "/{id}/resume";
     public static final String PARTNER_ANALYTICS = PARTNER_PREFIX + "/analytics";
 
     // 4. ADMIN - Admin dashboard & management (ROLE: ADMIN)
@@ -51,6 +56,10 @@ public final class ApiEndpoints {
     public static final String ADMIN_APPROVALS = ADMIN_PREFIX + "/approvals";
     public static final String ADMIN_CONFIGS = ADMIN_PREFIX + "/configs";
     public static final String ADMIN_MONITORING = ADMIN_PREFIX + "/activities";
+    public static final String ADMIN_PROMOTIONS = ADMIN_PREFIX + "/promotions";
+    public static final String ADMIN_PROMOTIONS_PAUSE = ADMIN_PROMOTIONS + "/{id}/pause";
+    public static final String ADMIN_PROMOTIONS_RESUME = ADMIN_PROMOTIONS + "/{id}/resume";
+    public static final String ADMIN_LOYALTY_RULES = ADMIN_PREFIX + "/loyalty/rules";
 
     // 5. EXTERNAL SYSTEMS - Integrations (Payment, Map, Notification, etc.)
     public static final String SYSTEMS_PREFIX = BASE_PREFIX + "/systems";
