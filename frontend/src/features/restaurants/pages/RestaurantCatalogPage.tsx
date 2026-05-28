@@ -1,15 +1,16 @@
+// Trang thuộc module nhà hàng. File được đặt trong features/restaurants để gom UI, hook, service và type cùng miền nghiệp vụ.
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Heart, Map, MapPin } from 'lucide-react'
-import { AuthActions } from '../../components/layout/AuthActions'
-import { CatalogSearchBar } from '../../features/catalog/components'
-import { useQueryParams } from '../../hooks/useQueryParams'
-import { useRestaurantSearch } from '../../features/restaurants/hooks/useRestaurantSearch'
-import { getRestaurantFilterOptions } from '../../features/restaurants/services/restaurantService'
-import type { RestaurantCatalog } from '../../features/restaurants/types'
-import type { FilterOption } from '../../features/hotels/types'
-import { formatFilterLabel, formatPriceBounds } from '../../utils/display'
+import { AuthActions } from '../../../components/layout/AuthActions'
+import { CatalogSearchBar } from '../../catalog/components'
+import { useQueryParams } from '../../../hooks/useQueryParams'
+import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
+import { getRestaurantFilterOptions } from '../services/restaurantService'
+import type { RestaurantCatalog } from '../types'
+import type { FilterOption } from '../../hotels/types'
+import { formatFilterLabel, formatPriceBounds } from '../../../utils/display'
 
 // ─── Helpers ─────────────────────────────────────────────────
 function toggleItem(list: string[], item: string): string[] {

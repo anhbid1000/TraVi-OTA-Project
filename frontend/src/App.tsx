@@ -12,10 +12,10 @@ import { useAuth } from './hooks/useAuth'
 import { ForbiddenPage } from './pages/ForbiddenPage'
 import { HomePage } from './pages/HomePage'
 import { AdminRoute, ProtectedRoute, StaffRoute } from './routes'
-import { HotelCatalogPage } from './pages/hotels/HotelCatalogPage'
-import { RestaurantCatalogPage } from './pages/restaurants/RestaurantCatalogPage'
-import { HotelDetailPage } from './pages/hotels/HotelDetailPage'
-import { RestaurantDetailPage } from './pages/restaurants/RestaurantDetailPage'
+import { HotelCatalogPage } from './features/hotels/pages/HotelCatalogPage'
+import { RestaurantCatalogPage } from './features/restaurants/pages/RestaurantCatalogPage'
+import { HotelDetailPage } from './features/hotels/pages/HotelDetailPage'
+import { RestaurantDetailPage } from './features/restaurants/pages/RestaurantDetailPage'
 import './App.css'
 
 function PaymentPage() {
@@ -71,6 +71,23 @@ function NotFoundPage() {
   )
 }
 
+/**
+ * Component App - Routing chính của ứng dụng TraVi OTA
+ * Cấu trúc route:
+ * /                             - Trang chủ
+ * /hotels                       - Danh sách khách sạn (catalog)
+ * /hotels/:id                   - Chi tiết khách sạn
+ * /restaurants                  - Danh sách nhà hàng (catalog)
+ * /restaurants/:id              - Chi tiết nhà hàng
+ * /login, /register, ...        - Auth flow cho khách
+ * /partner/login, ...           - Auth flow cho đối tác
+ * /admin/login                  - Auth flow cho admin
+ * /payment                      - Trang thanh toán (protected)
+ * /admin                        - Dashboard admin (protected)
+ * /partner                      - Dashboard đối tác (protected)
+ * /403                          - Trang lỗi 403 Forbidden
+ * *                             - Trang 404 Not Found
+ */
 function App() {
   return (
     <BrowserRouter>

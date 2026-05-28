@@ -1,3 +1,4 @@
+// Trang thuộc module khách sạn. File được đặt trong features/hotels để gom UI, hook, service và type cùng miền nghiệp vụ.
 import { useMemo, useState } from 'react'
 
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -11,9 +12,9 @@ import {
   SelectableItemCard,
   StickyBookingBar,
   WeatherAlertCard,
-} from '../../features/detail/components'
-import { useHotelDetail } from '../../features/hotels/hooks/useHotelDetail'
-import { formatVnd } from '../../utils/display'
+} from '../../detail/components'
+import { useHotelDetail } from '../hooks/useHotelDetail'
+import { formatVnd } from '../../../utils/display'
 
 function toPositiveNumber(value: string | null, fallback: number) {
   const parsed = Number(value)

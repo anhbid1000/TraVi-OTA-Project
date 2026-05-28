@@ -39,6 +39,9 @@ import static com.ota.travi.constant.ApiEndpoints.PUBLIC_RESTAURANTS_FILTER_OPTI
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_RESTAURANTS_SEARCH;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_WEATHER_FORECAST;
 
+/**
+ * Controller phục vụ dữ liệu catalog công khai (Public Catalog) cho khách vãng lai và thành viên.
+ **/
 @RestController
 public class PublicCatalogController {
     private final PublicCatalogService publicCatalogService;
@@ -74,6 +77,35 @@ public class PublicCatalogController {
             }
             if (guests == null || guests < 1) {
                 return new ResponseEntity<>("Số khách phải lớn hơn hoặc bằng 1.", HttpStatus.BAD_REQUEST);
+            }
+
+        // 1. Kiểm tra tham số cơ bản
+            if (page != null && page < 0) {
+                return new ResponseEntity<>("Trang phải lớn hơn hoặc bằng 0.", HttpStatus.BAD_REQUEST);
+            }
+            if (size != null && (size < 1 || size > 50)) {
+                return new ResponseEntity<>("Số lượng kết quả mỗi trang phải từ 1 đến 50.", HttpStatus.BAD_REQUEST);
+            }
+            if (minPrice != null && minPrice.compareTo(BigDecimal.ZERO) < 0) {
+                return new ResponseEntity<>("Giá tối thiểu không hợp lệ.", HttpStatus.BAD_REQUEST);
+            }
+            if (maxPrice != null && minPrice != null && maxPrice.compareTo(minPrice) < 0) {
+                return new ResponseEntity<>("Giá tối đa không được nhỏ hơn giá tối thiểu.", HttpStatus.BAD_REQUEST);
+            }
+            if (stars != null && !stars.isBlank()) {
+                List<Integer> starList = parseIntegerList(stars);
+                for (Integer star : starList) {
+                    if (star < 1 || star > 5) {
+                        return new ResponseEntity<>("Hạng sao phải từ 1 đến 5.", HttpStatus.BAD_REQUEST);
+                    }
+                }
+            }
+            // Validate sort parameter
+            if (sort != null && !sort.isBlank()) {
+                List<String> validSorts = List.of("popular_desc", "price_asc", "price_desc", "rating_desc");
+                if (!validSorts.contains(sort)) {
+                    return new ResponseEntity<>("Tham số sắp xếp không hợp lệ. Các giá trị cho phép: " + String.join(", ", validSorts), HttpStatus.BAD_REQUEST);
+                }
             }
 
             // 1. Xây dựng đối tượng HotelSearchRequest từ các tham số query
@@ -169,11 +201,37 @@ public class PublicCatalogController {
             if (date == null || time == null) {
                 return new ResponseEntity<>("Vui lòng chọn ngày và giờ dùng bữa.", HttpStatus.BAD_REQUEST);
             }
+
+            LocalDateTime reservationDateTime = LocalDateTime.of(date, time);
+            if (reservationDateTime.isBefore(LocalDateTime.now())) {
+                return new ResponseEntity<>("Ngày giờ đặt chỗ không được ở quá khứ.", HttpStatus.BAD_REQUEST);
+            }
+
             if (guests == null || guests < 1) {
                 return new ResponseEntity<>("Số khách phải lớn hơn hoặc bằng 1.", HttpStatus.BAD_REQUEST);
             }
 
-            // 1. Xây dựng đối tượng RestaurantSearchRequest từ các tham số query
+            // Validate paging/price/sort
+            if (page != null && page < 0) {
+                return new ResponseEntity<>("Trang phải lớn hơn hoặc bằng 0.", HttpStatus.BAD_REQUEST);
+            }
+            if (size != null && (size < 1 || size > 50)) {
+                return new ResponseEntity<>("Số lượng kết quả mỗi trang phải từ 1 đến 50.", HttpStatus.BAD_REQUEST);
+            }
+            if (minPrice != null && minPrice.compareTo(BigDecimal.ZERO) < 0) {
+                return new ResponseEntity<>("Giá tối thiểu không hợp lệ.", HttpStatus.BAD_REQUEST);
+            }
+            if (maxPrice != null && minPrice != null && maxPrice.compareTo(minPrice) < 0) {
+                return new ResponseEntity<>("Giá tối đa không được nhỏ hơn giá tối thiểu.", HttpStatus.BAD_REQUEST);
+            }
+            if (sort != null && !sort.isBlank()) {
+                List<String> validSorts = List.of("popular_desc", "price_asc", "price_desc", "rating_desc");
+                if (!validSorts.contains(sort)) {
+                    return new ResponseEntity<>("Tham số sắp xếp không hợp lệ. Các giá trị cho phép: " + String.join(", ", validSorts), HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            // Build request
             RestaurantSearchRequest request = new RestaurantSearchRequest(
                     city,
                     keyword,
@@ -189,13 +247,13 @@ public class PublicCatalogController {
                     size
             );
 
-            // 2. Xác thực dữ liệu yêu cầu
+            // Validate using Jakarta Validator on DTO
             String error = validateRequest(request);
             if (error != null) {
                 return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
             }
 
-            // 3. Gọi service để tìm kiếm nhà hàng và trả về danh sách kết quả
+            // Call service
             Page<RestaurantCatalogResponse> response = publicCatalogService.searchRestaurants(request);
             return ResponseEntity.ok(response);
         } catch (RuntimeException ex) {

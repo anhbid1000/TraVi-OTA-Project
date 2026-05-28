@@ -647,11 +647,11 @@ public class PublicCatalogService {
 
     private ChinhSachResponse mapPolicy(String businessProfileId) {
         return chinhSachRepository.findByHoSoKinhDoanh_IdHoSo(businessProfileId)
-                .map(this::toPolicyResponse)
+                .map(this::toChinhSachResponse)
                 .orElse(null);
     }
 
-    private ChinhSachResponse toPolicyResponse(ChinhSach policy) {
+    private ChinhSachResponse toChinhSachResponse(ChinhSach policy) {
         return new ChinhSachResponse(
                 policy.getId(),
                 policy.getHoSoKinhDoanh().getIdHoSo(),

@@ -1,3 +1,4 @@
+// Trang thuộc module nhà hàng. File được đặt trong features/restaurants để gom UI, hook, service và type cùng miền nghiệp vụ.
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CalendarDays, Clock3, Users } from 'lucide-react'
@@ -10,9 +11,9 @@ import {
   SelectableItemCard,
   StickyBookingBar,
   WeatherAlertCard,
-} from '../../features/detail/components'
-import { useRestaurantDetail } from '../../features/restaurants/hooks/useRestaurantDetail'
-import { formatVnd } from '../../utils/display'
+} from '../../detail/components'
+import { useRestaurantDetail } from '../hooks/useRestaurantDetail'
+import { formatVnd } from '../../../utils/display'
 
 type MenuTag = 'Tất cả' | string
 

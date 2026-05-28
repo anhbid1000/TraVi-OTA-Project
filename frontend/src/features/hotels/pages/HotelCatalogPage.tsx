@@ -1,14 +1,15 @@
+// Trang thuộc module khách sạn. File được đặt trong features/hotels để gom UI, hook, service và type cùng miền nghiệp vụ.
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Heart, Map, MapPin } from 'lucide-react'
-import { AuthActions } from '../../components/layout/AuthActions'
-import { CatalogSearchBar } from '../../features/catalog/components'
-import { getHotelFilterOptions } from '../../features/hotels/services/hotelService'
-import { useQueryParams } from '../../hooks/useQueryParams'
-import { useHotelSearch } from '../../features/hotels/hooks/useHotelSearch'
-import type { FilterOption, HotelCatalog } from '../../features/hotels/types'
-import { formatFilterLabel, formatPriceBounds, formatVnd } from '../../utils/display'
+import { AuthActions } from '../../../components/layout/AuthActions'
+import { CatalogSearchBar } from '../../catalog/components'
+import { getHotelFilterOptions } from '../services/hotelService'
+import { useQueryParams } from '../../../hooks/useQueryParams'
+import { useHotelSearch } from '../hooks/useHotelSearch'
+import type { FilterOption, HotelCatalog } from '../types'
+import { formatFilterLabel, formatPriceBounds, formatVnd } from '../../../utils/display'
 
 function toggleItem(list: string[], item: string): string[] {
   return list.includes(item) ? list.filter((x) => x !== item) : [...list, item]
