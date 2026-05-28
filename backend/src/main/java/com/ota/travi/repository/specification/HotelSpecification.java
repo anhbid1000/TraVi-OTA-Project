@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.Specification;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public final class HotelSpecification {
 
@@ -82,7 +83,15 @@ public final class HotelSpecification {
             }
             query.distinct(true);
             Join<KhachSan, TienIchKhachSan> amenityJoin = root.join("tienIch", JoinType.INNER);
-            return amenityJoin.get("id").in(amenityIds);
+            List<String> normalizedAmenities = amenityIds.stream()
+                    .map(String::trim)
+                    .filter(value -> !value.isBlank())
+                    .map(value -> value.toLowerCase(Locale.ROOT))
+                    .collect(Collectors.toList());
+            if (normalizedAmenities.isEmpty()) {
+                return null;
+            }
+            return cb.lower(amenityJoin.get("tenTienIch")).in(normalizedAmenities);
         };
     }
 

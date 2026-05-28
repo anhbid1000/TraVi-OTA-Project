@@ -13,10 +13,15 @@ public final class ApiEndpoints {
     // 1. GUEST - Public routes (no auth required)
     public static final String PUBLIC_PREFIX = BASE_PREFIX + "/public";
     public static final String PUBLIC_HOTELS_SEARCH = PUBLIC_PREFIX + "/hotels/search";
+    public static final String PUBLIC_HOTELS_FEATURED = PUBLIC_PREFIX + "/hotels/featured";
+    public static final String PUBLIC_HOTELS_FILTER_OPTIONS = PUBLIC_PREFIX + "/hotels/filter-options/data";
     public static final String PUBLIC_HOTEL_DETAIL = PUBLIC_PREFIX + "/hotels/{id}";
     public static final String PUBLIC_RESTAURANTS_SEARCH = PUBLIC_PREFIX + "/restaurants/search";
+    public static final String PUBLIC_RESTAURANTS_FEATURED = PUBLIC_PREFIX + "/restaurants/featured";
+    public static final String PUBLIC_RESTAURANTS_FILTER_OPTIONS = PUBLIC_PREFIX + "/restaurants/filter-options/data";
     public static final String PUBLIC_RESTAURANT_DETAIL = PUBLIC_PREFIX + "/restaurants/{id}";
     public static final String PUBLIC_WEATHER_FORECAST = PUBLIC_PREFIX + "/weather/forecast";
+    public static final String PUBLIC_CITIES = PUBLIC_PREFIX + "/locations/cities";
     public static final String PUBLIC_ROOMS_SEARCH = PUBLIC_PREFIX + "/rooms/search"; // planned
     public static final String PUBLIC_CULTURE_SPOTS = PUBLIC_PREFIX + "/culture-spots"; // planned
 

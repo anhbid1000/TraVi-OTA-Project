@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,8 +29,13 @@ import java.util.List;
 import java.util.Set;
 
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_HOTEL_DETAIL;
+import static com.ota.travi.constant.ApiEndpoints.PUBLIC_HOTELS_FEATURED;
+import static com.ota.travi.constant.ApiEndpoints.PUBLIC_HOTELS_FILTER_OPTIONS;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_HOTELS_SEARCH;
+import static com.ota.travi.constant.ApiEndpoints.PUBLIC_CITIES;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_RESTAURANT_DETAIL;
+import static com.ota.travi.constant.ApiEndpoints.PUBLIC_RESTAURANTS_FEATURED;
+import static com.ota.travi.constant.ApiEndpoints.PUBLIC_RESTAURANTS_FILTER_OPTIONS;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_RESTAURANTS_SEARCH;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_WEATHER_FORECAST;
 
@@ -46,10 +52,10 @@ public class PublicCatalogController {
     // --- 1. API TÌM KIẾM KHÁCH SẠN (SEARCH HOTELS) ---
     @GetMapping(PUBLIC_HOTELS_SEARCH)
     public ResponseEntity<?> searchHotels(
-            @RequestParam String city,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut,
-            @RequestParam Integer guests,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut,
+            @RequestParam(required = false) Integer guests,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
@@ -60,6 +66,16 @@ public class PublicCatalogController {
             @RequestParam(required = false) Integer size
     ) {
         try {
+            if (city == null || city.isBlank()) {
+                return new ResponseEntity<>("Vui lòng chọn thành phố.", HttpStatus.BAD_REQUEST);
+            }
+            if (checkIn == null || checkOut == null) {
+                return new ResponseEntity<>("Vui lòng chọn ngày nhận và trả phòng.", HttpStatus.BAD_REQUEST);
+            }
+            if (guests == null || guests < 1) {
+                return new ResponseEntity<>("Số khách phải lớn hơn hoặc bằng 1.", HttpStatus.BAD_REQUEST);
+            }
+
             // 1. Xây dựng đối tượng HotelSearchRequest từ các tham số query
             HotelSearchRequest request = new HotelSearchRequest(
                     city,
@@ -107,14 +123,37 @@ public class PublicCatalogController {
         }
     }
 
+    @GetMapping(PUBLIC_HOTELS_FEATURED)
+    public ResponseEntity<?> getFeaturedHotels(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut,
+            @RequestParam(required = false) Integer guests,
+            @RequestParam(required = false) Integer size
+    ) {
+        try {
+            LocalDate resolvedCheckIn = checkIn == null ? LocalDate.now().plusDays(1) : checkIn;
+            LocalDate resolvedCheckOut = checkOut == null ? resolvedCheckIn.plusDays(1) : checkOut;
+            int resolvedGuests = guests == null || guests < 1 ? 2 : guests;
+
+            if (!resolvedCheckOut.isAfter(resolvedCheckIn)) {
+                resolvedCheckOut = resolvedCheckIn.plusDays(1);
+            }
+
+            return ResponseEntity.ok(publicCatalogService.getFeaturedHotels(resolvedCheckIn, resolvedCheckOut, resolvedGuests, size));
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     // --- 3. API TÌM KIẾM NHÀ HÀNG (SEARCH RESTAURANTS) ---
     @GetMapping(PUBLIC_RESTAURANTS_SEARCH)
     public ResponseEntity<?> searchRestaurants(
-            @RequestParam String city,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time,
-            @RequestParam Integer guests,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time,
+            @RequestParam(required = false) Integer guests,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String cuisine,
             @RequestParam(required = false) String cuisineType,
             @RequestParam(required = false) String amenities,
             @RequestParam(required = false) BigDecimal minPrice,
@@ -124,6 +163,16 @@ public class PublicCatalogController {
             @RequestParam(required = false) Integer size
     ) {
         try {
+            if (city == null || city.isBlank()) {
+                return new ResponseEntity<>("Vui lòng chọn thành phố.", HttpStatus.BAD_REQUEST);
+            }
+            if (date == null || time == null) {
+                return new ResponseEntity<>("Vui lòng chọn ngày và giờ dùng bữa.", HttpStatus.BAD_REQUEST);
+            }
+            if (guests == null || guests < 1) {
+                return new ResponseEntity<>("Số khách phải lớn hơn hoặc bằng 1.", HttpStatus.BAD_REQUEST);
+            }
+
             // 1. Xây dựng đối tượng RestaurantSearchRequest từ các tham số query
             RestaurantSearchRequest request = new RestaurantSearchRequest(
                     city,
@@ -131,7 +180,7 @@ public class PublicCatalogController {
                     date,
                     time,
                     guests,
-                    cuisineType,
+                    parseStringList(cuisine != null ? cuisine : cuisineType),
                     parseStringList(amenities),
                     minPrice,
                     maxPrice,
@@ -166,6 +215,57 @@ public class PublicCatalogController {
             // Gọi service để lấy chi tiết nhà hàng với thông tin bàn, menu, tiện ích
             RestaurantDetailResponse response = publicCatalogService.getRestaurantDetail(id, date, time, guests);
             return ResponseEntity.ok(response);
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping(PUBLIC_RESTAURANTS_FEATURED)
+    public ResponseEntity<?> getFeaturedRestaurants(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime time,
+            @RequestParam(required = false) Integer guests,
+            @RequestParam(required = false) Integer size
+    ) {
+        try {
+            int resolvedGuests = guests == null || guests < 1 ? 2 : guests;
+            LocalDate resolvedDate = date == null ? LocalDate.now().plusDays(1) : date;
+            LocalTime resolvedTime = time == null ? LocalTime.of(19, 0) : time;
+
+            LocalDateTime reservationDateTime = LocalDateTime.of(resolvedDate, resolvedTime);
+            if (reservationDateTime.isBefore(LocalDateTime.now())) {
+                reservationDateTime = LocalDateTime.now().plusHours(1).withMinute(0).withSecond(0).withNano(0);
+            }
+
+            return ResponseEntity.ok(publicCatalogService.getFeaturedRestaurants(
+                    reservationDateTime.toLocalDate(),
+                    reservationDateTime.toLocalTime(),
+                    resolvedGuests,
+                    size
+            ));
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping(PUBLIC_CITIES)
+    public ResponseEntity<List<String>> getPublicCities() {
+        return ResponseEntity.ok(publicCatalogService.getPublicCities());
+    }
+
+    @GetMapping(PUBLIC_HOTELS_FILTER_OPTIONS)
+    public ResponseEntity<?> getHotelFilterOptions() {
+        try {
+            return ResponseEntity.ok(publicCatalogService.getHotelFilterOptions());
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping(PUBLIC_RESTAURANTS_FILTER_OPTIONS)
+    public ResponseEntity<?> getRestaurantFilterOptions() {
+        try {
+            return ResponseEntity.ok(publicCatalogService.getRestaurantFilterOptions());
         } catch (RuntimeException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
         }

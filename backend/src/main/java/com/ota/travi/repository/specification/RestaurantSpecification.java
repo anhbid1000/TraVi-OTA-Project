@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.Specification;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public final class RestaurantSpecification {
 
@@ -24,7 +25,7 @@ public final class RestaurantSpecification {
         return Specification.where(isPublicVisible())
                 .and(hasCity(request.city()))
                 .and(keywordContains(request.keyword()))
-                .and(hasCuisineType(request.cuisineType()))
+                .and(hasCuisineTypes(request.cuisines()))
                 .and(hasAmenities(request.amenities()))
                 .and(hasGuestCapacity(request.guests()))
                 .and(priceRangeBetween(request.minPrice(), request.maxPrice()));
@@ -51,12 +52,20 @@ public final class RestaurantSpecification {
         };
     }
 
-    public static Specification<NhaHang> hasCuisineType(String cuisineType) {
+    public static Specification<NhaHang> hasCuisineTypes(List<String> cuisineTypes) {
         return (root, query, cb) -> {
-            if (!hasText(cuisineType)) {
+            if (cuisineTypes == null || cuisineTypes.isEmpty()) {
                 return null;
             }
-            return cb.equal(cb.lower(root.get("loaiAmThuc")), cuisineType.trim().toLowerCase(Locale.ROOT));
+            List<String> normalizedCuisines = cuisineTypes.stream()
+                    .map(String::trim)
+                    .filter(value -> !value.isBlank())
+                    .map(value -> value.toLowerCase(Locale.ROOT))
+                    .collect(Collectors.toList());
+            if (normalizedCuisines.isEmpty()) {
+                return null;
+            }
+            return cb.lower(root.get("loaiAmThuc")).in(normalizedCuisines);
         };
     }
 
@@ -67,7 +76,15 @@ public final class RestaurantSpecification {
             }
             query.distinct(true);
             Join<NhaHang, TienIchNhaHang> amenityJoin = root.join("tienIch", JoinType.INNER);
-            return amenityJoin.get("id").in(amenityIds);
+            List<String> normalizedAmenities = amenityIds.stream()
+                    .map(String::trim)
+                    .filter(value -> !value.isBlank())
+                    .map(value -> value.toLowerCase(Locale.ROOT))
+                    .collect(Collectors.toList());
+            if (normalizedAmenities.isEmpty()) {
+                return null;
+            }
+            return cb.lower(amenityJoin.get("tenTienIch")).in(normalizedAmenities);
         };
     }
 

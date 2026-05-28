@@ -29,9 +29,28 @@ frontend/src/
         authUi.ts
         authValidation.ts
         index.ts
+    catalog/
+      components/
+      hooks/
+      services/
+    hotels/
+      hooks/
+      pages/
+      services/
+      types.ts
+    restaurants/
+      hooks/
+      pages/
+      services/
+      types.ts
+    weather/
+      hooks/
+      services/
+      types.ts
   hooks/
     useAuth.ts
   pages/
+    HomePage.tsx
     ForbiddenPage.tsx
     auth/
       AdminLogin.tsx
@@ -118,6 +137,8 @@ const updateField = (field: keyof FormValues, value: string) => {
   setSubmitError('')
 }
 ```
+- Voi page search/catalog co URL sync, giu `draft form state` rieng va chi commit sang URL khi submit hoac khi filter da debounce xong; tranh bind input keystroke truc tiep vao query params neu gay double text/loop re-render.
+- Detail page phai giu ID backend duoi dang string (UUID) khi map state/select, khong ep ve number.
 ---
 ## 6) Auth component reuse rules
 Bat buoc reuse cac module sau thay vi viet lai:
@@ -168,6 +189,14 @@ import { authButtonBaseClass, isValidEmail } from '../../features/auth/utils'
   - `verifyPasswordResetOtp`
   - `resetPassword`
 - Service khong manipulate UI state. Chi call API + xu ly storage can thiet.
+- Voi public catalog/services, uu tien tach ro `search`, `detail`, `featured`, `suggestions`; khong dung mock fallback neu API loi.
+- Backend DTO phai map sang UI type tai service layer, khong truyen response raw vao component neu response co field tieng Viet.
+- Dung cac helper chung khi can:
+  - `normalizeVietnameseText`
+  - `formatVnd`
+  - `formatPriceRange`
+  - `formatPriceBounds`
+  - `formatTimeValue`
 ---
 ## 9) Type safety standards
 - Khong dung `any`.
@@ -192,12 +221,16 @@ type LoginFormErrors = Partial<Record<keyof LoginFormValues, string>>
 - Reuse class constants trong `authUi.ts` cho auth pages.
 - Khong hardcode inline style object neu co the dung Tailwind.
 - Dynamic class dung `clsx` hoac template string ro rang.
+- Noi dung hien thi cho user phai la tieng Viet co dau; neu backend tra text ASCII/no-dau thi chuan hoa truoc khi render.
+- Card/detail layout va active nav style nen dong bo giua home, catalog, va detail.
 ---
 ## 12) Error handling standards
 - Moi submit async phai co `try/catch/finally`.
 - Luon clear error cu truoc request moi (`setSubmitError('')`).
 - Dung helper `getApiErrorMessage(error, fallback)`.
 - Khong swallow error.
+- Neu backend tra validation message ro rang (vi du: `Vui long chon thanh pho.`), frontend phai uu tien hien thi message do thay vi generic fallback.
+- Error state cho public catalog/detail phai than thien, co hanh dong, va khong che mat thong tin that khi loi la do input/contract.
 Mau:
 ```typescript
 try {
@@ -232,6 +265,10 @@ Checklist:
 - [ ] Khong hardcode API base URL trong component
 - [ ] Khong con `console.log` debug
 - [ ] Build pass
+- [ ] Catalog/detail khong dung mock fallback
+- [ ] City autocomplete lay tu backend
+- [ ] Featured card dan sang detail dung route
+- [ ] Gia/price range dung format `formatVnd` / `formatPriceRange`
 ---
 ## 15) Anti-patterns cam tranh
 - Duplicate auth validation regex trong tung page.
@@ -239,6 +276,9 @@ Checklist:
 - Hardcode route/API string lap lai nhieu noi.
 - Nhung logic refresh token vao page component.
 - Dung default export tran lan cho page/component.
+- Dung mock data fallback cho public catalog/detail khi API da co that.
+- Dung state so thuc cho UUID string va ep ve number.
+- Bind input search vao URL theo moi ky tu neu gay loop/double text.
 ---
 ## 16) Update policy
 Khi them auth flow moi, phai cap nhat dong bo:
@@ -248,6 +288,7 @@ Khi them auth flow moi, phai cap nhat dong bo:
 4. Shared components/utils neu co logic dung chung
 5. `README-SPRINT1.md`
 6. File coding standards nay neu co rule moi
+7. `Module2_Search&Catalog.md` neu thay doi luong search/catalog/detail/public API
 ---
-**Last Updated:** May 2026  
-**Version:** 1.1.0
+**Last Updated:** May 28, 2026  
+**Version:** 1.2.0

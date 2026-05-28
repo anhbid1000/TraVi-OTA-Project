@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import {
   AdminLogin,
@@ -11,88 +10,36 @@ import {
 } from './pages/auth'
 import { useAuth } from './hooks/useAuth'
 import { ForbiddenPage } from './pages/ForbiddenPage'
+import { HomePage } from './pages/HomePage'
 import { AdminRoute, ProtectedRoute, StaffRoute } from './routes'
+import { HotelCatalogPage } from './pages/hotels/HotelCatalogPage'
+import { RestaurantCatalogPage } from './pages/restaurants/RestaurantCatalogPage'
+import { HotelDetailPage } from './pages/hotels/HotelDetailPage'
+import { RestaurantDetailPage } from './pages/restaurants/RestaurantDetailPage'
 import './App.css'
 
-function HomePage() {
-  const { isAuthenticated, isLoading, logout, user } = useAuth()
-  const [logoutError, setLogoutError] = useState('')
-
-  const handleLogout = async () => {
-    setLogoutError('')
-
-    try {
-      await logout()
-    } catch {
-      setLogoutError('Không thể đăng xuất lúc này. Vui lòng thử lại.')
-    }
-  }
+function PaymentPage() {
+  const { isLoading, logout, user } = useAuth()
 
   return (
     <main style={{ padding: '32px', maxWidth: '960px', margin: '0 auto' }}>
-      <h1>TraVi-OTA</h1>
-      <p>Nền tảng quản lý khách sạn và nhà hàng thông minh.</p>
-
-      {isAuthenticated ? (
-        <section
-          style={{
-            margin: '20px 0',
-            padding: '16px 20px',
-            border: '1px solid #dbeafe',
-            borderRadius: '16px',
-            background: '#f8fbff',
-          }}
-        >
-          <p style={{ margin: '0 0 8px', fontWeight: 700 }}>Bạn đang đăng nhập</p>
-          <p style={{ margin: '0 0 6px' }}>
-            <strong>Email:</strong> {String(user?.email ?? 'Không xác định')}
-          </p>
-          <p style={{ margin: '0 0 16px' }}>
-            <strong>Vai trò:</strong> {String(user?.role ?? 'Không xác định')}
-          </p>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={isLoading}
-            style={{
-              border: 'none',
-              borderRadius: '999px',
-              padding: '10px 18px',
-              background: '#dc2626',
-              color: '#fff',
-              fontWeight: 700,
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              opacity: isLoading ? 0.7 : 1,
-            }}
-          >
-            {isLoading ? 'Đang đăng xuất...' : 'Đăng xuất'}
-          </button>
-
-          {logoutError && (
-            <p style={{ margin: '12px 0 0', color: '#dc2626', fontWeight: 600 }}>{logoutError}</p>
-          )}
-        </section>
-      ) : (
-        <p style={{ margin: '20px 0', color: '#4b5563' }}>
-          Hiện bạn chưa đăng nhập. Hãy dùng các liên kết bên dưới để đăng nhập hoặc đăng ký.
-        </p>
-      )}
-
-      <nav>
-        <Link to="/">Trang chủ</Link> | <Link to="/login">Đăng nhập</Link> |{' '}
-        <Link to="/register">Đăng ký</Link> | <Link to="/partner/login">Đối tác</Link> |{' '}
-        <Link to="/admin/login">Admin</Link> | <Link to="/payment">Thanh toán</Link>
-      </nav>
-    </main>
-  )
-}
-
-function PaymentPage() {
-  return (
-    <main>
-      <h1>Thanh toán</h1>
-      <p>Trang này chỉ dành cho người dùng đã đăng nhập.</p>
+      <h1>Thanh toan</h1>
+      <p>Trang nay chi danh cho nguoi dung da dang nhap.</p>
+      <p>
+        <strong>Email:</strong> {String(user?.email ?? 'Khong xac dinh')}
+      </p>
+      <button
+        type="button"
+        onClick={() => {
+          void logout()
+        }}
+        disabled={isLoading}
+      >
+        {isLoading ? 'Dang dang xuat...' : 'Dang xuat'}
+      </button>
+      <p style={{ marginTop: '16px' }}>
+        <Link to="/">Quay ve trang chu</Link>
+      </p>
     </main>
   )
 }
@@ -129,6 +76,10 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/hotels" element={<HotelCatalogPage />} />
+        <Route path="/hotels/:id" element={<HotelDetailPage />} />
+        <Route path="/restaurants" element={<RestaurantCatalogPage />} />
+        <Route path="/restaurants/:id" element={<RestaurantDetailPage />} />
 
         <Route path="/login" element={<CustomerLogin />} />
         <Route path="/register" element={<CustomerRegister />} />

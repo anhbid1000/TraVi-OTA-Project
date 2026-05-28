@@ -4,6 +4,8 @@ import com.ota.travi.dto.request.HotelSearchRequest;
 import com.ota.travi.dto.request.RestaurantSearchRequest;
 import com.ota.travi.dto.response.AnhResponse;
 import com.ota.travi.dto.response.ChinhSachResponse;
+import com.ota.travi.dto.response.FilterOptionResponse;
+import com.ota.travi.dto.response.FilterOptionsResponse;
 import com.ota.travi.dto.response.HotelCatalogResponse;
 import com.ota.travi.dto.response.HotelDetailResponse;
 import com.ota.travi.dto.response.MenuItemResponse;
@@ -41,6 +43,8 @@ import com.ota.travi.repository.MonAnRepository;
 import com.ota.travi.repository.NhaHangRepository;
 import com.ota.travi.repository.PhongRepository;
 import com.ota.travi.repository.ThucDonRepository;
+import com.ota.travi.repository.TienIchKhachSanRepository;
+import com.ota.travi.repository.TienIchNhaHangRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
@@ -52,11 +56,16 @@ import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
 public class PublicCatalogService {
     private static final int RESTAURANT_SLOT_DURATION_HOURS = 2;
+    private static final int DEFAULT_FEATURED_HOTEL_SIZE = 4;
+    private static final int DEFAULT_FEATURED_RESTAURANT_SIZE = 3;
+    private static final int MAX_FEATURED_SIZE = 12;
+    private static final int FEATURED_RECENT_DAYS = 30;
 
     private static final List<TrangThaiDon> ACTIVE_BOOKING_STATUSES = List.of(
             TrangThaiDon.CHO_THANH_TOAN,
@@ -78,6 +87,8 @@ public class PublicCatalogService {
     private final AnhNhaHangRepository anhNhaHangRepository;
     private final AnhPhongRepository anhPhongRepository;
     private final ChinhSachRepository chinhSachRepository;
+    private final TienIchKhachSanRepository tienIchKhachSanRepository;
+    private final TienIchNhaHangRepository tienIchNhaHangRepository;
 
     public PublicCatalogService(
             CatalogSearchService catalogSearchService,
@@ -92,7 +103,9 @@ public class PublicCatalogService {
             AnhKhachSanRepository anhKhachSanRepository,
             AnhNhaHangRepository anhNhaHangRepository,
             AnhPhongRepository anhPhongRepository,
-            ChinhSachRepository chinhSachRepository
+            ChinhSachRepository chinhSachRepository,
+            TienIchKhachSanRepository tienIchKhachSanRepository,
+            TienIchNhaHangRepository tienIchNhaHangRepository
     ) {
         this.catalogSearchService = catalogSearchService;
         this.khachSanRepository = khachSanRepository;
@@ -107,6 +120,8 @@ public class PublicCatalogService {
         this.anhNhaHangRepository = anhNhaHangRepository;
         this.anhPhongRepository = anhPhongRepository;
         this.chinhSachRepository = chinhSachRepository;
+        this.tienIchKhachSanRepository = tienIchKhachSanRepository;
+        this.tienIchNhaHangRepository = tienIchNhaHangRepository;
     }
 
     // --- 1. TÌMM KIẾM KHÁCH SẠN (SEARCH HOTELS) ---
@@ -123,6 +138,33 @@ public class PublicCatalogService {
                 .toList();
 
         return new PageImpl<>(mapped, hotelPage.getPageable(), hotelPage.getTotalElements());
+    }
+
+    @Transactional(readOnly = true)
+    public List<HotelCatalogResponse> getFeaturedHotels(LocalDate checkIn, LocalDate checkOut, Integer guests, Integer size) {
+        LocalDate resolvedCheckIn = checkIn == null ? LocalDate.now().plusDays(1) : checkIn;
+        LocalDate resolvedCheckOut = checkOut == null ? resolvedCheckIn.plusDays(1) : checkOut;
+        int resolvedGuests = guests == null || guests < 1 ? 2 : guests;
+        int resolvedSize = normalizeFeaturedSize(size, DEFAULT_FEATURED_HOTEL_SIZE);
+        LocalDateTime recentFrom = LocalDateTime.now().minusDays(FEATURED_RECENT_DAYS);
+
+        return khachSanRepository.findAll().stream()
+                .filter(this::isPublicVisible)
+                .map(hotel -> {
+                    HotelCatalogResponse mapped = mapHotelCatalog(hotel, resolvedCheckIn, resolvedCheckOut, resolvedGuests);
+                    int recentBookings = normalizeCount(donKhachSanChiTietRepository.sumRecentBookedQuantityByHotel(
+                            hotel.getIdTaiSan(),
+                            recentFrom,
+                            ACTIVE_BOOKING_STATUSES
+                    ));
+                    double score = scoreFeaturedHotel(hotel, mapped, recentBookings);
+                    return new ScoredHotel(mapped, score);
+                })
+                .filter(item -> item.response().soPhongConTrong() > 0)
+                .sorted(Comparator.comparingDouble(ScoredHotel::score).reversed())
+                .limit(resolvedSize)
+                .map(ScoredHotel::response)
+                .toList();
     }
 
     // --- 2. LẤY CHI TIẾT KHÁCH SẠN (GET HOTEL DETAIL) ---
@@ -188,6 +230,117 @@ public class PublicCatalogService {
                 .toList();
 
         return new PageImpl<>(mapped, restaurantPage.getPageable(), restaurantPage.getTotalElements());
+    }
+
+    @Transactional(readOnly = true)
+    public List<RestaurantCatalogResponse> getFeaturedRestaurants(LocalDate date, LocalTime time, Integer guests, Integer size) {
+        LocalDate resolvedDate = date == null ? LocalDate.now().plusDays(1) : date;
+        LocalTime resolvedTime = time == null ? LocalTime.of(19, 0) : time;
+        int resolvedGuests = guests == null || guests < 1 ? 2 : guests;
+        int resolvedSize = normalizeFeaturedSize(size, DEFAULT_FEATURED_RESTAURANT_SIZE);
+        LocalDateTime requestedStart = LocalDateTime.of(resolvedDate, resolvedTime);
+        LocalDateTime requestedEnd = requestedStart.plusHours(RESTAURANT_SLOT_DURATION_HOURS);
+        LocalDateTime recentFrom = LocalDateTime.now().minusDays(FEATURED_RECENT_DAYS);
+
+        return nhaHangRepository.findAll().stream()
+                .filter(this::isPublicVisible)
+                .map(restaurant -> {
+                    RestaurantCatalogResponse mapped = mapRestaurantCatalog(restaurant, requestedStart, requestedEnd);
+                    int recentReservations = normalizeCount(donNhaHangRepository.countRecentReservationsByRestaurant(
+                            restaurant.getIdTaiSan(),
+                            recentFrom,
+                            ACTIVE_BOOKING_STATUSES
+                    ));
+                    double score = scoreFeaturedRestaurant(restaurant, mapped, recentReservations);
+                    return new ScoredRestaurant(mapped, score);
+                })
+                .filter(item -> item.response().soGheConTrong() >= resolvedGuests)
+                .sorted(Comparator.comparingDouble(ScoredRestaurant::score).reversed())
+                .limit(resolvedSize)
+                .map(ScoredRestaurant::response)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getPublicCities() {
+        return java.util.stream.Stream.concat(
+                        khachSanRepository.findAll().stream()
+                                .filter(this::isPublicVisible)
+                                .map(hotel -> hotel.getHoSoKinhDoanh().getThanhPho()),
+                        nhaHangRepository.findAll().stream()
+                                .filter(this::isPublicVisible)
+                                .map(restaurant -> restaurant.getHoSoKinhDoanh().getThanhPho())
+                )
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(city -> !city.isBlank())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public FilterOptionsResponse getHotelFilterOptions() {
+        List<FilterOptionResponse> amenities = tienIchKhachSanRepository.findAll().stream()
+                .sorted(Comparator.comparing(TienIchKhachSan::getTenTienIch, String.CASE_INSENSITIVE_ORDER))
+                .map(amenity -> new FilterOptionResponse(
+                        amenity.getTenTienIch(),
+                        amenity.getTenTienIch(),
+                        amenity.getMoTa()
+                ))
+                .toList();
+
+        List<FilterOptionResponse> types = khachSanRepository.findAll().stream()
+                .filter(this::isPublicVisible)
+                .map(KhachSan::getLoaiKhachSan)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .map(type -> new FilterOptionResponse(
+                        type,
+                        type,
+                        null
+                ))
+                .toList();
+
+        return new FilterOptionsResponse(amenities, types, java.util.Collections.emptyList());
+    }
+
+    @Transactional(readOnly = true)
+    public FilterOptionsResponse getRestaurantFilterOptions() {
+        List<FilterOptionResponse> amenities = tienIchNhaHangRepository.findAll().stream()
+                .map(TienIchNhaHang::getTenTienIch)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .map(amenity -> new FilterOptionResponse(
+                        amenity,
+                        amenity,
+                        null
+                ))
+                .toList();
+
+        // Get distinct cuisines from restaurants
+        List<FilterOptionResponse> cuisines = nhaHangRepository.findAll().stream()
+                .filter(this::isPublicVisible)
+                .map(restaurant -> restaurant.getLoaiAmThuc())
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(cuisine -> !cuisine.isBlank())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .map(cuisine -> new FilterOptionResponse(
+                        cuisine,
+                        cuisine,
+                        null
+                ))
+                .toList();
+
+        return new FilterOptionsResponse(amenities, java.util.Collections.emptyList(), cuisines);
     }
 
     // --- 4. LẤY CHI TIẾT NHÀ HÀNG (GET RESTAURANT DETAIL) ---
@@ -555,6 +708,68 @@ public class PublicCatalogService {
         double minPrice = activePrices.stream().min(Double::compareTo).orElse(basePrice == null ? 0 : basePrice);
         double maxPrice = activePrices.stream().max(Double::compareTo).orElse(minPrice);
         return String.format(Locale.ROOT, "%.0f - %.0f", minPrice, maxPrice);
+    }
+
+    private int normalizeFeaturedSize(Integer size, int defaultSize) {
+        if (size == null || size < 1) {
+            return defaultSize;
+        }
+        return Math.min(size, MAX_FEATURED_SIZE);
+    }
+
+    private int normalizeCount(Integer value) {
+        return value == null ? 0 : Math.max(value, 0);
+    }
+
+    private double scoreFeaturedHotel(KhachSan hotel, HotelCatalogResponse response, int recentBookings) {
+        int stars = hotel.getHangSao() == null ? 0 : hotel.getHangSao();
+        int availableRooms = response.soPhongConTrong() == null ? 0 : response.soPhongConTrong();
+        int amenities = response.tienIchNoiBat() == null ? 0 : response.tienIchNoiBat().size();
+        boolean hasThumbnail = response.thumbnailUrl() != null && !response.thumbnailUrl().isBlank();
+        double price = response.giaThapNhat() == null ? 0.0 : response.giaThapNhat();
+
+        double roomDiscountScore = phongRepository.findByKhachSan_IdTaiSan(hotel.getIdTaiSan()).stream()
+                .filter(room -> Boolean.FALSE.equals(room.getDeleted()))
+                .map(Phong::getPhanTramGiamGia)
+                .filter(Objects::nonNull)
+                .mapToDouble(Float::doubleValue)
+                .average()
+                .orElse(0.0);
+
+        double priceScore = price > 0 ? Math.min(5.0, 2_000_000.0 / price) : 0.0;
+
+        return (stars * 4.0)
+                + (recentBookings * 1.5)
+                + (availableRooms * 0.8)
+                + (amenities * 0.5)
+                + roomDiscountScore
+                + priceScore
+                + (hasThumbnail ? 2.0 : -1.0);
+    }
+
+    private double scoreFeaturedRestaurant(NhaHang restaurant, RestaurantCatalogResponse response, int recentReservations) {
+        int availableSeats = response.soGheConTrong() == null ? 0 : response.soGheConTrong();
+        int amenities = response.tienIchNoiBat() == null ? 0 : response.tienIchNoiBat().size();
+        boolean hasThumbnail = response.thumbnailUrl() != null && !response.thumbnailUrl().isBlank();
+        boolean canPreOrder = Boolean.TRUE.equals(restaurant.getCoDatMonTruoc());
+
+        long activeDishCount = monAnRepository.findByThucDon_NhaHang_IdTaiSan(restaurant.getIdTaiSan()).stream()
+                .filter(item -> item.getTrangThai() == TrangThaiMonAn.DANG_BAN)
+                .filter(item -> Boolean.FALSE.equals(item.getDeleted()))
+                .count();
+
+        return (recentReservations * 2.0)
+                + (availableSeats * 0.4)
+                + (amenities * 0.5)
+                + (activeDishCount * 0.2)
+                + (canPreOrder ? 1.5 : 0.0)
+                + (hasThumbnail ? 2.0 : -1.0);
+    }
+
+    private record ScoredHotel(HotelCatalogResponse response, double score) {
+    }
+
+    private record ScoredRestaurant(RestaurantCatalogResponse response, double score) {
     }
 
     private boolean isPublicVisible(KhachSan hotel) {

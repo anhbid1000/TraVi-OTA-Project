@@ -29,7 +29,7 @@ public record RestaurantSearchRequest(
         @Min(value = 1, message = "So khach phai lon hon hoac bang 1")
         Integer guests,
 
-        String cuisineType,
+        List<String> cuisines,
 
         List<String> amenities,
 

@@ -20,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 import static com.ota.travi.constant.ApiEndpoints.AUTH_PREFIX;
+import static com.ota.travi.constant.ApiEndpoints.PUBLIC_PREFIX;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -36,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
-        return requestUri != null && requestUri.startsWith(AUTH_PREFIX);
+        return requestUri != null && (requestUri.startsWith(AUTH_PREFIX) || requestUri.startsWith(PUBLIC_PREFIX));
     }
 
     @Override

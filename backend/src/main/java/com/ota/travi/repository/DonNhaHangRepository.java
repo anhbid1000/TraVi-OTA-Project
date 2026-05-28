@@ -44,5 +44,20 @@ public interface DonNhaHangRepository extends JpaRepository<DonNhaHang, String> 
             @Param("requestedEnd") LocalDateTime requestedEnd,
             @Param("activeStatuses") List<TrangThaiDon> activeStatuses
     );
+
+    @Query("""
+            SELECT COUNT(DISTINCT dn.id)
+            FROM DonNhaHang dn
+            JOIN dn.banDaGan link
+            WHERE link.ban.nhaHang.idTaiSan = :restaurantId
+              AND dn.deleted = false
+              AND dn.trangThaiDon IN :activeStatuses
+              AND dn.ngayTao >= :fromDateTime
+            """)
+    Integer countRecentReservationsByRestaurant(
+            @Param("restaurantId") String restaurantId,
+            @Param("fromDateTime") LocalDateTime fromDateTime,
+            @Param("activeStatuses") List<TrangThaiDon> activeStatuses
+    );
 }
 

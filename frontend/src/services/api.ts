@@ -46,6 +46,11 @@ const isPublicAuthRequest = (url?: string) => {
   )
 }
 
+const isPublicRequest = (url?: string) => {
+  const normalizedUrl = normalizeRequestUrl(url)
+  return normalizedUrl.startsWith('/v1/public/')
+}
+
 const refreshAccessToken = async () => {
   const refreshToken = tokenStorage.getRefreshToken()
 
@@ -72,7 +77,7 @@ const refreshAccessToken = async () => {
 api.interceptors.request.use((config) => {
   const token = tokenStorage.getAccessToken()
 
-  if (token && !isPublicAuthRequest(config.url)) {
+  if (token && !isPublicAuthRequest(config.url) && !isPublicRequest(config.url)) {
     config.headers.Authorization = `${tokenStorage.getTokenType()} ${token}`
   }
 

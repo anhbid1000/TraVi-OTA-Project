@@ -51,6 +51,8 @@ Luu y:
 - Tat ca endpoint phai khai bao trong `constant/ApiEndpoints.java`.
 - Controller khong hardcode route string.
 - Prefix hien tai: `/api/v1`.
+- Public catalog/search/detail/featured/cities endpoints phai duoc dinh nghia tap trung trong `ApiEndpoints.java`.
+- `SecurityConfig` phai permit ro `AUTH_PREFIX`, `PUBLIC_PREFIX`, va `"/error"` de response public/validation di dung luong.
 Vi du:
 ```java
 public static final String AUTH_PREFIX = BASE_PREFIX + "/auth";
@@ -65,6 +67,9 @@ public static final String AUTH_FORGOT_PASSWORD_RESET = AUTH_PREFIX + "/forgot-p
 - Validate input bang `@Valid @RequestBody`.
 - Controller chi lam: parse input, goi service, map HTTP status.
 - Khong de business logic trong controller.
+- Doi voi public catalog/search API, uu tien `@RequestParam(required = false)` + validate thu cong de tra 400 voi message nghiep vu ro rang thay vi de framework binding fail som.
+- Khong fallback mock data trong controller neu request/response co loi; neu thieu param thi tra loi that de FE hien thi va dev sua dung contract.
+- Public controller phai return message co hanh dong ro rang cho user, vi du: `Vui long chon thanh pho.`, `Vui long chon ngay nhan va tra phong.`
 Mau:
 ```java
 @PostMapping(AUTH_LOGIN)
@@ -85,6 +90,8 @@ public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
 - Dung `@Transactional` cho luong ghi DB nhieu buoc.
 - Side effect sau commit (gui email OTP) phai chay sau transaction commit.
 - Khong return `null`; dung `Optional` hoac throw exception.
+- Public catalog service phai chiu trach nhiem search/filter/detail/featured/availability/location aggregation; controller chi delegate va map status.
+- Featured logic phai map theo du lieu thuc te cua project hien co, khong duoc hardcode mock ranking neu da co nguon data that.
 `AuthService` can tach method ro:
 - `register(...)`
 - `login(...)`
@@ -151,6 +158,8 @@ public record VerifyOtpRequest(
 - Message loi phai ro nghiep vu.
 - Uu tien custom exception cho case dung lai.
 - Dung dung HTTP status code: 200, 201, 400, 401, 403, 404, 409, 429.
+- Cac message tra ra frontend cho public catalog/search nen co dau, de hieu, va co hanh dong cu the; tranh thay bang message chung chung neu loi thuoc ve validation.
+- Neu request sai contract, uu tien 400 voi message nghiep vu thay vi im lang hoac ne sang loi he thong.
 ---
 ## 13) Validation standards
 - Dung `jakarta.validation` tren DTO request.
@@ -196,13 +205,14 @@ Checklist:
 - Dung generic exception khong context.
 ---
 ## 18) Update policy
-Moi khi them endpoint auth moi, phai cap nhat dong thoi:
+Moi khi them endpoint moi, phai cap nhat dong thoi:
 1. `ApiEndpoints.java`
 2. Controller lien quan
 3. Service lien quan
 4. DTO request/response
 5. Unit tests
 6. `README-SPRINT1.md` va file coding standards neu co rule moi
+7. `Module2_Search&Catalog.md` neu thay doi contract public catalog/search/detail/featured
 ---
-**Last Updated:** May 2026  
-**Version:** 1.1.0
+**Last Updated:** May 28, 2026  
+**Version:** 1.2.0
