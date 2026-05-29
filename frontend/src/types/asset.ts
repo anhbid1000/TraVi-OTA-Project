@@ -1,12 +1,18 @@
 export type ServiceType = 'KHACH_SAN' | 'NHA_HANG'
-export type ApprovalStatus = 'CHO_DUYET' | 'DANG_HOAT_DONG' | 'BI_TU_CHOI' | 'BAN_NHAP' | 'BI_KHOA_TAM_THOI'
-export type ApprovalDecision = 'APPROVED' | 'REJECTED'
-export type MenuItemStatus = 'CO_SAN' | 'TAM_HET'
+export type MenuItemStatus = 'DANG_BAN' | 'TAM_HET' | 'NGUNG_BAN'
+export type TableStatus = 'SAN_SANG' | 'TAM_DUNG' | 'NGUNG_SU_DUNG'
 
 export type BusinessProfilePayload = {
   hoSo: {
     tenCoSo: string
     sdtLienHe: string
+    emailLienHe?: string
+    diaChi?: string
+    thanhPho?: string
+    quanHuyen?: string
+    phuongXa?: string
+    kinhDo?: number
+    viDo?: number
     loaiDichVu: ServiceType
     maSoThue: string
     giayPhepKinhDoanh: string
@@ -15,6 +21,15 @@ export type BusinessProfilePayload = {
       loaiChinhSach: string
       noiDung: string
       ngayApDung: string
+      gioNhanPhong?: string
+      gioTraPhong?: string
+      gioMoCua?: string
+      gioDongCua?: string
+      chinhSachHuy?: string
+      chinhSachHoanTien?: string
+      quyDinhTreEm?: string
+      quyDinhVatNuoi?: string
+      ghiChuKhac?: string
     }
   }
   khachSan?: {
@@ -67,9 +82,8 @@ export type BusinessProfileResponse = {
   maSoThue: string
   giayPhepKinhDoanh: string
   toaDoGPS: string
-  trangThaiKiemDuyet: ApprovalStatus
+  trangThaiHoatDong?: 'CHUA_HOAT_DONG' | 'DANG_HOAT_DONG' | 'TAM_DUNG' | 'BI_KHOA'
   thoiGianDangKy: string
-  thoiGianDuyet?: string | null
   chinhSach?: {
     id: string
     hoSoKinhDoanhId: string
@@ -87,31 +101,17 @@ export type BusinessProfileResponse = {
   }>
 }
 
-export type AdminApprovalResponse = BusinessProfileResponse & {
-  doiTacEmail: string
-  doiTacHoTen: string
-  comparison?: {
-    oldTenCoSo?: string | null
-    oldSdtLienHe?: string | null
-    oldLoaiDichVu?: string | null
-    oldMaSoThue?: string | null
-    oldGiayPhepKinhDoanh?: string | null
-    oldToaDoGPS?: string | null
-    newTenCoSo?: string | null
-    newSdtLienHe?: string | null
-    newLoaiDichVu?: string | null
-    newMaSoThue?: string | null
-    newGiayPhepKinhDoanh?: string | null
-    newToaDoGPS?: string | null
-  } | null
-}
-
 export type RoomPayload = {
   phong: {
     soPhong: string
+    tenPhong: string
     loaiPhong: string
+    moTa?: string
     sucChuaToiDa: number
+    soGiuong: number
     dienTich: number
+    giaCoBan: number
+    soLuongPhong: number
     trangThai: string
     tienIch: string[]
     phanTramGiamGia: number
@@ -144,9 +144,11 @@ export type RoomResponse = {
 }
 
 export type TablePayload = {
+  tenBan?: string
   viTriSanh: string
+  moTa?: string
   soChoNgoi: number
-  trangThai: number
+  trangThai?: TableStatus
 }
 
 export type TableResponse = {
@@ -154,7 +156,7 @@ export type TableResponse = {
   nhaHangId: string
   viTriSanh: string
   soChoNgoi: number
-  trangThai: number
+  trangThai: TableStatus
 }
 
 export type MenuItemPayload = {
@@ -195,4 +197,19 @@ export type ComboResponse = {
   ngayBatDau?: string | null
   ngayKetThuc?: string | null
   monAnIds: string[]
+}
+
+
+
+export type MenuPayload = {
+  tenThucDon: string
+  phanLoai?: string
+}
+
+export type MenuResponse = {
+  id: string
+  nhaHangId: string
+  phanLoai?: string
+  monAn?: MenuItemResponse[]
+  combo?: ComboResponse[]
 }

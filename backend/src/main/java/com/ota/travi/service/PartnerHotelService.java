@@ -8,11 +8,13 @@ import com.ota.travi.entity.AnhPhong;
 import com.ota.travi.entity.KhachSan;
 import com.ota.travi.entity.Phong;
 import com.ota.travi.enums.TrangThaiPhong;
+import com.ota.travi.enums.TrangThaiDonDatCho;
 import com.ota.travi.exception.BusinessConflictException;
 import com.ota.travi.exception.ForbiddenOperationException;
 import com.ota.travi.exception.ResourceNotFoundException;
 import com.ota.travi.repository.KhachSanRepository;
 import com.ota.travi.repository.PhongRepository;
+import com.ota.travi.repository.DatPhongRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,12 +34,15 @@ public class PartnerHotelService {
     private PhongRepository phongRepository;
 
     @Autowired
+    private DatPhongRepository datPhongRepository;
+
+    @Autowired
     private PartnerAssetMapper partnerAssetMapper;
 
     @Transactional
     public PhongResponse createRoom(String partnerId, String hotelId, PhongUpsertRequest request) {
         KhachSan khachSan = requireOwnedHotel(partnerId, hotelId);
-        if (phongRepository.existsByKhachSan_IdTaiSanAndSoPhong(hotelId, request.phong().soPhong())) {
+        if (phongRepository.existsByKhachSan_IdTaiSanAndSoPhongAndDeletedFalse(hotelId, request.phong().soPhong())) {
             throw new BusinessConflictException("So phong da ton tai trong khach san nay");
         }
 
@@ -49,7 +54,7 @@ public class PartnerHotelService {
     @Transactional(readOnly = true)
     public List<PhongResponse> getRooms(String partnerId, String hotelId) {
         requireOwnedHotel(partnerId, hotelId);
-        return phongRepository.findByKhachSan_IdTaiSan(hotelId).stream()
+        return phongRepository.findByKhachSan_IdTaiSanAndDeletedFalse(hotelId).stream()
                 .map(partnerAssetMapper::toPhongResponse)
                 .toList();
     }
@@ -136,7 +141,11 @@ public class PartnerHotelService {
     }
 
     private boolean hasFutureBookingForRoom(String roomId) {
-        // TODO: Noi voi repository DonDatCho khi module Booking duoc tao.
-        return false;
+        return datPhongRepository.existsByPhong_IdAndNgayCheckInAfterAndDonDatCho_TrangThaiNotIn(
+                roomId,
+                java.time.LocalDate.now(),
+                java.util.List.of(TrangThaiDonDatCho.DA_HUY_BO, TrangThaiDonDatCho.DA_HOAN_TIEN)
+        );
     }
 }
+

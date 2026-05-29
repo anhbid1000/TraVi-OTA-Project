@@ -1,7 +1,10 @@
 package com.ota.travi.entity;
 
+import com.ota.travi.enums.TrangThaiBan;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -40,7 +43,9 @@ public class Ban {
     @Column(length = 1000)
     private String moTa;
 
-    private Integer trangThai;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TrangThaiBan trangThai = TrangThaiBan.SAN_SANG;
 
     private Integer soChoNgoi;
 

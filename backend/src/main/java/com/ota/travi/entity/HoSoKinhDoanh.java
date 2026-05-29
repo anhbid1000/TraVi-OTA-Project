@@ -23,7 +23,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import com.ota.travi.enums.LoaiDichVu;
 import com.ota.travi.enums.TrangThaiHoatDong;
-import com.ota.travi.enums.TrangThaiKiemDuyet;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -82,38 +81,14 @@ public class HoSoKinhDoanh {
     private Double kinhDo;
 
     private Double viDo;
-
-    private String oldTenCoSo;
-
-    private String oldSdtLienHe;
-
-    private String oldLoaiDichVu;
-
-    private String oldMaSoThue;
-
-    private String oldGiayPhepKinhDoanh;
-
-    private String oldToaDoGPS;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TrangThaiKiemDuyet trangThaiKiemDuyet = TrangThaiKiemDuyet.CHO_DUYET;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TrangThaiHoatDong trangThaiHoatDong = TrangThaiHoatDong.CHUA_HOAT_DONG;
-
-    @Column(length = 1000)
-    private String lyDoTuChoiGanNhat;
-
     @CreationTimestamp
     private LocalDateTime thoiGianDangKy;
 
     @UpdateTimestamp
     private LocalDateTime thoiGianCapNhat;
-
-    private LocalDateTime thoiGianDuyet;
-
     @Column(nullable = false)
     private Boolean deleted = false;
 
@@ -121,8 +96,5 @@ public class HoSoKinhDoanh {
     private ChinhSach chinhSach;
 
     @OneToMany(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TaiSan> danhSachTaiSan = new ArrayList<>();
+    private List<TaiSan> danhSachTaiSan = new ArrayList<>();}
 
-    @OneToMany(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<LichSuKiemDuyetHoSo> lichSuKiemDuyet = new ArrayList<>();
-}

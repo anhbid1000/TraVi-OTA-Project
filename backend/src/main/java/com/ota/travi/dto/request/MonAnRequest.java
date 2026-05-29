@@ -29,6 +29,8 @@ public record MonAnRequest(
 
         TrangThaiMonAn trangThai,
 
+        String thucDonId,
+
         List<String> theNguCanh
 ) {
 }

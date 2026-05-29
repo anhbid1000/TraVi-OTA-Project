@@ -1,6 +1,8 @@
 🚀 TraVi-OTA: Smart Hotel & Restaurant Management System
 TraVi-OTA là nền tảng quản lý tích hợp "Tất-cả-trong-một" dành cho Khách sạn và Nhà hàng, được tối ưu hóa bằng Trí tuệ nhân tạo (AI). Dự án hướng tới việc cung cấp trải nghiệm du lịch thông minh, từ đặt phòng, quản lý thực đơn đến lịch trình cá nhân hóa cho khách hàng.
 
+> **Cập nhật:** Đã hoàn thành refactor Module 1 sang phạm vi Partner-only (không còn admin approval). Xem chi tiết tại [docs/README-MODULE1-PARTNER-ONLY.md](docs/README-MODULE1-PARTNER-ONLY.md).
+
 🛠 Tech Stack
 
 1. Backend

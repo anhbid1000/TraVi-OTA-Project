@@ -8,6 +8,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,6 +27,8 @@ import static com.ota.travi.constant.ApiEndpoints.PUBLIC_PREFIX;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -127,6 +131,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // Mở cửa: Cấp quyền thành công vào Context
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                // DEBUG log: verify what Spring Security sees
+                try {
+                    log.warn("[AUTH-DEBUG] path={} username={} authorities={}",
+                            request.getRequestURI(),
+                            userDetails.getUsername(),
+                            userDetails.getAuthorities());
+                } catch (Exception logEx) {
+                    log.warn("[AUTH-DEBUG] Failed to log authorities: {}", logEx.getMessage());
+                }
             }
         }
 

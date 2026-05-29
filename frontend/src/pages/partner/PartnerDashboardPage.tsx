@@ -70,6 +70,25 @@ type ProfileFormState = {
   hangSao: string
   loaiAmThuc: string
   sucChua: string
+  emailLienHe: string
+  diaChi: string
+  thanhPho: string
+  quanHuyen: string
+  phuongXa: string
+  kinhDo: string
+  viDo: string
+  chinhSachHuy: string
+  chinhSachHoanTien: string
+  gioNhanPhong: string
+  gioTraPhong: string
+  gioMoCua: string
+  gioDongCua: string
+  quyDinhTreEm: string
+  quyDinhVatNuoi: string
+  ghiChuKhac: string
+  tienIchKhachSan: string[]
+  tienIchNhaHang: string[]
+  danhSachAnh: Array<{url: string, moTa: string, laAnhDaiDien: boolean}>
 }
 
 type ProfileFormErrors = Partial<Record<keyof ProfileFormState | 'businessLicense', string>>
@@ -85,8 +104,9 @@ type UploadOptions = {
   allowPdf?: boolean
 }
 
-const HOTEL_AMENITIES = ['WIFI', 'DIEU_HOA', 'TV', 'TU_LANH', 'BON_TAM', 'BAN_CONG', 'VIEW_DEP']
-const RESTAURANT_AREAS = ['Main Hall', 'Terrace', 'VIP Lounge', 'Private Room']
+const RESTAURANT_AREAS = ['Sảnh chính', 'Sân thượng', 'Phòng VIP', 'Phòng riêng']
+const HOTEL_AMENITY_OPTIONS = ['Wifi miễn phí', 'Lễ tân 24/7', 'Bãi đỗ xe', 'Hồ bơi', 'Phòng gym', 'Spa', 'Nhà hàng', 'Đưa đón sân bay']
+const RESTAURANT_AMENITY_OPTIONS = ['Đặt bàn online', 'Đặt món trước', 'Phòng riêng', 'Bãi đỗ xe', 'Wifi miễn phí', 'Thanh toán thẻ', 'Phục vụ ngoài trời', 'Mang về']
 const MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png']
 const ALLOWED_LICENSE_TYPES = [...ALLOWED_IMAGE_TYPES, 'application/pdf']
@@ -111,15 +131,38 @@ const initialProfileForm: ProfileFormState = {
   moTa: '',
   giaCoBan: '500000',
   hangSao: '4',
-  loaiAmThuc: 'Vietnamese',
+  loaiAmThuc: 'Ẩm thực Việt',
   sucChua: '80',
+  emailLienHe: '',
+  diaChi: '',
+  thanhPho: '',
+  quanHuyen: '',
+  phuongXa: '',
+  kinhDo: '106.70090',
+  viDo: '10.77690',
+  chinhSachHuy: '',
+  chinhSachHoanTien: '',
+  gioNhanPhong: '14:00',
+  gioTraPhong: '12:00',
+  gioMoCua: '08:00',
+  gioDongCua: '22:00',
+  quyDinhTreEm: '',
+  quyDinhVatNuoi: '',
+  ghiChuKhac: '',
+  tienIchKhachSan: [],
+  tienIchNhaHang: [],
+  danhSachAnh: [],
 }
 
 const initialRoomForm = {
   soPhong: '',
-  loaiPhong: 'Deluxe Emerald Suite',
+  tenPhong: '',
+  loaiPhong: 'Phòng Deluxe',
   sucChuaToiDa: '2',
+  soGiuong: '1',
   dienTich: '45',
+  giaCoBan: '500000',
+  soLuongPhong: '1',
   phanTramGiamGia: '0',
   tienIch: ['WIFI', 'DIEU_HOA'],
   imageName: '',
@@ -149,23 +192,50 @@ function makeLocalId(prefix: string) {
 function buildBusinessPayload(form: ProfileFormState): BusinessProfilePayload {
   const tenCoSo = form.tenCoSo.trim()
   const moTa = form.moTa.trim()
+  
+  const mappedImages = form.danhSachAnh.map(img => ({
+    duongDanUrl: img.url,
+    moTaAnh: img.moTa || 'Ảnh cơ sở',
+    laAnhDaiDien: img.laAnhDaiDien
+  }));
+  
   const base = {
     hoSo: {
       tenCoSo,
       sdtLienHe: normalizePhone(form.sdtLienHe),
+      emailLienHe: form.emailLienHe.trim(),
+      diaChi: form.diaChi.trim(),
+      thanhPho: form.thanhPho.trim(),
+      quanHuyen: form.quanHuyen.trim(),
+      phuongXa: form.phuongXa.trim(),
+      kinhDo: Number(form.kinhDo),
+      viDo: Number(form.viDo),
       loaiDichVu: form.loaiDichVu,
       maSoThue: onlyDigits(form.maSoThue),
       giayPhepKinhDoanh: form.giayPhepKinhDoanh.trim(),
       toaDoGPS: form.toaDoGPS.replace(/\s+/g, ''),
       chinhSach: {
         loaiChinhSach: 'CHINH_SACH_CHUNG',
-        noiDung: 'Doi tac tuan thu quy dinh niem yet, hoan huy va chat luong dich vu cua TraVi OTA.',
+        noiDung: form.ghiChuKhac || 'Chính sách chung',
         ngayApDung: new Date().toISOString().slice(0, 10),
+        gioNhanPhong: form.gioNhanPhong,
+        gioTraPhong: form.gioTraPhong,
+        gioMoCua: form.gioMoCua,
+        gioDongCua: form.gioDongCua,
+        chinhSachHuy: form.chinhSachHuy,
+        chinhSachHoanTien: form.chinhSachHoanTien,
+        quyDinhTreEm: form.quyDinhTreEm,
+        quyDinhVatNuoi: form.quyDinhVatNuoi,
+        ghiChuKhac: form.ghiChuKhac,
       },
     },
-    danhSachAnh: [],
-    tienIchKhachSan: [],
-    tienIchNhaHang: [],
+    danhSachAnh: mappedImages.length > 0 ? mappedImages : [{ duongDanUrl: 'https://via.placeholder.com/800x400?text=No+Image', moTaAnh: 'Ảnh mặc định', laAnhDaiDien: true }],
+    tienIchKhachSan: form.loaiDichVu === 'KHACH_SAN'
+      ? form.tienIchKhachSan.map(t => ({ tenTienIch: t, loaiTienIch: 'CO_BAN', moTa: t }))
+      : [],
+    tienIchNhaHang: form.loaiDichVu === 'NHA_HANG'
+      ? form.tienIchNhaHang.map(t => ({ tenTienIch: t, loaiTienIch: 'CO_BAN', moTa: t, coThuPhi: false, phiSuDung: 0 }))
+      : [],
   }
 
   if (form.loaiDichVu === 'KHACH_SAN') {
@@ -181,10 +251,7 @@ function buildBusinessPayload(form: ProfileFormState): BusinessProfilePayload {
         gioTraPhong: '12:00',
       },
       nhaHang: null,
-      tienIchKhachSan: [
-        { tenTienIch: 'Wifi mien phi', loaiTienIch: 'CO_BAN', moTa: 'Phu song trong khuon vien' },
-        { tenTienIch: 'Le tan 24/7', loaiTienIch: 'DICH_VU', moTa: 'Ho tro khach moi luc' },
-      ],
+
     }
   }
 
@@ -201,15 +268,7 @@ function buildBusinessPayload(form: ProfileFormState): BusinessProfilePayload {
       gioMoCua: '08:00',
       gioDongCua: '22:00',
     },
-    tienIchNhaHang: [
-      {
-        tenTienIch: 'Dat ban online',
-        loaiTienIch: 'DICH_VU',
-        moTa: 'Cho phep khach dat ban truoc',
-        coThuPhi: false,
-        phiSuDung: 0,
-      },
-    ],
+
   }
 }
 
@@ -350,7 +409,7 @@ function getProfileFormErrors(form: ProfileFormState, targetStep = 3): ProfileFo
     if (!/^(\d{10}|\d{13})$/.test(taxCode)) {
       errors.maSoThue = 'Mã số thuế phải gồm 10 hoặc 13 chữ số.'
     }
-    if (!form.giayPhepKinhDoanh.trim()) errors.businessLicense = 'Vui lòng upload giấy phép kinh doanh.'
+    if (!form.giayPhepKinhDoanh.trim()) errors.businessLicense = 'Vui lòng tải lên giấy phép kinh doanh.'
     else if (form.giayPhepKinhDoanh.trim().length > 500) errors.businessLicense = 'Đường dẫn file giấy phép quá dài.'
   }
 
@@ -412,7 +471,7 @@ function buildLocalRoom(roomForm: typeof initialRoomForm, id = makeLocalId('room
     loaiPhong: roomForm.loaiPhong,
     sucChuaToiDa: Number(roomForm.sucChuaToiDa),
     dienTich: Number(roomForm.dienTich),
-    trangThai: 'SAN_SANG',
+    trangThai: 'DANG_BAN',
     tienIch: roomForm.tienIch,
     phanTramGiamGia: Number(roomForm.phanTramGiamGia),
     danhSachAnh: roomForm.imageName
@@ -434,7 +493,7 @@ function buildLocalTables(quantity: number, selectedArea: string, seats: string,
     nhaHangId: 'local-restaurant',
     viTriSanh: `${selectedArea} #${offset + index + 1}`,
     soChoNgoi: Number(seats),
-    trangThai: 1,
+    trangThai: 'SAN_SANG',
   }))
 }
 
@@ -516,10 +575,10 @@ export function PartnerDashboardPage() {
   const [menuItems, setMenuItems] = useState<MenuItemResponse[]>([])
   const [combos, setCombos] = useState<ComboResponse[]>([])
   const [roomForm, setRoomForm] = useState(initialRoomForm)
-  const [tableForm, setTableForm] = useState({ soLuong: '6', soChoNgoi: '4', viTriSanh: 'Main Hall' })
+  const [tableForm, setTableForm] = useState({ soLuong: '6', soChoNgoi: '4', viTriSanh: 'Sảnh chính' })
   const [menuForm, setMenuForm] = useState(initialMenuForm)
   const [comboForm, setComboForm] = useState(initialComboForm)
-  const [selectedArea, setSelectedArea] = useState('Main Hall')
+  const [selectedArea, setSelectedArea] = useState('Sảnh chính')
   const [isRoomModalOpen, setIsRoomModalOpen] = useState(false)
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false)
   const [isComboModalOpen, setIsComboModalOpen] = useState(false)
@@ -543,16 +602,9 @@ export function PartnerDashboardPage() {
   const isHotel = profile?.loaiDichVu === 'KHACH_SAN'
   const isRestaurant = profile?.loaiDichVu === 'NHA_HANG'
 
-  const statusLabel = useMemo(() => {
-    if (!profile) return 'Draft'
-    if (profile.trangThaiKiemDuyet === 'CHO_DUYET') return 'Pending'
-    if (profile.trangThaiKiemDuyet === 'DANG_HOAT_DONG') return 'Active'
-    if (profile.trangThaiKiemDuyet === 'BI_TU_CHOI') return 'Rejected'
-    return profile.trangThaiKiemDuyet
-  }, [profile])
 
   const menuStats = useMemo(() => {
-    const active = menuItems.filter((item) => item.trangThai === 'CO_SAN').length
+    const active = menuItems.filter((item) => item.trangThai === 'DANG_BAN').length
     return { total: menuItems.length, active, outOfStock: menuItems.length - active }
   }, [menuItems])
 
@@ -616,7 +668,7 @@ export function PartnerDashboardPage() {
           setCombos(comboList)
         }
       } catch (err) {
-        showError(err, 'Không thể tải dữ liệu Partner Dashboard.')
+        showError(err, 'Không thể tải dữ liệu bảng điều khiển đối tác.')
       }
     }
 
@@ -671,7 +723,7 @@ export function PartnerDashboardPage() {
     if (!isPositiveNumber(roomForm.sucChuaToiDa)) return 'Sức chứa phòng phải lớn hơn 0.'
     if (!isPositiveNumber(roomForm.dienTich)) return 'Diện tích phòng phải lớn hơn 0.'
     if (Number(roomForm.phanTramGiamGia) < 0 || Number(roomForm.phanTramGiamGia) > 100) return 'Phần trăm giảm giá phải từ 0 đến 100.'
-    if (!roomForm.imageName.trim()) return 'Vui lòng upload ít nhất một ảnh phòng.'
+    if (!roomForm.imageName.trim()) return 'Vui lòng tải lên ít nhất một ảnh phòng.'
     return ''
   }
 
@@ -686,7 +738,7 @@ export function PartnerDashboardPage() {
   const validateMenuForm = () => {
     if (!menuForm.tenMon.trim()) return 'Vui lòng nhập tên món.'
     if (!isPositiveNumber(menuForm.giaBan)) return 'Giá món phải lớn hơn 0.'
-    if (!menuForm.duongDanUrl.trim()) return 'Vui lòng upload ảnh món ăn.'
+    if (!menuForm.duongDanUrl.trim()) return 'Vui lòng tải lên ảnh món ăn.'
     return ''
   }
 
@@ -738,8 +790,8 @@ export function PartnerDashboardPage() {
 
       showMessage(
         existingProfileId
-          ? 'Hồ sơ đã được cập nhật. Nếu thay đổi thông tin nhạy cảm, hồ sơ sẽ chuyển về trạng thái chờ duyệt lại.'
-          : 'Hồ sơ đã được gửi lên hệ thống kiểm duyệt. Admin sẽ xem xét và phản hồi cho đối tác.',
+          ? 'Hồ sơ kinh doanh đã được cập nhật.'
+          : 'Hồ sơ kinh doanh đã được tạo và kích hoạt thành công.',
       )
     } catch (err) {
       showError(
@@ -753,7 +805,7 @@ export function PartnerDashboardPage() {
 
   const saveDraft = () => {
     localStorage.setItem('partner:profileDraft', JSON.stringify(profileForm))
-    showMessage('Đã lưu bản nháp trên trình duyệt. Đây chưa phải là thao tác gửi duyệt hồ sơ.')
+    showMessage('Đã lưu bản nháp cục bộ trên trình duyệt. Hãy hoàn thành các bước để lưu lên hệ thống.')
   }
 
   const saveRoom = async () => {
@@ -768,9 +820,14 @@ export function PartnerDashboardPage() {
     const payload: RoomPayload = {
       phong: {
         soPhong: roomForm.soPhong,
+        tenPhong: roomForm.tenPhong?.trim() || roomForm.soPhong,
         loaiPhong: roomForm.loaiPhong,
+        moTa: '',
         sucChuaToiDa: Number(roomForm.sucChuaToiDa),
+        soGiuong: Number(roomForm.soGiuong),
         dienTich: Number(roomForm.dienTich),
+        giaCoBan: Number(roomForm.giaCoBan),
+        soLuongPhong: Number(roomForm.soLuongPhong),
         trangThai: 'SAN_SANG',
         tienIch: roomForm.tienIch,
         phanTramGiamGia: Number(roomForm.phanTramGiamGia),
@@ -815,9 +872,13 @@ export function PartnerDashboardPage() {
     setEditingRoomId(room.id)
     setRoomForm({
       soPhong: room.soPhong,
+      tenPhong: room.soPhong, // Fallback
       loaiPhong: room.loaiPhong,
       sucChuaToiDa: String(room.sucChuaToiDa),
+      soGiuong: '1',
       dienTich: String(room.dienTich),
+      giaCoBan: '500000',
+      soLuongPhong: '1',
       phanTramGiamGia: String(room.phanTramGiamGia ?? 0),
       tienIch: room.tienIch,
       imageName: room.danhSachAnh?.find((image) => image.laAnhDaiDien)?.duongDanUrl ?? room.danhSachAnh?.[0]?.duongDanUrl ?? '',
@@ -837,7 +898,7 @@ export function PartnerDashboardPage() {
     try {
       return await partnerAssetService.uploadPartnerAsset(file)
     } catch (err) {
-      showError(err, 'Không thể upload file. Vui lòng kiểm tra backend và thử lại.')
+      showError(err, 'Không thể tải tệp lên. Vui lòng kiểm tra backend và thử lại.')
       return null
     }
   }
@@ -900,7 +961,7 @@ export function PartnerDashboardPage() {
       setTables((current) =>
         current.map((table) =>
           table.id === editingTableId
-            ? { ...table, viTriSanh: selectedArea, soChoNgoi: Number(tableForm.soChoNgoi), trangThai: 1 }
+            ? { ...table, viTriSanh: selectedArea, soChoNgoi: Number(tableForm.soChoNgoi), trangThai: 'SAN_SANG' }
             : table,
         ),
       )
@@ -924,7 +985,7 @@ export function PartnerDashboardPage() {
         const updated = await partnerAssetService.updateTable(assetId, editingTableId, {
           viTriSanh: selectedArea,
           soChoNgoi: Number(tableForm.soChoNgoi),
-          trangThai: 1,
+          trangThai: 'SAN_SANG',
         })
         setTables((current) => current.map((table) => (table.id === editingTableId ? updated : table)))
         setEditingTableId(null)
@@ -940,7 +1001,7 @@ export function PartnerDashboardPage() {
           await partnerAssetService.createTable(assetId, {
             viTriSanh: `${selectedArea} #${index}`,
             soChoNgoi: Number(tableForm.soChoNgoi),
-            trangThai: 1,
+            trangThai: 'SAN_SANG',
           }),
         )
       }
@@ -975,7 +1036,7 @@ export function PartnerDashboardPage() {
       const created = await partnerAssetService.createTable(assetId, {
         viTriSanh: `${selectedArea} #${tables.length + 1}`,
         soChoNgoi: Number(tableForm.soChoNgoi),
-        trangThai: 1,
+        trangThai: 'SAN_SANG',
       })
       setTables((current) => [...current, created])
       setTableForm((current) => ({ ...current, soLuong: '1' }))
@@ -1011,7 +1072,7 @@ export function PartnerDashboardPage() {
     const payload = {
       tenMon: menuForm.tenMon,
       giaBan: Number(menuForm.giaBan),
-      trangThai: 'CO_SAN' as MenuItemStatus,
+      trangThai: 'DANG_BAN' as MenuItemStatus,
       duongDanUrl: menuForm.duongDanUrl,
       theNguCanh: menuForm.theNguCanh.split(',').map((item) => item.trim()).filter(Boolean),
     }
@@ -1063,7 +1124,7 @@ export function PartnerDashboardPage() {
   }
 
   const toggleMenuStatus = async (item: MenuItemResponse) => {
-    const nextStatus: MenuItemStatus = item.trangThai === 'CO_SAN' ? 'TAM_HET' : 'CO_SAN'
+    const nextStatus: MenuItemStatus = item.trangThai === 'DANG_BAN' ? 'TAM_HET' : 'DANG_BAN'
     if (!assetId || item.id.startsWith('menu-')) {
       setMenuItems((current) =>
         current.map((menuItem) => (menuItem.id === item.id ? { ...menuItem, trangThai: nextStatus } : menuItem)),
@@ -1074,7 +1135,7 @@ export function PartnerDashboardPage() {
     try {
       const updated = await partnerAssetService.updateMenuItemStatus(assetId, item.id, nextStatus)
       setMenuItems((current) => current.map((menuItem) => (menuItem.id === item.id ? updated : menuItem)))
-      showMessage(nextStatus === 'CO_SAN' ? 'Món đã được bật lại.' : 'Món đã chuyển sang tạm hết.')
+      showMessage(nextStatus === 'DANG_BAN' ? 'Món đã được bật lại.' : 'Món đã chuyển sang tạm hết.')
     } catch (err) {
       showError(err, 'Không thể cập nhật trạng thái món.')
     }
@@ -1186,18 +1247,36 @@ export function PartnerDashboardPage() {
     }
   }
 
+  const toggleAmenity = (amenity: string) => {
+    const field = profileForm.loaiDichVu === 'KHACH_SAN' ? 'tienIchKhachSan' : 'tienIchNhaHang'
+    const current = profileForm[field]
+    const next = current.includes(amenity)
+      ? current.filter((item) => item !== amenity)
+      : [...current, amenity]
+    updateProfileField(field, next as any)
+  }
+
+  const addCustomAmenity = (value: string) => {
+    const amenity = value.trim()
+    if (!amenity) return
+    const field = profileForm.loaiDichVu === 'KHACH_SAN' ? 'tienIchKhachSan' : 'tienIchNhaHang'
+    if (!profileForm[field].includes(amenity)) {
+      updateProfileField(field, [...profileForm[field], amenity] as any)
+    }
+  }
+
   const handleLogout = async () => {
     await logout()
     navigate('/partner/login')
   }
 
   const navItems: Array<{ id: PartnerView; label: string; icon: React.ReactNode }> = [
-    { id: 'business-profile', label: 'Business Profile', icon: <BriefcaseBusiness size={20} /> },
-    { id: 'hotel-setup', label: 'Hotel Setup', icon: <Bed size={20} /> },
-    { id: 'room-management', label: 'Room Management', icon: <DoorOpen size={20} /> },
-    { id: 'restaurant-setup', label: 'Restaurant Setup', icon: <Utensils size={20} /> },
-    { id: 'table-layout', label: 'Table Layout', icon: <Grid2X2 size={20} /> },
-    { id: 'menu-management', label: 'Menu Management', icon: <BookOpen size={20} /> },
+    { id: 'business-profile', label: 'Hồ sơ kinh doanh', icon: <BriefcaseBusiness size={20} /> },
+    { id: 'hotel-setup', label: 'Thiết lập khách sạn', icon: <Bed size={20} /> },
+    { id: 'room-management', label: 'Quản lý phòng', icon: <DoorOpen size={20} /> },
+    { id: 'restaurant-setup', label: 'Thiết lập nhà hàng', icon: <Utensils size={20} /> },
+    { id: 'table-layout', label: 'Bố trí bàn', icon: <Grid2X2 size={20} /> },
+    { id: 'menu-management', label: 'Quản lý thực đơn', icon: <BookOpen size={20} /> },
   ]
 
   return (
@@ -1206,39 +1285,39 @@ export function PartnerDashboardPage() {
         <div className="partner-sidebar-inner">
           <div className="partner-brand-card">
             <div className="partner-user-avatar large">
-              {partnerAvatarUrl ? <img src={partnerAvatarUrl} alt="Partner avatar" /> : partnerInitials}
+              {partnerAvatarUrl ? <img src={partnerAvatarUrl} alt="Ảnh đại diện đối tác" /> : partnerInitials}
             </div>
             <div className="brand-title">
-              <strong>TraVi Dashboard</strong>
-              <span>Partner Portal</span>
+              <strong>Bảng điều khiển TraVi</strong>
+              <span>Cổng đối tác</span>
             </div>
           </div>
 
           <nav className="side-nav partner-nav main-partner-nav">
             <button>
               <LayoutGrid size={20} />
-              Overview
+              Tổng quan
             </button>
             <button>
               <CalendarIcon />
-              Bookings
+              Đặt phòng
             </button>
             <button>
               <AnalyticsIcon />
-              Analytics
+              Phân tích
             </button>
             <button className="active">
               <BriefcaseBusiness size={20} />
-              Management
+              Quản lý
             </button>
             <button>
               <SettingsIcon />
-              Settings
+              Cài đặt
             </button>
           </nav>
 
           <div className="management-subnav">
-            <p>Management</p>
+            <p>Quản lý</p>
             {navItems.map((item) => (
               <button
                 key={item.id}
@@ -1253,8 +1332,8 @@ export function PartnerDashboardPage() {
         </div>
 
         <div className="sidebar-footer">
-          <button><CircleHelp size={20} /> Help Center</button>
-          <button onClick={handleLogout}><LogOut size={20} /> Logout</button>
+          <button><CircleHelp size={20} /> Trung tâm trợ giúp</button>
+          <button onClick={handleLogout}><LogOut size={20} /> Đăng xuất</button>
         </div>
       </aside>
 
@@ -1278,7 +1357,6 @@ export function PartnerDashboardPage() {
             profile={profile}
             profileForm={profileForm}
             profileErrors={profileErrors}
-            statusLabel={statusLabel}
             isSubmitting={isSubmitting}
             updateProfileField={updateProfileField}
             saveProfile={saveProfile}
@@ -1286,6 +1364,8 @@ export function PartnerDashboardPage() {
             uploadFile={uploadFile}
             uploadBusinessLicense={uploadBusinessLicense}
             isUploadingLicense={isUploadingLicense}
+            toggleAmenity={toggleAmenity}
+            addCustomAmenity={addCustomAmenity}
           />
         )}
 
@@ -1327,7 +1407,7 @@ export function PartnerDashboardPage() {
             deleteTable={deleteTable}
             editingTableId={editingTableId}
             isSaving={isTableSaving}
-            propertyName={profileForm.tenCoSo || 'The Emerald Garden'}
+            propertyName={profileForm.tenCoSo || 'Khu vườn Emerald'}
           />
         )}
 
@@ -1412,6 +1492,213 @@ export function PartnerDashboardPage() {
   )
 }
 
+function RoomModal({
+  roomForm,
+  setRoomForm,
+  saveRoom,
+  isEditing,
+  isSaving,
+  uploadFile,
+  close,
+}: {
+  roomForm: typeof initialRoomForm
+  setRoomForm: React.Dispatch<React.SetStateAction<typeof initialRoomForm>>
+  saveRoom: () => void
+  isEditing: boolean
+  isSaving: boolean
+  uploadFile: (file: File, options?: UploadOptions) => Promise<UploadedAsset | null>
+  close: () => void
+}) {
+  const handleRoomImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const uploaded = await uploadFile(file)
+      if (uploaded) {
+        setRoomForm((c) => ({ ...c, imageName: uploaded.url }))
+      }
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={close}>
+      <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+        <div className="section-title between">
+          <h2>{isEditing ? 'Chỉnh sửa phòng' : 'Thêm phòng'}</h2>
+          <button className="icon-btn" onClick={close} type="button"><X size={16} /></button>
+        </div>
+        <div className="form-grid two-column">
+          <label><span>Số phòng</span><input value={roomForm.soPhong} onChange={(e) => setRoomForm((c) => ({ ...c, soPhong: e.target.value }))} /></label>
+          <label><span>Loại phòng</span><input value={roomForm.loaiPhong} onChange={(e) => setRoomForm((c) => ({ ...c, loaiPhong: e.target.value }))} /></label>
+          <label><span>Sức chứa</span><input value={roomForm.sucChuaToiDa} onChange={(e) => setRoomForm((c) => ({ ...c, sucChuaToiDa: e.target.value }))} /></label>
+          <label><span>Diện tích (m²)</span><input value={roomForm.dienTich} onChange={(e) => setRoomForm((c) => ({ ...c, dienTich: e.target.value }))} /></label>
+        </div>
+        <div className="form-grid two-column">
+          <label className="full">
+            <span>Ảnh phòng *</span>
+            <div className="upload-box" style={{ cursor: 'pointer' }}>
+              <input type="file" accept="image/jpeg,image/png" onChange={handleRoomImageUpload} />
+              <div style={{ textAlign: 'center', padding: '20px', color: '#68736d' }}>
+                {roomForm.imageName ? (
+                  <>
+                    <img src={roomForm.imageName} alt="Preview" style={{ maxWidth: '100%', maxHeight: '150px', marginBottom: '8px', borderRadius: '4px' }} />
+                    <p style={{ margin: '8px 0 0 0', fontSize: '12px' }}>Bấm để thay ảnh</p>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ margin: '0', fontWeight: 500 }}>Tải ảnh lên</p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '12px' }}>Bấm để chọn ảnh JPG hoặc PNG</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </label>
+        </div>
+        <div className="modal-actions">
+          <button className="ghost-btn" onClick={close} type="button">Hủy</button>
+          <button className="primary-btn" onClick={saveRoom} disabled={isSaving} type="button">{isSaving ? 'Đang lưu...' : 'Lưu'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MenuModal({
+  menuForm,
+  setMenuForm,
+  createMenuItem,
+  isEditing,
+  isSaving,
+  uploadFile,
+  close,
+}: {
+  menuForm: typeof initialMenuForm
+  setMenuForm: React.Dispatch<React.SetStateAction<typeof initialMenuForm>>
+  createMenuItem: () => void
+  isEditing: boolean
+  isSaving: boolean
+  uploadFile: (file: File, options?: UploadOptions) => Promise<UploadedAsset | null>
+  close: () => void
+}) {
+  const handleMenuImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const uploaded = await uploadFile(file)
+      if (uploaded) {
+        setMenuForm((c) => ({ ...c, duongDanUrl: uploaded.url }))
+      }
+    }
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={close}>
+      <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+        <div className="section-title between">
+          <h2>{isEditing ? 'Chỉnh sửa món ăn' : 'Thêm món ăn'}</h2>
+          <button className="icon-btn" onClick={close} type="button"><X size={16} /></button>
+        </div>
+        <div className="form-grid two-column">
+          <label><span>Tên món</span><input value={menuForm.tenMon} onChange={(e) => setMenuForm((c) => ({ ...c, tenMon: e.target.value }))} /></label>
+          <label><span>Giá bán</span><input value={menuForm.giaBan} onChange={(e) => setMenuForm((c) => ({ ...c, giaBan: e.target.value }))} /></label>
+          <label className="full"><span>Nhãn hiển thị</span><input value={menuForm.theNguCanh} onChange={(e) => setMenuForm((c) => ({ ...c, theNguCanh: e.target.value }))} /></label>
+        </div>
+        <div className="form-grid two-column">
+          <label className="full">
+            <span>Ảnh món ăn *</span>
+            <div className="upload-box" style={{ cursor: 'pointer' }}>
+              <input type="file" accept="image/jpeg,image/png" onChange={handleMenuImageUpload} />
+              <div style={{ textAlign: 'center', padding: '20px', color: '#68736d' }}>
+                {menuForm.duongDanUrl ? (
+                  <>
+                    <img src={menuForm.duongDanUrl} alt="Preview" style={{ maxWidth: '100%', maxHeight: '150px', marginBottom: '8px', borderRadius: '4px' }} />
+                    <p style={{ margin: '8px 0 0 0', fontSize: '12px' }}>Bấm để thay ảnh</p>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ margin: '0', fontWeight: 500 }}>Tải ảnh lên</p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '12px' }}>Bấm để chọn ảnh JPG hoặc PNG</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </label>
+        </div>
+        <div className="modal-actions">
+          <button className="ghost-btn" onClick={close} type="button">Hủy</button>
+          <button className="primary-btn" onClick={createMenuItem} disabled={isSaving} type="button">{isSaving ? 'Đang lưu...' : 'Lưu'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ComboModal({
+  comboForm,
+  setComboForm,
+  menuItems,
+  saveCombo,
+  isEditing,
+  isSaving,
+  close,
+}: {
+  comboForm: typeof initialComboForm
+  setComboForm: React.Dispatch<React.SetStateAction<typeof initialComboForm>>
+  menuItems: MenuItemResponse[]
+  saveCombo: () => void
+  isEditing: boolean
+  isSaving: boolean
+  close: () => void
+}) {
+  const toggleComboItem = (itemId: string) => {
+    setComboForm((current) => ({
+      ...current,
+      monAnIds: current.monAnIds.includes(itemId)
+        ? current.monAnIds.filter((id) => id !== itemId)
+        : [...current.monAnIds, itemId],
+    }))
+  }
+
+  return (
+    <div className="modal-backdrop" onClick={close}>
+      <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+        <div className="section-title between">
+          <h2>{isEditing ? 'Chỉnh sửa combo' : 'Thêm combo'}</h2>
+          <button className="icon-btn" onClick={close} type="button"><X size={16} /></button>
+        </div>
+        <div className="form-grid two-column">
+          <label><span>Tên combo</span><input value={comboForm.tenCombo} onChange={(e) => setComboForm((c) => ({ ...c, tenCombo: e.target.value }))} /></label>
+          <label><span>Giá combo</span><input value={comboForm.giaCombo} onChange={(e) => setComboForm((c) => ({ ...c, giaCombo: e.target.value }))} /></label>
+          <label><span>Mô tả</span><input value={comboForm.moTa} onChange={(e) => setComboForm((c) => ({ ...c, moTa: e.target.value }))} /></label>
+          <label><span>Trạng thái</span><select value={comboForm.trangThai} onChange={(e) => setComboForm((c) => ({ ...c, trangThai: e.target.value }))}><option value="1">Đang hoạt động</option><option value="0">Tạm dừng</option></select></label>
+        </div>
+
+        <div className="combo-picker">
+          <h3>Món trong combo</h3>
+          {menuItems.length === 0 ? (
+            <p className="muted-text">Chưa có món ăn nào để chọn. Hãy thêm món trước.</p>
+          ) : (
+            menuItems.map((item) => (
+              <label key={item.id} className="combo-item-row">
+                <input
+                  type="checkbox"
+                  checked={comboForm.monAnIds.includes(item.id)}
+                  onChange={() => toggleComboItem(item.id)}
+                />
+                <span>{item.tenMon}</span>
+                <strong>{formatMoney(item.giaBan)}</strong>
+              </label>
+            ))
+          )}
+        </div>
+
+        <div className="modal-actions">
+          <button className="ghost-btn" onClick={close} type="button">Hủy</button>
+          <button className="primary-btn" onClick={saveCombo} disabled={isSaving} type="button">{isSaving ? 'Đang lưu...' : 'Lưu'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CalendarIcon() {
   return (
     <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
@@ -1443,7 +1730,6 @@ type BusinessProfileViewProps = {
   profile: BusinessProfileResponse | null
   profileForm: ProfileFormState
   profileErrors: ProfileFormErrors
-  statusLabel: string
   isSubmitting: boolean
   updateProfileField: (name: keyof ProfileFormState, value: string) => void
   saveProfile: () => void
@@ -1451,6 +1737,8 @@ type BusinessProfileViewProps = {
   uploadFile: (file: File, options?: UploadOptions) => Promise<UploadedAsset | null>
   uploadBusinessLicense: (file: File) => Promise<void>
   isUploadingLicense: boolean
+  toggleAmenity: (amenity: string) => void
+  addCustomAmenity: (value: string) => void
 }
 
 function BusinessProfileView({
@@ -1459,13 +1747,14 @@ function BusinessProfileView({
   profile,
   profileForm,
   profileErrors,
-  statusLabel,
   isSubmitting,
   updateProfileField,
   saveProfile,
   saveDraft,
   uploadBusinessLicense,
   isUploadingLicense,
+  toggleAmenity,
+  addCustomAmenity,
 }: BusinessProfileViewProps) {
   const currentStepErrors = Object.fromEntries(
     Object.entries(profileErrors).filter(([key]) => {
@@ -1481,12 +1770,13 @@ function BusinessProfileView({
       <header className="partner-page-header split">
         <div>
           <h1>Thiết lập hồ sơ kinh doanh</h1>
-          <p>Hoàn thiện thông tin cơ sở kinh doanh và gửi hồ sơ để Admin kiểm duyệt.</p>
+          <p>Hoàn thiện thông tin cơ sở kinh doanh để kích hoạt hiển thị trên hệ thống.</p>
         </div>
         <div className="status-cluster">
-          <span className="mini-pill gray">Bản nháp</span>
-          <span className={`mini-pill ${statusLabel === 'Pending' ? 'yellow' : 'gray'}`}>Chờ duyệt</span>
-          <span className={`mini-pill ${statusLabel === 'Active' ? 'green' : 'gray'}`}>Đang hoạt động</span>
+          <span className={`mini-pill ${!profile ? 'yellow' : 'gray'}`}>Chưa lưu</span>
+          <span className={`mini-pill ${profile?.trangThaiHoatDong === 'TAM_DUNG' ? 'yellow' : 'gray'}`}>Tạm dừng</span>
+          <span className={`mini-pill ${profile?.trangThaiHoatDong === 'BI_KHOA' ? 'red' : 'gray'}`}>Bị khóa</span>
+          <span className={`mini-pill ${profile?.trangThaiHoatDong === 'DANG_HOAT_DONG' ? 'green' : 'gray'}`}>Đang hoạt động</span>
         </div>
       </header>
 
@@ -1495,15 +1785,23 @@ function BusinessProfileView({
           <div className="wizard-steps">
             <button className={step > 1 ? 'done' : step === 1 ? 'active' : ''} onClick={() => setStep(1)}>
               {step > 1 ? <Check size={20} /> : <span>1</span>}
-              Thông tin cơ bản
+              Cơ bản
             </button>
             <button className={step > 2 ? 'done' : step === 2 ? 'active' : ''} onClick={() => setStep(2)}>
               {step > 2 ? <Check size={20} /> : <span>2</span>}
-              Giấy tờ pháp lý
+              Pháp lý
             </button>
-            <button className={step === 3 ? 'active' : ''} onClick={() => setStep(3)}>
-              <span>3</span>
-              Vị trí bản đồ
+            <button className={step > 3 ? 'done' : step === 3 ? 'active' : ''} onClick={() => setStep(3)}>
+              {step > 3 ? <Check size={20} /> : <span>3</span>}
+              Vị trí
+            </button>
+            <button className={step > 4 ? 'done' : step === 4 ? 'active' : ''} onClick={() => setStep(4)}>
+              {step > 4 ? <Check size={20} /> : <span>4</span>}
+              Ảnh & Tiện ích
+            </button>
+            <button className={step === 5 ? 'active' : ''} onClick={() => setStep(5)}>
+              <span>5</span>
+              Chính sách
             </button>
           </div>
 
@@ -1579,7 +1877,7 @@ function BusinessProfileView({
                   </div>
                   <div className="business-preview-card">
                     <p><Eye size={14} /> Xem trước hiển thị</p>
-                    <img src={heroImage} alt="Business preview" />
+                    <img src={heroImage} alt="Ảnh xem trước cơ sở" />
                     <div>
                       <strong>{profileForm.tenCoSo || 'Tên cơ sở của bạn'}</strong>
                       <span>$$$</span>
@@ -1663,6 +1961,110 @@ function BusinessProfileView({
                 </div>
               </>
             )}
+
+            {step === 4 && (
+              <>
+                <div className="accent-heading">
+                  <UploadCloud size={22} />
+                  <h2>Ảnh & Tiện ích</h2>
+                </div>
+                <div className="form-grid single">
+                  <div>
+                    <label>Tiện ích</label>
+                    <div className="tag-row" style={{ marginTop: 8, flexWrap: 'wrap', gap: 10 }}>
+                      {(profileForm.loaiDichVu === 'KHACH_SAN' ? HOTEL_AMENITY_OPTIONS : RESTAURANT_AMENITY_OPTIONS).map((amenity) => {
+                        const checked = profileForm.loaiDichVu === 'KHACH_SAN'
+                          ? profileForm.tienIchKhachSan.includes(amenity)
+                          : profileForm.tienIchNhaHang.includes(amenity)
+                        return (
+                          <label key={amenity} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <input type="checkbox" checked={checked} onChange={() => toggleAmenity(amenity)} />
+                            <span>{amenity}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                    <input
+                      style={{ marginTop: 12 }}
+                      placeholder="Thêm tiện ích khác rồi nhấn Enter..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          addCustomAmenity(e.currentTarget.value)
+                          e.currentTarget.value = ''
+                        }
+                      }}
+                    />
+                    <small>Có thể chọn nhanh bằng checkbox hoặc nhập tiện ích riêng.</small>
+                  </div>
+                  <label>
+                    Ảnh cơ sở (URL ảnh tạm thời cho demo)
+                    <input 
+                      placeholder="https://example.com/image.jpg" 
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const val = e.currentTarget.value.trim();
+                          if (val) {
+                            const newArr = [...profileForm.danhSachAnh, {url: val, moTa: '', laAnhDaiDien: profileForm.danhSachAnh.length === 0}];
+                            updateProfileField('danhSachAnh', newArr as any);
+                            e.currentTarget.value = '';
+                          }
+                        }
+                      }}
+                    />
+                    <small>Nhập URL ảnh và ấn Enter để thêm.</small>
+                  </label>
+                  {profileForm.danhSachAnh.length > 0 && (
+                    <div className="uploaded-file-list">
+                      {profileForm.danhSachAnh.map((img, i) => (
+                        <div key={i} className="uploaded-file">
+                          <img src={img.url} alt="thumb" style={{width: 40, height: 40, objectFit: 'cover', borderRadius: 4}} />
+                          <div style={{flex: 1, marginLeft: 10}}>
+                            <input value={img.moTa} onChange={(e) => {
+                              const newArr = [...profileForm.danhSachAnh];
+                              newArr[i].moTa = e.target.value;
+                              updateProfileField('danhSachAnh', newArr as any);
+                            }} placeholder="Mô tả ảnh..." style={{padding: 4, width: '100%', fontSize: 12}} />
+                          </div>
+                          <button onClick={() => {
+                              const newArr = [...profileForm.danhSachAnh];
+                              newArr.splice(i, 1);
+                              updateProfileField('danhSachAnh', newArr as any);
+                          }}><Trash2 size={16} /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {step === 5 && (
+              <>
+                <div className="accent-heading">
+                  <FileText size={22} />
+                  <h2>Chính sách & Quy định</h2>
+                </div>
+                <div className="form-grid single">
+                  {profileForm.loaiDichVu === 'KHACH_SAN' ? (
+                    <div className="form-grid">
+                      <label>Giờ nhận phòng <input type="time" value={profileForm.gioNhanPhong} onChange={e => updateProfileField('gioNhanPhong', e.target.value)} /></label>
+                      <label>Giờ trả phòng <input type="time" value={profileForm.gioTraPhong} onChange={e => updateProfileField('gioTraPhong', e.target.value)} /></label>
+                    </div>
+                  ) : (
+                    <div className="form-grid">
+                      <label>Giờ mở cửa <input type="time" value={profileForm.gioMoCua} onChange={e => updateProfileField('gioMoCua', e.target.value)} /></label>
+                      <label>Giờ đóng cửa <input type="time" value={profileForm.gioDongCua} onChange={e => updateProfileField('gioDongCua', e.target.value)} /></label>
+                    </div>
+                  )}
+                  <label>Chính sách hủy <textarea value={profileForm.chinhSachHuy} onChange={e => updateProfileField('chinhSachHuy', e.target.value)} placeholder="Ví dụ: Miễn phí hủy trước 24h..." /></label>
+                  <label>Chính sách trẻ em & thú cưng <textarea value={profileForm.quyDinhTreEm} onChange={e => updateProfileField('quyDinhTreEm', e.target.value)} placeholder="Trẻ em dưới 6 tuổi miễn phí..." /></label>
+                  <label>Ghi chú khác <textarea value={profileForm.ghiChuKhac} onChange={e => updateProfileField('ghiChuKhac', e.target.value)} placeholder="Các quy định khác..." /></label>
+                </div>
+              </>
+            )}
+
           </section>
 
           <div className="profile-actions">
@@ -1673,14 +2075,14 @@ function BusinessProfileView({
               <button className="secondary-btn" disabled={isSubmitting} onClick={saveDraft}>
                 Lưu bản nháp
               </button>
-              {step < 3 ? (
+              {step < 5 ? (
                 <button className="primary-btn" onClick={() => setStep(step + 1)}>
-                  {step === 1 ? 'Tiếp tục: Giấy tờ pháp lý' : 'Tiếp tục: Chọn vị trí'}
+                  {step === 1 ? 'Tiếp tục: Giấy tờ pháp lý' : step === 2 ? 'Tiếp tục: Vị trí' : step === 3 ? 'Tiếp tục: Ảnh & Tiện ích' : 'Tiếp tục: Chính sách'}
                   <ArrowRight size={18} />
                 </button>
               ) : (
                 <button className="primary-btn" disabled={isSubmitting} onClick={saveProfile}>
-                  {isSubmitting ? 'Đang gửi hồ sơ...' : profile ? 'Cập nhật hồ sơ' : 'Gửi hồ sơ duyệt'}
+                  {isSubmitting ? 'Đang lưu hồ sơ...' : profile ? 'Lưu cập nhật hồ sơ' : 'Kích hoạt hồ sơ'}
                   <ArrowRight size={18} />
                 </button>
               )}
@@ -1705,26 +2107,26 @@ function HotelSetupView({
   return (
     <>
       <header className="partner-page-header">
-        <h1>Hotel Setup</h1>
-        <p>Configure core hotel details before managing rooms.</p>
+        <h1>Thiết lập khách sạn</h1>
+        <p>Cấu hình thông tin khách sạn trước khi quản lý danh sách phòng.</p>
       </header>
       <section className="hotel-setup-grid">
         <div className="panel feature-panel">
           <Hotel size={32} />
-          <h2>{profileForm.tenCoSo || 'Grand Horizon Resort'}</h2>
-          <p>{profileForm.moTa || 'High quality hospitality property ready for TraVi travelers.'}</p>
+          <h2>{profileForm.tenCoSo || 'Khách sạn Grand Horizon'}</h2>
+          <p>{profileForm.moTa || 'Cơ sở lưu trú chất lượng cao đã sẵn sàng phục vụ khách hàng TraVi.'}</p>
           <div className="setup-stats">
-            <span>{profileForm.hangSao} stars</span>
+            <span>{profileForm.hangSao} sao</span>
             <span>{formatMoney(Number(profileForm.giaCoBan || 0))}</span>
-            <span>{profile ? profile.trangThaiKiemDuyet : 'DRAFT'}</span>
+            <span>{profile ? profile.trangThaiHoatDong : 'BẢN NHÁP'}</span>
           </div>
         </div>
         <div className="panel setup-checklist">
-          <h2>Hotel readiness</h2>
-          <p><CheckCircle2 /> Business profile submitted</p>
-          <p><CheckCircle2 /> Legal document attached</p>
-          <p><XCircle /> Room inventory needs setup</p>
-          <button className="primary-btn" onClick={() => setActiveView('room-management')}>Go to Room Management</button>
+          <h2>Mức độ sẵn sàng</h2>
+          <p><CheckCircle2 /> Hồ sơ kinh doanh đã được tạo</p>
+          <p><CheckCircle2 /> Đã tải lên giấy phép kinh doanh</p>
+          <p><XCircle /> Cần thiết lập danh sách phòng</p>
+          <button className="primary-btn" onClick={() => setActiveView('room-management')}>Đi tới quản lý phòng</button>
         </div>
       </section>
     </>
@@ -1750,28 +2152,28 @@ function RoomManagementView({
     <>
       <header className="partner-page-header split">
         <div>
-          <p className="breadcrumb">Management › <strong>Room Management</strong></p>
-          <h1>Room Inventory</h1>
-          <p>Manage room availability, pricing, and amenities for your property.</p>
+          <p className="breadcrumb">Quản lý › <strong>Quản lý phòng</strong></p>
+          <h1>Danh sách phòng</h1>
+          <p>Quản lý trạng thái phòng, giá bán và tiện ích của cơ sở.</p>
         </div>
         <div className="header-actions">
-          <div className="search-box"><Search size={20} /><input value={roomSearch} onChange={(event) => setRoomSearch(event.target.value)} placeholder="Search rooms..." /></div>
-          <button className="secondary-btn">Filters</button>
-          <button className="primary-btn" onClick={() => setIsRoomModalOpen(true)}><Plus size={18} /> Add Room</button>
+          <div className="search-box"><Search size={20} /><input value={roomSearch} onChange={(event) => setRoomSearch(event.target.value)} placeholder="Tìm kiếm phòng..." /></div>
+          <button className="secondary-btn">Lọc</button>
+          <button className="primary-btn" onClick={() => setIsRoomModalOpen(true)}><Plus size={18} /> Thêm phòng</button>
         </div>
       </header>
       <section className="panel table-panel">
         <table className="data-table room-table">
           <thead>
             <tr>
-              <th>Image</th>
-              <th>Room No.</th>
-              <th>Type</th>
-              <th>Capacity</th>
-              <th>Area</th>
-              <th>Price</th>
-              <th>Status</th>
-              <th>Actions</th>
+              <th>Ảnh</th>
+              <th>Số phòng</th>
+              <th>Loại</th>
+              <th>Sức chứa</th>
+              <th>Diện tích</th>
+              <th>Giá</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
             </tr>
           </thead>
           <tbody>
@@ -1780,14 +2182,14 @@ function RoomManagementView({
                 <td><div className="room-thumb"><Bed size={22} /></div></td>
                 <td><strong>{room.soPhong}</strong></td>
                 <td><strong>{room.loaiPhong}</strong><span className="table-subtext">{room.tienIch.join(' · ')}</span></td>
-                <td>{room.sucChuaToiDa} Adults</td>
+                <td>{room.sucChuaToiDa} Người</td>
                 <td>{room.dienTich} m²</td>
-                <td><strong>{room.phanTramGiamGia > 0 ? `-${room.phanTramGiamGia}%` : 'Base'}</strong></td>
-                <td><span className="badge green">Available</span></td>
+                <td><strong>{room.phanTramGiamGia > 0 ? `-${room.phanTramGiamGia}%` : 'Giá cơ bản'}</strong></td>
+                <td><span className="badge green">Còn phòng</span></td>
                 <td className="table-actions"><button className="icon-btn" onClick={() => startRoomEdit(room)}><Pencil size={16} /></button><button className="icon-btn danger" onClick={() => deleteRoom(room.id)}><Trash2 size={16} /></button></td>
               </tr>
             ))}
-            {!rooms.length && <tr><td colSpan={8} className="empty-cell">No rooms yet. Add the first room to populate inventory.</td></tr>}
+            {!rooms.length && <tr><td colSpan={8} className="empty-cell">Chưa có phòng nào. Hãy thêm phòng đầu tiên để bắt đầu.</td></tr>}
           </tbody>
         </table>
       </section>
@@ -1807,28 +2209,28 @@ function RestaurantSetupView({
   return (
     <>
       <header className="partner-page-header">
-        <h1>Restaurant Setup</h1>
-        <p>Prepare restaurant capacity, cuisine positioning and operational tools.</p>
+        <h1>Thiết lập nhà hàng</h1>
+        <p>Chuẩn bị sức chứa nhà hàng, định vị ẩm thực và các công cụ vận hành.</p>
       </header>
       <section className="hotel-setup-grid">
         <div className="panel feature-panel">
           <Utensils size={32} />
           <h2>{profileForm.tenCoSo || 'The Emerald Garden'}</h2>
-          <p>{profileForm.loaiAmThuc} cuisine · {profileForm.sucChua} seats · {profile ? profile.trangThaiKiemDuyet : 'DRAFT'}</p>
+          <p>{profileForm.loaiAmThuc} · {profileForm.sucChua} chỗ · {profile ? profile.trangThaiHoatDong : 'BẢN NHÁP'}</p>
           <div className="setup-stats">
-            <span>Menu ready</span>
-            <span>Table layout</span>
-            <span>Availability switch</span>
+            <span>Thực đơn sẵn sàng</span>
+            <span>Bố cục bàn</span>
+            <span>Bật/tắt trạng thái</span>
           </div>
         </div>
         <div className="panel setup-checklist">
-          <h2>Restaurant setup flow</h2>
-          <p><CheckCircle2 /> Business profile available</p>
-          <p><XCircle /> Table layout needs generation</p>
-          <p><XCircle /> Menu items need setup</p>
+          <h2>Quy trình thiết lập nhà hàng</h2>
+          <p><CheckCircle2 /> Hồ sơ kinh doanh có sẵn</p>
+          <p><XCircle /> Cần tạo bố cục bàn</p>
+          <p><XCircle /> Cần thiết lập các món ăn</p>
           <div className="inline-actions">
-            <button className="secondary-btn" onClick={() => setActiveView('table-layout')}>Table Layout</button>
-            <button className="primary-btn" onClick={() => setActiveView('menu-management')}>Menu Management</button>
+            <button className="secondary-btn" onClick={() => setActiveView('table-layout')}>Bố cục bàn</button>
+            <button className="primary-btn" onClick={() => setActiveView('menu-management')}>Quản lý thực đơn</button>
           </div>
         </div>
       </section>
@@ -1869,41 +2271,41 @@ function TableLayoutView({
     <>
       <header className="partner-page-header split compact-header">
         <div>
-          <h1>Table Management</h1>
-          <p>Design and organize your restaurant's dining areas.</p>
+          <h1>Quản lý bàn</h1>
+          <p>Thiết kế và sắp xếp các khu vực ăn uống của nhà hàng.</p>
         </div>
         <div className="property-chip"><Utensils size={20} /> {propertyName}</div>
       </header>
       <div className="table-layout-grid">
         <section className="panel">
-          <div className="accent-heading"><LayoutGrid size={22} /><h2>Bulk Table Creation</h2></div>
+          <div className="accent-heading"><LayoutGrid size={22} /><h2>Tạo bàn hàng loạt</h2></div>
           <div className="form-grid single">
-            <label>Number of Tables<input value={tableForm.soLuong} onChange={(event) => setTableForm((current) => ({ ...current, soLuong: event.target.value }))} placeholder="e.g. 10" /></label>
+            <label>Số lượng bàn<input value={tableForm.soLuong} onChange={(event) => setTableForm((current) => ({ ...current, soLuong: event.target.value }))} placeholder="ví dụ: 10" /></label>
             <label>
-              Seats Per Table
+              Số chỗ ngồi mỗi bàn
               <select value={tableForm.soChoNgoi} onChange={(event) => setTableForm((current) => ({ ...current, soChoNgoi: event.target.value }))}>
-                <option value="2">2 Seats</option>
-                <option value="4">4 Seats</option>
-                <option value="6">6 Seats</option>
+                <option value="2">2 chỗ</option>
+                <option value="4">4 chỗ</option>
+                <option value="6">6 chỗ</option>
               </select>
             </label>
           </div>
-          <h3>Select Area</h3>
+          <h3>Chọn khu vực</h3>
           <div className="area-grid">
             {RESTAURANT_AREAS.map((area) => (
               <button key={area} className={selectedArea === area ? 'active' : ''} onClick={() => setSelectedArea(area)}>{area}</button>
             ))}
           </div>
-          <button className="primary-btn full-width" disabled={isSaving} onClick={createTables}><Plus size={18} /> {isSaving ? 'Saving...' : editingTableId ? 'Update Table' : 'Generate Tables'}</button>
+          <button className="primary-btn full-width" disabled={isSaving} onClick={createTables}><Plus size={18} /> {isSaving ? 'Đang lưu...' : editingTableId ? 'Cập nhật bàn' : 'Tạo bàn'}</button>
         </section>
 
         <section className="panel layout-preview">
-          <div className="accent-heading"><Grid2X2 size={22} /><h2>Layout Preview: {selectedArea}</h2></div>
+          <div className="accent-heading"><Grid2X2 size={22} /><h2>Xem trước bố cục: {selectedArea}</h2></div>
           <div className="floor-plan">
             {previewTables.map((table, index) => (
               <div key={table.id} className="floor-table" style={{ left: `${8 + (index % 6) * 15}%`, top: `${16 + Math.floor(index / 6) * 28}%` }}>
                 <strong>{selectedArea[0]}{index + 1}</strong>
-                <span>{table.soChoNgoi} Seats</span>
+                <span>{table.soChoNgoi} chỗ</span>
               </div>
             ))}
             <button className="floor-add" disabled={isSaving} onClick={() => void createSingleTable()}><Plus /></button>
@@ -1913,22 +2315,22 @@ function TableLayoutView({
 
       <section className="panel table-panel">
         <div className="section-title between">
-          <h2>Table Inventory</h2>
-          <button className="primary-btn" disabled={isSaving} onClick={() => void createSingleTable()}><Plus size={18} /> Add Single Table</button>
+          <h2>Danh sách bàn</h2>
+          <button className="primary-btn" disabled={isSaving} onClick={() => void createSingleTable()}><Plus size={18} /> Thêm bàn đơn</button>
         </div>
         <table className="data-table">
-          <thead><tr><th>Table ID</th><th>Area</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Mã bàn</th><th>Khu vực</th><th>Sức chứa</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
           <tbody>
             {tables.map((table, index) => (
               <tr key={table.id}>
                 <td><span className="table-code">{getTableArea(table.viTriSanh)[0] ?? 'T'}{index + 1}</span> {table.viTriSanh}</td>
                 <td>{getTableArea(table.viTriSanh)}</td>
-                <td>{table.soChoNgoi} People</td>
-                <td><span className="badge green">Available</span></td>
+                <td>{table.soChoNgoi} người</td>
+                <td><span className="badge green">Còn trống</span></td>
                 <td className="table-actions"><button className="icon-btn" onClick={() => startTableEdit(table)}><Pencil size={16} /></button><button className="icon-btn danger" onClick={() => deleteTable(table.id)}><Trash2 size={16} /></button></td>
               </tr>
             ))}
-            {!tables.length && <tr><td colSpan={5} className="empty-cell">No tables generated yet.</td></tr>}
+            {!tables.length && <tr><td colSpan={5} className="empty-cell">Chưa có bàn nào được tạo.</td></tr>}
           </tbody>
         </table>
       </section>
@@ -1967,286 +2369,116 @@ function MenuManagementView({
     <>
       <header className="partner-page-header split compact-header">
         <div>
-          <h1>Menu Management</h1>
-          <p>Manage your digital menu and instant availability.</p>
+          <h1>Quản lý thực đơn</h1>
+          <p>Quản lý thực đơn điện tử và trạng thái phục vụ tức thời.</p>
         </div>
         <div className="header-actions">
-          <div className="search-box"><Search size={20} /><input value={menuSearch} onChange={(event) => setMenuSearch(event.target.value)} placeholder="Search dishes..." /></div>
-          <button className="primary-btn" onClick={() => setIsMenuModalOpen(true)}><Plus size={18} /> Add Menu Item</button>
+          <div className="search-box"><Search size={20} /><input value={menuSearch} onChange={(event) => setMenuSearch(event.target.value)} placeholder="Tìm kiếm món ăn..." /></div>
+          <button className="primary-btn" onClick={() => setIsMenuModalOpen(true)}><Plus size={18} /> Thêm món ăn</button>
         </div>
       </header>
 
       <section className="metric-grid partner-metrics">
-        <div className="metric-card"><span>Total Dishes</span><strong>{menuStats.total}</strong><Utensils /></div>
-        <div className="metric-card"><span>Active</span><strong>{menuStats.active}</strong><CheckCircle2 /></div>
-        <div className="metric-card danger"><span>Out of Stock</span><strong>{menuStats.outOfStock}</strong><XCircle /></div>
-        <div className="menu-health"><span>Menu Health</span><strong>Premium</strong><p>Top Rated Establishment</p></div>
+        <div className="metric-card"><span>Tổng số món</span><strong>{menuStats.total}</strong><Utensils /></div>
+        <div className="metric-card"><span>Đang bán</span><strong>{menuStats.active}</strong><CheckCircle2 /></div>
+        <div className="metric-card danger"><span>Tạm hết</span><strong>{menuStats.outOfStock}</strong><XCircle /></div>
+        <div className="menu-health"><span>Chất lượng thực đơn</span><strong>Cao cấp</strong><p>Cơ sở được đánh giá nổi bật</p></div>
       </section>
 
       <section className="panel table-panel">
         <table className="data-table menu-table">
-          <thead><tr><th>Dish</th><th>Price</th><th>Category / Tags</th><th>Availability</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Món ăn</th><th>Giá</th><th>Danh mục / Thẻ</th><th>Trạng thái phục vụ</th><th>Hành động</th></tr></thead>
           <tbody>
             {menuItems.map((item) => (
               <tr key={item.id}>
-                <td><div className="dish-cell"><div className="dish-thumb"><Utensils size={18} /></div><div><strong>{item.tenMon}</strong><span>{item.theNguCanh[0] || 'Menu Item'}</span></div></div></td>
+                <td><div className="dish-cell"><div className="dish-thumb"><Utensils size={18} /></div><div><strong>{item.tenMon}</strong><span>{item.theNguCanh[0] || 'Món ăn'}</span></div></div></td>
                 <td><strong className="price-text">{formatMoney(item.giaBan)}</strong></td>
                 <td><div className="tag-row">{item.theNguCanh.map((tag) => <span key={tag}>{tag}</span>)}</div></td>
                 <td>
-                  <button className={`availability-toggle ${item.trangThai === 'CO_SAN' ? 'on' : ''}`} onClick={() => toggleMenuStatus(item)}>
+                  <button
+                    className={`availability-toggle ${item.trangThai === 'DANG_BAN' ? 'on' : ''}`}
+                    onClick={() => toggleMenuStatus(item)}
+                    type="button"
+                  >
                     <span />
                   </button>
-                  <strong className={item.trangThai === 'CO_SAN' ? 'available-text' : 'stockout-text'}>
-                    {item.trangThai === 'CO_SAN' ? 'Available' : 'Out of Stock'}
+                  <strong className={item.trangThai === 'DANG_BAN' ? 'available-text' : 'stockout-text'}>
+                    {item.trangThai === 'DANG_BAN' ? 'Đang bán' : 'Tạm hết'}
                   </strong>
                 </td>
-                <td className="table-actions"><button className="icon-btn" onClick={() => startMenuItemEdit(item)}><Pencil size={16} /></button><button className="icon-btn danger" onClick={() => deleteMenuItem(item.id)}><Trash2 size={16} /></button></td>
+                <td className="table-actions">
+                  <button className="icon-btn" onClick={() => startMenuItemEdit(item)} type="button">
+                    <Pencil size={16} />
+                  </button>
+                  <button className="icon-btn danger" onClick={() => deleteMenuItem(item.id)} type="button">
+                    <Trash2 size={16} />
+                  </button>
+                </td>
               </tr>
             ))}
-            {!menuItems.length && <tr><td colSpan={5} className="empty-cell">No menu items yet. Add a dish to start.</td></tr>}
+            {!menuItems.length && (
+              <tr>
+                <td colSpan={5} className="empty-cell">
+                  Chưa có món ăn nào.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </section>
 
-      <section className="panel table-panel combo-panel">
+      <section className="panel table-panel">
         <div className="section-title between">
-          <div>
-            <h2>Combo Management</h2>
-            <p>Create bundled offers from existing menu items.</p>
-          </div>
-          <button className="primary-btn" onClick={() => setIsComboModalOpen(true)}>
-            <Plus size={18} /> Add Combo
+          <h2>Combo</h2>
+          <button className="primary-btn" onClick={() => setIsComboModalOpen(true)} type="button">
+            <Plus size={18} /> Thêm combo
           </button>
         </div>
-        <table className="data-table menu-table">
-          <thead><tr><th>Combo</th><th>Price</th><th>Items</th><th>Status</th><th>Actions</th></tr></thead>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Combo</th>
+              <th>Giá</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
           <tbody>
             {combos.map((combo) => (
               <tr key={combo.id}>
-                <td><strong>{combo.tenCombo}</strong><span className="table-subtext">{combo.moTa || 'Combo offer'}</span></td>
-                <td><strong className="price-text">{formatMoney(combo.giaCombo)}</strong></td>
-                <td>{combo.monAnIds.length} món</td>
-                <td><span className={combo.trangThai === 1 ? 'available-text' : 'stockout-text'}>{combo.trangThai === 1 ? 'Active' : 'Hidden'}</span></td>
+                <td>
+                  <strong>{combo.tenCombo}</strong>
+                  <div className="muted-text">{combo.moTa || 'Combo'}</div>
+                </td>
+                <td>
+                  <strong className="price-text">{formatMoney(combo.giaCombo)}</strong>
+                </td>
+                <td>
+                  <span className={String(combo.trangThai) === '1' ? 'badge green' : 'badge'}>
+                    {String(combo.trangThai) === '1' ? 'Hoạt động' : 'Không hoạt động'}
+                  </span>
+                </td>
                 <td className="table-actions">
-                  <button className="icon-btn" onClick={() => startComboEdit(combo)}><Pencil size={16} /></button>
-                  <button className="icon-btn danger" onClick={() => deleteCombo(combo.id)}><Trash2 size={16} /></button>
+                  <button className="icon-btn" onClick={() => startComboEdit(combo)} type="button">
+                    <Pencil size={16} />
+                  </button>
+                  <button className="icon-btn danger" onClick={() => deleteCombo(combo.id)} type="button">
+                    <Trash2 size={16} />
+                  </button>
                 </td>
               </tr>
             ))}
-            {!combos.length && <tr><td colSpan={5} className="empty-cell">No combos yet. Create a bundle from available dishes.</td></tr>}
+            {!combos.length && (
+              <tr>
+                <td colSpan={4} className="empty-cell">
+                  Chưa có combo nào.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </section>
-
-      <PartnerFooter />
     </>
   )
 }
 
-function RoomModal({
-  roomForm,
-  setRoomForm,
-  saveRoom,
-  isEditing,
-  isSaving,
-  uploadFile,
-  close,
-}: {
-  roomForm: typeof initialRoomForm
-  setRoomForm: React.Dispatch<React.SetStateAction<typeof initialRoomForm>>
-  saveRoom: () => void
-  isEditing: boolean
-  isSaving: boolean
-  uploadFile: (file: File, options?: UploadOptions) => Promise<UploadedAsset | null>
-  close: () => void
-}) {
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-card">
-        <button className="close-btn" onClick={close}><X size={18} /></button>
-        <h2>{isEditing ? 'Edit Room' : 'Add Room'}</h2>
-        <div
-          className="drop-zone"
-          onDragOver={(event) => event.preventDefault()}
-          onDrop={(event) => {
-            event.preventDefault()
-            const file = event.dataTransfer.files?.[0]
-            if (!file) return
-            void uploadFile(file, { allowPdf: false }).then((uploaded) => {
-              if (uploaded) {
-                setRoomForm((current) => ({ ...current, imageName: uploaded.url }))
-              }
-            })
-          }}
-        >
-          <UploadCloud size={24} />
-          <span>{roomForm.imageName || 'Drag room photos here'}</span>
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-            onChange={(event) => {
-              const file = event.target.files?.[0]
-              if (!file) return
-              void uploadFile(file, { allowPdf: false }).then((uploaded) => {
-                if (uploaded) {
-                  setRoomForm((current) => ({ ...current, imageName: uploaded.url }))
-                }
-              })
-            }}
-          />
-        </div>
-        <div className="form-grid">
-          <label>Room No.<input value={roomForm.soPhong} onChange={(event) => setRoomForm({ ...roomForm, soPhong: event.target.value })} /></label>
-          <label>Room Type<input value={roomForm.loaiPhong} onChange={(event) => setRoomForm({ ...roomForm, loaiPhong: event.target.value })} /></label>
-          <label>Capacity<input type="number" min="1" value={roomForm.sucChuaToiDa} onChange={(event) => setRoomForm({ ...roomForm, sucChuaToiDa: event.target.value })} /></label>
-          <label>Area<input type="number" min="1" value={roomForm.dienTich} onChange={(event) => setRoomForm({ ...roomForm, dienTich: event.target.value })} /></label>
-          <label>Discount %<input type="number" min="0" max="100" value={roomForm.phanTramGiamGia} onChange={(event) => setRoomForm({ ...roomForm, phanTramGiamGia: event.target.value })} /></label>
-        </div>
-        <div className="checkbox-grid">
-          {HOTEL_AMENITIES.map((amenity) => (
-            <label key={amenity}>
-              <input
-                type="checkbox"
-                checked={roomForm.tienIch.includes(amenity)}
-                onChange={(event) => {
-                  setRoomForm((current) => ({
-                    ...current,
-                    tienIch: event.target.checked
-                      ? [...current.tienIch, amenity]
-                      : current.tienIch.filter((item) => item !== amenity),
-                  }))
-                }}
-              />
-              {amenity}
-            </label>
-          ))}
-        </div>
-        <button className="primary-btn" disabled={isSaving} onClick={saveRoom}><CheckCircle2 size={18} /> {isSaving ? 'Saving...' : 'Save Room'}</button>
-      </div>
-    </div>
-  )
-}
-
-function MenuModal({
-  menuForm,
-  setMenuForm,
-  createMenuItem,
-  isEditing,
-  isSaving,
-  uploadFile,
-  close,
-}: {
-  menuForm: typeof initialMenuForm
-  setMenuForm: React.Dispatch<React.SetStateAction<typeof initialMenuForm>>
-  createMenuItem: () => void
-  isEditing: boolean
-  isSaving: boolean
-  uploadFile: (file: File, options?: UploadOptions) => Promise<UploadedAsset | null>
-  close: () => void
-}) {
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-card small">
-        <button className="close-btn" onClick={close}><X size={18} /></button>
-        <h2>{isEditing ? 'Edit Menu Item' : 'Add Menu Item'}</h2>
-        <div className="drop-zone">
-          <UploadCloud size={24} />
-          <span>{menuForm.duongDanUrl ? menuForm.duongDanUrl.split('/').pop() : 'Upload dish photo'}</span>
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-            onChange={(event) => {
-              const file = event.target.files?.[0]
-              if (!file) return
-              void uploadFile(file, { allowPdf: false }).then((uploaded) => {
-                if (uploaded) {
-                  setMenuForm((current) => ({ ...current, duongDanUrl: uploaded.url }))
-                }
-              })
-            }}
-          />
-        </div>
-        <div className="form-grid single">
-          <label>Dish Name<input value={menuForm.tenMon} onChange={(event) => setMenuForm({ ...menuForm, tenMon: event.target.value })} /></label>
-          <label>Price<input type="number" min="1000" value={menuForm.giaBan} onChange={(event) => setMenuForm({ ...menuForm, giaBan: event.target.value })} /></label>
-          <label>Tags<input value={menuForm.theNguCanh} onChange={(event) => setMenuForm({ ...menuForm, theNguCanh: event.target.value })} /></label>
-        </div>
-        <button className="primary-btn full-width" disabled={isSaving} onClick={createMenuItem}><Plus size={18} /> {isSaving ? 'Saving...' : 'Save Dish'}</button>
-      </div>
-    </div>
-  )
-}
-
-function ComboModal({
-  comboForm,
-  setComboForm,
-  menuItems,
-  saveCombo,
-  isEditing,
-  isSaving,
-  close,
-}: {
-  comboForm: typeof initialComboForm
-  setComboForm: React.Dispatch<React.SetStateAction<typeof initialComboForm>>
-  menuItems: MenuItemResponse[]
-  saveCombo: () => void
-  isEditing: boolean
-  isSaving: boolean
-  close: () => void
-}) {
-  const toggleItem = (itemId: string) => {
-    setComboForm((current) => ({
-      ...current,
-      monAnIds: current.monAnIds.includes(itemId)
-        ? current.monAnIds.filter((id) => id !== itemId)
-        : [...current.monAnIds, itemId],
-    }))
-  }
-
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-card">
-        <button className="close-btn" onClick={close}><X size={18} /></button>
-        <h2>{isEditing ? 'Edit Combo' : 'Add Combo'}</h2>
-        <div className="form-grid">
-          <label>Combo Name<input value={comboForm.tenCombo} onChange={(event) => setComboForm((current) => ({ ...current, tenCombo: event.target.value }))} placeholder="Family Dinner Combo" /></label>
-          <label>Combo Price<input type="number" min="1000" value={comboForm.giaCombo} onChange={(event) => setComboForm((current) => ({ ...current, giaCombo: event.target.value }))} /></label>
-          <label>Status
-            <select value={comboForm.trangThai} onChange={(event) => setComboForm((current) => ({ ...current, trangThai: event.target.value }))}>
-              <option value="1">Active</option>
-              <option value="0">Hidden</option>
-            </select>
-          </label>
-          <label>Start Date<input type="date" value={comboForm.ngayBatDau} onChange={(event) => setComboForm((current) => ({ ...current, ngayBatDau: event.target.value }))} /></label>
-          <label>End Date<input type="date" value={comboForm.ngayKetThuc} onChange={(event) => setComboForm((current) => ({ ...current, ngayKetThuc: event.target.value }))} /></label>
-          <label className="full">Description<textarea value={comboForm.moTa} onChange={(event) => setComboForm((current) => ({ ...current, moTa: event.target.value }))} placeholder="Short combo description..." /></label>
-        </div>
-        <div className="combo-picker">
-          <h3>Combo Items</h3>
-          {menuItems.map((item) => (
-            <label key={item.id}>
-              <input type="checkbox" checked={comboForm.monAnIds.includes(item.id)} onChange={() => toggleItem(item.id)} />
-              <span>{item.tenMon}</span>
-              <strong>{formatMoney(item.giaBan)}</strong>
-            </label>
-          ))}
-          {!menuItems.length && <p className="muted">Create menu items before creating combos.</p>}
-        </div>
-        <button className="primary-btn full-width" disabled={isSaving} onClick={saveCombo}>
-          <Plus size={18} /> {isSaving ? 'Saving...' : isEditing ? 'Update Combo' : 'Save Combo'}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function PartnerFooter() {
-  return (
-    <footer className="partner-footer">
-      <div><h3>TraVi</h3><p>Empowering local hospitality partners across Vietnam with world-class digital tools.</p></div>
-      <div><strong>Partner Resources</strong><span>About Us</span><span>Contact Support</span><span>Privacy Policy</span></div>
-      <div><strong>Legal</strong><span>Terms of Service</span><span>VNPay Merchant</span><span>MoMo Business</span></div>
-      <div><strong>Newsletter</strong><div className="newsletter"><input placeholder="Email" /><button>Join</button></div></div>
-    </footer>
-  )
-}

@@ -6,6 +6,8 @@ import type {
   ComboResponse,
   MenuItemPayload,
   MenuItemResponse,
+  MenuPayload,
+  MenuResponse,
   MenuItemStatus,
   RoomPayload,
   RoomResponse,
@@ -100,6 +102,29 @@ createBusinessProfile(payload: BusinessProfilePayload) {
     return api.delete(`/v1/partner/restaurants/${restaurantId}/tables/${tableId}`)
   },
 
+
+  getMenus(restaurantId: string) {
+    return api
+      .get<MenuResponse[]>(`/v1/partner/restaurants/${restaurantId}/menus`)
+      .then((response) => response.data)
+  },
+
+  createMenu(restaurantId: string, payload: MenuPayload) {
+    return api
+      .post<MenuResponse>(`/v1/partner/restaurants/${restaurantId}/menus`, payload)
+      .then((response) => response.data)
+  },
+
+  updateMenu(restaurantId: string, menuId: string, payload: MenuPayload) {
+    return api
+      .put<MenuResponse>(`/v1/partner/restaurants/${restaurantId}/menus/${menuId}`, payload)
+      .then((response) => response.data)
+  },
+
+  deleteMenu(restaurantId: string, menuId: string) {
+    return api.delete(`/v1/partner/restaurants/${restaurantId}/menus/${menuId}`)
+  },
+
   getMenuItems(restaurantId: string) {
     return api
       .get<MenuItemResponse[]>(`/v1/partner/restaurants/${restaurantId}/menu-items`)
@@ -152,3 +177,4 @@ createBusinessProfile(payload: BusinessProfilePayload) {
     return api.delete(`/v1/partner/restaurants/${restaurantId}/combos/${comboId}`)
   },
 }
+

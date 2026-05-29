@@ -6,12 +6,14 @@ import com.ota.travi.dto.request.MenuItemStatusRequest;
 import com.ota.travi.dto.request.MonAnRequest;
 import com.ota.travi.dto.request.PartnerBusinessProfileRequest;
 import com.ota.travi.dto.request.PhongUpsertRequest;
+import com.ota.travi.dto.request.ThucDonRequest;
 import com.ota.travi.dto.response.FileUploadResponse;
 import com.ota.travi.dto.response.BanResponse;
 import com.ota.travi.dto.response.ComboResponse;
 import com.ota.travi.dto.response.HoSoKinhDoanhResponse;
 import com.ota.travi.dto.response.MonAnResponse;
 import com.ota.travi.dto.response.PhongResponse;
+import com.ota.travi.dto.response.ThucDonResponse;
 import com.ota.travi.security.CustomUserDetails;
 import com.ota.travi.service.FileStorageService;
 import com.ota.travi.service.PartnerBusinessProfileService;
@@ -180,6 +182,46 @@ public class PartnerAssetController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+
+    @PostMapping(PARTNER_RESTAURANTS + "/{id}/menus")
+    public ResponseEntity<?> createMenu(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String id,
+            @Valid @RequestBody ThucDonRequest request
+    ) {
+        ThucDonResponse response = partnerRestaurantService.createMenu(userDetails.getUser().getId(), id, request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping(PARTNER_RESTAURANTS + "/{id}/menus")
+    public ResponseEntity<?> getMenus(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String id
+    ) {
+        return new ResponseEntity<>(partnerRestaurantService.getMenus(userDetails.getUser().getId(), id), HttpStatus.OK);
+    }
+
+    @PutMapping(PARTNER_RESTAURANTS + "/{id}/menus/{menuId}")
+    public ResponseEntity<?> updateMenu(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String id,
+            @PathVariable String menuId,
+            @Valid @RequestBody ThucDonRequest request
+    ) {
+        ThucDonResponse response = partnerRestaurantService.updateMenu(userDetails.getUser().getId(), id, menuId, request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @DeleteMapping(PARTNER_RESTAURANTS + "/{id}/menus/{menuId}")
+    public ResponseEntity<?> deleteMenu(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String id,
+            @PathVariable String menuId
+    ) {
+        partnerRestaurantService.deleteMenu(userDetails.getUser().getId(), id, menuId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
     @PostMapping(PARTNER_RESTAURANTS + "/{id}/menu-items")
     public ResponseEntity<?> createMenuItem(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -274,3 +316,4 @@ public class PartnerAssetController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
+

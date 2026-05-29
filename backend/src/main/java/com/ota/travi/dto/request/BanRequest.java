@@ -1,5 +1,6 @@
 package com.ota.travi.dto.request;
 
+import com.ota.travi.enums.TrangThaiBan;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -18,7 +19,6 @@ public record BanRequest(
         @Min(value = 1, message = "Số chỗ ngồi phải lớn hơn hoặc bằng 1")
         Integer soChoNgoi,
 
-        @Min(value = 0, message = "Trạng thái không hợp lệ")
-        Integer trangThai
+        TrangThaiBan trangThai
 ) {
 }

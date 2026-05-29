@@ -18,7 +18,6 @@ import com.ota.travi.entity.NhaHang;
 import com.ota.travi.entity.TienIchKhachSan;
 import com.ota.travi.entity.TienIchNhaHang;
 import com.ota.travi.enums.LoaiDichVu;
-import com.ota.travi.enums.TrangThaiKiemDuyet;
 import com.ota.travi.enums.TrangThaiHoatDong;
 import com.ota.travi.exception.BusinessConflictException;
 import com.ota.travi.exception.ForbiddenOperationException;
@@ -68,9 +67,9 @@ public class PartnerBusinessProfileService {
         HoSoKinhDoanh hoSo = new HoSoKinhDoanh();
         hoSo.setDoiTac(doiTac);
         applyBusinessProfileFields(hoSo, request);
-        hoSo.setTrangThaiKiemDuyet(TrangThaiKiemDuyet.CHO_DUYET);
-        hoSo.setTrangThaiHoatDong(TrangThaiHoatDong.CHUA_HOAT_DONG);
-        hoSo.setThoiGianDuyet(null);
+        // Partner-only model: hồ sơ mới mặc định hoạt động ngay
+        hoSo.setTrangThaiHoatDong(TrangThaiHoatDong.DANG_HOAT_DONG);
+        hoSo.setDeleted(false);
 
         ChinhSach chinhSach = toChinhSach(request.hoSo().chinhSach(), hoSo);
         hoSo.setChinhSach(chinhSach);
@@ -96,28 +95,15 @@ public class PartnerBusinessProfileService {
     public HoSoKinhDoanhResponse updateBusinessProfile(String partnerId, String profileId, PartnerBusinessProfileRequest request) {
         HoSoKinhDoanh hoSo = requireOwnedBusinessProfile(partnerId, profileId);
         boolean maSoThueChanged = !Objects.equals(hoSo.getMaSoThue(), request.hoSo().maSoThue());
-        boolean giayPhepChanged = !Objects.equals(hoSo.getGiayPhepKinhDoanh(), request.hoSo().giayPhepKinhDoanh());
-        boolean sensitiveChanged = maSoThueChanged || giayPhepChanged;
 
         if (maSoThueChanged && hoSoKinhDoanhRepository.existsByMaSoThueAndIdHoSoNot(request.hoSo().maSoThue(), profileId)) {
             throw new BusinessConflictException("Ma so thue da ton tai");
         }
 
-        if (sensitiveChanged) {
-            captureApprovalSnapshot(hoSo);
-        }
-
         applyBusinessProfileFields(hoSo, request);
         applyChinhSach(hoSo.getChinhSach(), request.hoSo().chinhSach(), hoSo);
-
-        if (sensitiveChanged) {
-            hoSo.setTrangThaiKiemDuyet(TrangThaiKiemDuyet.CHO_DUYET);
-            hoSo.setTrangThaiHoatDong(TrangThaiHoatDong.CHUA_HOAT_DONG);
-            hoSo.setThoiGianDuyet(null);
-            notifyAdminProfileNeedsReview(hoSo);
-        }
-
         updatePrimaryAsset(hoSo, request);
+        
         return partnerAssetMapper.toHoSoResponse(hoSoKinhDoanhRepository.save(hoSo));
     }
 
@@ -151,16 +137,7 @@ public class PartnerBusinessProfileService {
         hoSo.setToaDoGPS(request.hoSo().toaDoGPS());
     }
 
-    private void captureApprovalSnapshot(HoSoKinhDoanh hoSo) {
-        hoSo.setOldTenCoSo(hoSo.getTenCoSo());
-        hoSo.setOldSdtLienHe(hoSo.getSdtLienHe());
-        hoSo.setOldLoaiDichVu(hoSo.getLoaiDichVu() == null ? null : hoSo.getLoaiDichVu().name());
-        hoSo.setOldMaSoThue(hoSo.getMaSoThue());
-        hoSo.setOldGiayPhepKinhDoanh(hoSo.getGiayPhepKinhDoanh());
-        hoSo.setOldToaDoGPS(hoSo.getToaDoGPS());
-    }
-
-    private ChinhSach toChinhSach(ChinhSachRequest request, HoSoKinhDoanh hoSo) {
+private ChinhSach toChinhSach(ChinhSachRequest request, HoSoKinhDoanh hoSo) {
         ChinhSach chinhSach = new ChinhSach();
         applyChinhSach(chinhSach, request, hoSo);
         return chinhSach;
@@ -358,7 +335,5 @@ public class PartnerBusinessProfileService {
         });
     }
 
-    private void notifyAdminProfileNeedsReview(HoSoKinhDoanh hoSo) {
-        // TODO: Noi voi module notification/email cho Admin o giai doan kiem duyet.
-    }
 }
+

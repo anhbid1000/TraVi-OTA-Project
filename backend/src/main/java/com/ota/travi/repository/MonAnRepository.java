@@ -10,9 +10,9 @@ import java.util.List;
 
 @Repository
 public interface MonAnRepository extends JpaRepository<MonAn, String> {
-    List<MonAn> findByThucDon_Id(String thucDonId);
+    List<MonAn> findByThucDon_IdAndDeletedFalse(String thucDonId);
 
-    List<MonAn> findByThucDon_NhaHang_IdTaiSan(String nhaHangId);
+    List<MonAn> findByThucDon_NhaHang_IdTaiSanAndDeletedFalse(String nhaHangId);
 
-    List<MonAn> findByTrangThai(TrangThaiMonAn trangThai);
+    List<MonAn> findByTrangThaiAndDeletedFalse(TrangThaiMonAn trangThai);
 }

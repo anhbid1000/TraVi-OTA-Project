@@ -3,15 +3,18 @@ package com.ota.travi.service;
 import com.ota.travi.dto.request.BanRequest;
 import com.ota.travi.dto.request.ComboRequest;
 import com.ota.travi.dto.request.MonAnRequest;
+import com.ota.travi.dto.request.ThucDonRequest;
 import com.ota.travi.dto.response.BanResponse;
 import com.ota.travi.dto.response.ComboResponse;
 import com.ota.travi.dto.response.MonAnResponse;
+import com.ota.travi.dto.response.ThucDonResponse;
 import com.ota.travi.entity.Ban;
 import com.ota.travi.entity.Combo;
 import com.ota.travi.entity.MonAn;
 import com.ota.travi.entity.NhaHang;
 import com.ota.travi.entity.ThucDon;
 import com.ota.travi.enums.TrangThaiMonAn;
+import com.ota.travi.enums.TrangThaiDonDatCho;
 import com.ota.travi.exception.BusinessConflictException;
 import com.ota.travi.exception.ForbiddenOperationException;
 import com.ota.travi.exception.ResourceNotFoundException;
@@ -20,6 +23,8 @@ import com.ota.travi.repository.ComboRepository;
 import com.ota.travi.repository.MonAnRepository;
 import com.ota.travi.repository.NhaHangRepository;
 import com.ota.travi.repository.ThucDonRepository;
+import com.ota.travi.repository.DonDatMonRepository;
+import com.ota.travi.repository.ChiTietDonDatMonRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,6 +39,8 @@ import java.util.Set;
 @Service
 public class PartnerRestaurantService {
     private static final String DEFAULT_MENU_CATEGORY = "MAC_DINH";
+    private static final int COMBO_ACTIVE = 1;
+    private static final int COMBO_INACTIVE = 0;
 
     @Autowired
     private NhaHangRepository nhaHangRepository;
@@ -51,6 +58,12 @@ public class PartnerRestaurantService {
     private ComboRepository comboRepository;
 
     @Autowired
+    private DonDatMonRepository donDatMonRepository;
+
+    @Autowired
+    private ChiTietDonDatMonRepository chiTietDonDatMonRepository;
+
+    @Autowired
     private PartnerAssetMapper partnerAssetMapper;
 
     @Transactional
@@ -62,14 +75,15 @@ public class PartnerRestaurantService {
         ban.setViTriSanh(request.viTriSanh());
         ban.setMoTa(request.moTa());
         ban.setSoChoNgoi(request.soChoNgoi());
-        ban.setTrangThai(request.trangThai() == null ? 1 : request.trangThai());
+        ban.setTrangThai(com.ota.travi.enums.TrangThaiBan.SAN_SANG);
+        ban.setDeleted(false);
         return partnerAssetMapper.toBanResponse(banRepository.save(ban));
     }
 
     @Transactional(readOnly = true)
     public List<BanResponse> getTables(String partnerId, String restaurantId) {
         requireOwnedRestaurant(partnerId, restaurantId);
-        return banRepository.findByNhaHang_IdTaiSan(restaurantId).stream()
+        return banRepository.findByNhaHang_IdTaiSanAndDeletedFalse(restaurantId).stream()
                 .map(partnerAssetMapper::toBanResponse)
                 .toList();
     }
@@ -82,7 +96,7 @@ public class PartnerRestaurantService {
         ban.setViTriSanh(request.viTriSanh());
         ban.setMoTa(request.moTa());
         ban.setSoChoNgoi(request.soChoNgoi());
-        ban.setTrangThai(request.trangThai() == null ? 1 : request.trangThai());
+        ban.setTrangThai(request.trangThai() == null ? com.ota.travi.enums.TrangThaiBan.SAN_SANG : request.trangThai());
         return partnerAssetMapper.toBanResponse(banRepository.save(ban));
     }
 
@@ -90,15 +104,67 @@ public class PartnerRestaurantService {
     public void deleteTable(String partnerId, String restaurantId, String tableId) {
         requireOwnedRestaurant(partnerId, restaurantId);
         Ban ban = requireTableInRestaurant(restaurantId, tableId);
+        if (hasFutureReservationForTable(tableId)) {
+            throw new BusinessConflictException("Khong the xoa ban vi dang co don dat trong tuong lai");
+        }
         ban.setDeleted(true);
-        ban.setTrangThai(0);
+        ban.setTrangThai(com.ota.travi.enums.TrangThaiBan.NGUNG_SU_DUNG);
         banRepository.save(ban);
+    }
+
+
+    @Transactional
+    public ThucDonResponse createMenu(String partnerId, String restaurantId, ThucDonRequest request) {
+        NhaHang nhaHang = requireOwnedRestaurant(partnerId, restaurantId);
+        ThucDon thucDon = new ThucDon();
+        thucDon.setNhaHang(nhaHang);
+        thucDon.setTenThucDon(request.tenThucDon() == null || request.tenThucDon().isBlank() ? "Thực đơn mới" : request.tenThucDon());
+        thucDon.setPhanLoai(request.phanLoai());
+        thucDon.setTrangThai(com.ota.travi.enums.TrangThaiThucDon.DANG_HIEN_THI);
+        return partnerAssetMapper.toThucDonResponse(thucDonRepository.save(thucDon));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ThucDonResponse> getMenus(String partnerId, String restaurantId) {
+        requireOwnedRestaurant(partnerId, restaurantId);
+        return thucDonRepository.findByNhaHang_IdTaiSan(restaurantId).stream()
+                .map(partnerAssetMapper::toThucDonResponse)
+                .toList();
+    }
+
+    @Transactional
+    public ThucDonResponse updateMenu(String partnerId, String restaurantId, String menuId, ThucDonRequest request) {
+        requireOwnedRestaurant(partnerId, restaurantId);
+        ThucDon thucDon = thucDonRepository.findById(menuId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay thuc don"));
+        if (!java.util.Objects.equals(thucDon.getNhaHang().getIdTaiSan(), restaurantId)) {
+            throw new ResourceNotFoundException("Thuc don khong thuoc nha hang nay");
+        }
+        thucDon.setTenThucDon(request.tenThucDon());
+        thucDon.setPhanLoai(request.phanLoai());
+        return partnerAssetMapper.toThucDonResponse(thucDonRepository.save(thucDon));
+    }
+
+    @Transactional
+    public void deleteMenu(String partnerId, String restaurantId, String menuId) {
+        requireOwnedRestaurant(partnerId, restaurantId);
+        ThucDon thucDon = thucDonRepository.findById(menuId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay thuc don"));
+        if (!java.util.Objects.equals(thucDon.getNhaHang().getIdTaiSan(), restaurantId)) {
+            throw new ResourceNotFoundException("Thuc don khong thuoc nha hang nay");
+        }
+        if (!thucDon.getMonAn().isEmpty() || !thucDon.getCombo().isEmpty()) {
+            thucDon.setTrangThai(com.ota.travi.enums.TrangThaiThucDon.TAM_AN);
+            thucDonRepository.save(thucDon);
+        } else {
+            thucDonRepository.delete(thucDon);
+        }
     }
 
     @Transactional
     public MonAnResponse createMenuItem(String partnerId, String restaurantId, MonAnRequest request) {
         NhaHang nhaHang = requireOwnedRestaurant(partnerId, restaurantId);
-        ThucDon thucDon = findOrCreateDefaultMenu(nhaHang);
+        ThucDon thucDon = resolveMenuForItem(nhaHang, request.thucDonId());
         MonAn monAn = new MonAn();
         monAn.setThucDon(thucDon);
         applyMonAn(monAn, request);
@@ -108,7 +174,7 @@ public class PartnerRestaurantService {
     @Transactional(readOnly = true)
     public List<MonAnResponse> getMenuItems(String partnerId, String restaurantId) {
         requireOwnedRestaurant(partnerId, restaurantId);
-        return monAnRepository.findByThucDon_NhaHang_IdTaiSan(restaurantId).stream()
+        return monAnRepository.findByThucDon_NhaHang_IdTaiSanAndDeletedFalse(restaurantId).stream()
                 .map(partnerAssetMapper::toMonAnResponse)
                 .toList();
     }
@@ -154,7 +220,7 @@ public class PartnerRestaurantService {
     @Transactional(readOnly = true)
     public List<ComboResponse> getCombos(String partnerId, String restaurantId) {
         requireOwnedRestaurant(partnerId, restaurantId);
-        return comboRepository.findByThucDon_NhaHang_IdTaiSan(restaurantId).stream()
+        return comboRepository.findByThucDon_NhaHang_IdTaiSanAndTrangThaiNot(restaurantId, COMBO_INACTIVE).stream()
                 .map(partnerAssetMapper::toComboResponse)
                 .toList();
     }
@@ -171,7 +237,8 @@ public class PartnerRestaurantService {
     public void deleteCombo(String partnerId, String restaurantId, String comboId) {
         requireOwnedRestaurant(partnerId, restaurantId);
         Combo combo = requireComboInRestaurant(restaurantId, comboId);
-        comboRepository.delete(combo);
+        combo.setTrangThai(COMBO_INACTIVE);
+        comboRepository.save(combo);
     }
 
     private NhaHang requireOwnedRestaurant(String partnerId, String restaurantId) {
@@ -226,16 +293,29 @@ public class PartnerRestaurantService {
                 .orElseGet(() -> {
                     ThucDon thucDon = new ThucDon();
                     thucDon.setNhaHang(nhaHang);
+                    thucDon.setTenThucDon("Thực đơn mặc định");
                     thucDon.setPhanLoai(DEFAULT_MENU_CATEGORY);
                     return thucDonRepository.save(thucDon);
                 });
+    }
+
+    private ThucDon resolveMenuForItem(NhaHang nhaHang, String menuId) {
+        if (menuId == null || menuId.isBlank()) {
+            return findOrCreateDefaultMenu(nhaHang);
+        }
+        ThucDon thucDon = thucDonRepository.findById(menuId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khong tim thay thuc don"));
+        if (!Objects.equals(thucDon.getNhaHang().getIdTaiSan(), nhaHang.getIdTaiSan())) {
+            throw new ResourceNotFoundException("Thuc don khong thuoc nha hang nay");
+        }
+        return thucDon;
     }
 
     private void applyCombo(Combo combo, String restaurantId, ComboRequest request) {
         combo.setTenCombo(request.tenCombo());
         combo.setMoTa(request.moTa());
         combo.setGiaCombo(request.giaCombo());
-        combo.setTrangThai(request.trangThai());
+        combo.setTrangThai(request.trangThai() == null ? COMBO_ACTIVE : request.trangThai());
         combo.setNgayBatDau(request.ngayBatDau());
         combo.setNgayKetThuc(request.ngayKetThuc());
         combo.setMonAn(resolveComboMenuItems(restaurantId, request.monAnIds()));
@@ -252,7 +332,20 @@ public class PartnerRestaurantService {
     }
 
     private boolean hasPreorderedMenuItem(String itemId) {
-        // TODO: Noi voi repository dat mon truoc khi module Booking/Order duoc tao.
-        return false;
+        return chiTietDonDatMonRepository.existsByMonAn_IdAndDonDatMon_ThoiGianDatAfterAndDonDatMon_DonDatCho_TrangThaiNotIn(
+                itemId,
+                java.time.LocalDateTime.now(),
+                java.util.List.of(TrangThaiDonDatCho.DA_HUY_BO, TrangThaiDonDatCho.DA_HOAN_TIEN)
+        );
+    }
+
+    private boolean hasFutureReservationForTable(String tableId) {
+        return donDatMonRepository.existsByBan_IdAndThoiGianDatAfterAndDonDatCho_TrangThaiNotIn(
+                tableId,
+                java.time.LocalDateTime.now(),
+                java.util.List.of(TrangThaiDonDatCho.DA_HUY_BO, TrangThaiDonDatCho.DA_HOAN_TIEN)
+        );
     }
 }
+
+

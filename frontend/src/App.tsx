@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import {
-  AdminLogin,
   CustomerLogin,
   CustomerRegister,
   ForgotPasswordPage,
@@ -12,8 +11,7 @@ import {
 import { useAuth } from './hooks/useAuth'
 import { ForbiddenPage } from './pages/ForbiddenPage'
 import { PartnerDashboardPage } from './pages/partner'
-import { AdminApprovalsPage } from './pages/admin'
-import { AdminRoute, ProtectedRoute, StaffRoute } from './routes'
+import { ProtectedRoute, StaffRoute } from './routes'
 import './App.css'
 
 function HomePage() {
@@ -84,7 +82,7 @@ function HomePage() {
       <nav>
         <Link to="/">Trang chủ</Link> | <Link to="/login">Đăng nhập</Link> |{' '}
         <Link to="/register">Đăng ký</Link> | <Link to="/partner/login">Đối tác</Link> |{' '}
-        <Link to="/admin/login">Admin</Link> | <Link to="/payment">Thanh toán</Link>
+        <Link to="/payment">Thanh toán</Link>
       </nav>
     </main>
   )
@@ -142,19 +140,11 @@ function App() {
             />
           }
         />
-
-        <Route path="/admin/login" element={<AdminLogin />} />
-
         <Route path="/403" element={<ForbiddenPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/payment" element={<PaymentPage />} />
         </Route>
-
-        <Route element={<AdminRoute />}>
-          <Route path="/admin" element={<AdminApprovalsPage />} />
-        </Route>
-
         <Route element={<StaffRoute redirectTo="/partner/login" />}>
           <Route path="/partner" element={<PartnerDashboardPage />} />
         </Route>
@@ -166,3 +156,4 @@ function App() {
 }
 
 export default App
+

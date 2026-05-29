@@ -1,6 +1,5 @@
 package com.ota.travi.entity;
 
-import com.ota.travi.enums.TrangThaiKiemDuyet;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,9 +16,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * DEPRECATED: LichSuKiemDuyetHoSo được giữ lại chỉ để backward compatibility.
+ * Module 1 hiện không còn approval flow từ admin.
+ * 
+ * Lý do: Đã bỏ admin approval flow, chuyển sang partner-only asset management.
+ * Nếu cần audit trail trong tương lai, nên tạo entity riêng cho partner actions.
+ */
+@Deprecated(since = "2024", forRemoval = true)
 @Entity
 @Table(name = "lich_su_kiem_duyet_ho_so")
 @Setter
@@ -38,14 +46,6 @@ public class LichSuKiemDuyetHoSo {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id")
     private QuanTriVien admin;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TrangThaiKiemDuyet trangThaiCu;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TrangThaiKiemDuyet trangThaiMoi;
 
     @Column(length = 1000)
     private String lyDo;

@@ -12,5 +12,7 @@ public interface ComboRepository extends JpaRepository<Combo, String> {
 
     List<Combo> findByThucDon_NhaHang_IdTaiSan(String nhaHangId);
 
+    List<Combo> findByThucDon_NhaHang_IdTaiSanAndTrangThaiNot(String nhaHangId, Integer trangThai);
+
     List<Combo> findByTrangThai(Integer trangThai);
 }

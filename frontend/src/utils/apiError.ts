@@ -33,21 +33,21 @@ function stringifyErrorValue(value: unknown): string {
 function getStatusFallback(status: number | undefined, fallbackMessage: string) {
   switch (status) {
     case 400:
-      return 'D? li?u g?i l�n chua h?p l?. Vui l�ng ki?m tra l?i c�c tru?ng trong form.'
+      return 'Dữ liệu gửi lên chưa hợp lệ. Vui lòng kiểm tra lại các trường trong form.'
     case 401:
-      return 'Phi�n dang nh?p d� h?t h?n. Vui l�ng dang nh?p l?i b?ng t�i kho?n d?i t�c.'
+      return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại bằng tài khoản đối tác.'
     case 403:
-      return 'T�i kho?n hi?n t?i kh�ng c� quy?n d?i t�c d? thao t�c ch?c nang n�y.'
+      return 'Tài khoản hiện tại không có quyền đối tác để thực hiện chức năng này. Vui lòng đăng nhập lại bằng tài khoản đối tác.'
     case 404:
-      return 'Kh�ng t�m th?y d? li?u c?n thao t�c. Vui l�ng t?i l?i trang r?i th? l?i.'
+      return 'Không tìm thấy dữ liệu cần thao tác. Vui lòng tải lại trang rồi thử lại.'
     case 409:
-      return 'D? li?u b? tr�ng ho?c xung d?t v?i h? so d� t?n t?i trong h? th?ng.'
+      return 'Dữ liệu bị trùng hoặc xung đột với hồ sơ đã tồn tại trong hệ thống.'
     case 413:
-      return 'File t?i l�n qu� l?n. Vui l�ng ch?n file nh? hon.'
+      return 'File tải lên quá lớn. Vui lòng chọn file nhỏ hơn.'
     case 415:
-      return '�?nh d?ng file kh�ng du?c h? tr?.'
+      return 'Định dạng file không được hỗ trợ.'
     case 500:
-      return 'Backend dang g?p l?i x? l�. Vui l�ng ki?m tra log Spring Boot.'
+      return 'Backend đang gặp lỗi xử lý. Vui lòng kiểm tra log Spring Boot.'
     default:
       return fallbackMessage
   }
@@ -56,10 +56,14 @@ function getStatusFallback(status: number | undefined, fallbackMessage: string) 
 export function getApiErrorMessage(error: unknown, fallbackMessage: string) {
   if (axios.isAxiosError(error)) {
     if (!error.response) {
-      return 'Kh�ng k?t n?i du?c backend. Vui l�ng ki?m tra Spring Boot c� dang ch?y ? d�ng c?ng API hay chua.'
+      return 'Không kết nối được backend. Vui lòng kiểm tra Spring Boot có đang chạy đúng cổng API hay chưa.'
     }
 
     const data = error.response.data
+
+    if (error.response.status === 413) {
+      return getStatusFallback(error.response.status, fallbackMessage)
+    }
 
     if (typeof data === 'string' && data.trim()) {
       return data

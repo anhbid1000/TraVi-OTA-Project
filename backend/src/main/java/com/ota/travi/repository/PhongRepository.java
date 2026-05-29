@@ -10,11 +10,11 @@ import java.util.List;
 
 @Repository
 public interface PhongRepository extends JpaRepository<Phong, String> {
-    List<Phong> findByKhachSan_IdTaiSan(String khachSanId);
+    List<Phong> findByKhachSan_IdTaiSanAndDeletedFalse(String khachSanId);
 
-    List<Phong> findByKhachSan_IdTaiSanAndTrangThai(String khachSanId, TrangThaiPhong trangThai);
+    List<Phong> findByKhachSan_IdTaiSanAndTrangThaiAndDeletedFalse(String khachSanId, TrangThaiPhong trangThai);
 
-    boolean existsByKhachSan_IdTaiSanAndSoPhong(String khachSanId, String soPhong);
+    boolean existsByKhachSan_IdTaiSanAndSoPhongAndDeletedFalse(String khachSanId, String soPhong);
 
     void deleteByKhachSan_IdTaiSan(String khachSanId);
 }

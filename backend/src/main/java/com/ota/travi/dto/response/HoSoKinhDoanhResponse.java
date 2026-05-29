@@ -4,20 +4,27 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.ota.travi.enums.LoaiDichVu;
-import com.ota.travi.enums.TrangThaiKiemDuyet;
+import com.ota.travi.enums.TrangThaiHoatDong;
 
 public record HoSoKinhDoanhResponse(
         String idHoSo,
         String doiTacId,
         String tenCoSo,
         String sdtLienHe,
+        String emailLienHe,
+        String diaChi,
+        String thanhPho,
+        String quanHuyen,
+        String phuongXa,
+        Double kinhDo,
+        Double viDo,
         LoaiDichVu loaiDichVu,
         String maSoThue,
         String giayPhepKinhDoanh,
         String toaDoGPS,
-        TrangThaiKiemDuyet trangThaiKiemDuyet,
+        TrangThaiHoatDong trangThaiHoatDong,
         LocalDateTime thoiGianDangKy,
-        LocalDateTime thoiGianDuyet,
+        LocalDateTime thoiGianCapNhat,
         ChinhSachResponse chinhSach,
         List<TaiSanResponse> danhSachTaiSan
 ) {

@@ -1,12 +1,10 @@
 package com.ota.travi.service;
 
 import com.ota.travi.dto.response.AnhResponse;
-import com.ota.travi.dto.response.AdminApprovalResponse;
 import com.ota.travi.dto.response.BanResponse;
 import com.ota.travi.dto.response.ChinhSachResponse;
 import com.ota.travi.dto.response.ComboResponse;
 import com.ota.travi.dto.response.HoSoKinhDoanhResponse;
-import com.ota.travi.dto.response.ApprovalComparisonResponse;
 import com.ota.travi.dto.response.KhachSanResponse;
 import com.ota.travi.dto.response.MonAnResponse;
 import com.ota.travi.dto.response.NhaHangResponse;
@@ -44,61 +42,22 @@ public class PartnerAssetMapper {
                 hoSo.getDoiTac().getId(),
                 hoSo.getTenCoSo(),
                 hoSo.getSdtLienHe(),
+                hoSo.getEmailLienHe(),
+                hoSo.getDiaChi(),
+                hoSo.getThanhPho(),
+                hoSo.getQuanHuyen(),
+                hoSo.getPhuongXa(),
+                hoSo.getKinhDo(),
+                hoSo.getViDo(),
                 hoSo.getLoaiDichVu(),
                 hoSo.getMaSoThue(),
                 hoSo.getGiayPhepKinhDoanh(),
                 hoSo.getToaDoGPS(),
-                hoSo.getTrangThaiKiemDuyet(),
+                hoSo.getTrangThaiHoatDong(),
                 hoSo.getThoiGianDangKy(),
-                hoSo.getThoiGianDuyet(),
+                hoSo.getThoiGianCapNhat(),
                 toChinhSachResponse(hoSo.getChinhSach()),
                 hoSo.getDanhSachTaiSan().stream().map(this::toTaiSanResponse).toList()
-        );
-    }
-
-    private ApprovalComparisonResponse toApprovalComparisonResponse(HoSoKinhDoanh hoSo) {
-        boolean hasOldData = hoSo.getOldMaSoThue() != null
-                || hoSo.getOldGiayPhepKinhDoanh() != null
-                || hoSo.getOldTenCoSo() != null;
-
-        if (!hasOldData) {
-            return null;
-        }
-
-        return new ApprovalComparisonResponse(
-                hoSo.getOldTenCoSo(),
-                hoSo.getOldSdtLienHe(),
-                hoSo.getOldLoaiDichVu(),
-                hoSo.getOldMaSoThue(),
-                hoSo.getOldGiayPhepKinhDoanh(),
-                hoSo.getOldToaDoGPS(),
-                hoSo.getTenCoSo(),
-                hoSo.getSdtLienHe(),
-                hoSo.getLoaiDichVu().name(),
-                hoSo.getMaSoThue(),
-                hoSo.getGiayPhepKinhDoanh(),
-                hoSo.getToaDoGPS()
-        );
-    }
-
-    public AdminApprovalResponse toAdminApprovalResponse(HoSoKinhDoanh hoSo) {
-        return new AdminApprovalResponse(
-                hoSo.getIdHoSo(),
-                hoSo.getDoiTac().getId(),
-                hoSo.getDoiTac().getEmail(),
-                hoSo.getDoiTac().getHoTen(),
-                hoSo.getTenCoSo(),
-                hoSo.getSdtLienHe(),
-                hoSo.getLoaiDichVu(),
-                hoSo.getMaSoThue(),
-                hoSo.getGiayPhepKinhDoanh(),
-                hoSo.getToaDoGPS(),
-                hoSo.getTrangThaiKiemDuyet(),
-                hoSo.getThoiGianDangKy(),
-                hoSo.getThoiGianDuyet(),
-                toChinhSachResponse(hoSo.getChinhSach()),
-                hoSo.getDanhSachTaiSan().stream().map(this::toTaiSanResponse).toList(),
-                toApprovalComparisonResponse(hoSo)
         );
     }
 
@@ -212,7 +171,7 @@ public class PartnerAssetMapper {
         );
     }
 
-    private ThucDonResponse toThucDonResponse(ThucDon thucDon) {
+    public ThucDonResponse toThucDonResponse(ThucDon thucDon) {
         return new ThucDonResponse(
                 thucDon.getId(),
                 thucDon.getNhaHang().getIdTaiSan(),
@@ -264,3 +223,4 @@ public class PartnerAssetMapper {
         );
     }
 }
+
