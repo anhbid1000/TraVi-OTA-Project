@@ -10,7 +10,7 @@ interface ReviewModalProps {
 }
 
 export default function ReviewModal({ isOpen, bookingId, hotelName, onClose }: ReviewModalProps) {
-  const [activeTab, setActiveTab] = useState<'REVIEW' | 'COMPLAINT'>('REVIEW');
+  const [activeTab] = useState<'REVIEW' | 'COMPLAINT'>('REVIEW');
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [noiDung, setNoiDung] = useState<string>('');
