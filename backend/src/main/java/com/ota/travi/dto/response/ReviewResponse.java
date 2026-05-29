@@ -1,0 +1,22 @@
+package com.ota.travi.dto.response;
+
+import com.ota.travi.enums.LoaiDichVu;
+import com.ota.travi.enums.TrangThaiDanhGia;
+
+import java.time.LocalDateTime;
+
+/**
+ * Response review công khai.
+ */
+public record ReviewResponse(
+        String id,
+        String customerName,
+        String businessProfileId,
+        LoaiDichVu serviceType,
+        Integer rating,
+        String content,
+        TrangThaiDanhGia status,
+        LocalDateTime createdAt,
+        ReviewReplyResponse partnerReply
+) {
+}

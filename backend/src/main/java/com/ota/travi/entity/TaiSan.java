@@ -46,4 +46,11 @@ public abstract class TaiSan {
 
     @Column(name = "is_dynamic_pricing", nullable = false)
     protected Boolean isDynamicPricing = false;
+
+    // Module 5: Rating fields
+    @Column(name = "rating_average")
+    protected Double ratingAverage = 0.0;
+
+    @Column(name = "review_count")
+    protected Integer reviewCount = 0;
 }
