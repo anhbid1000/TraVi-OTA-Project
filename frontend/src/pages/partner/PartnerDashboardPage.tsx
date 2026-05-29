@@ -357,6 +357,8 @@ function getProfileErrorStep(errors: ProfileFormErrors) {
   }
   if (errors.maSoThue || errors.businessLicense) return 2
   if (errors.toaDoGPS) return 3
+  if (errors.danhSachAnh) return 4
+  if (errors.gioNhanPhong || errors.gioTraPhong || errors.gioMoCua || errors.gioDongCua || errors.chinhSachHuy || errors.quyDinhTreEm || errors.ghiChuKhac) return 5
   return 1
 }
 
@@ -378,7 +380,7 @@ function validateUploadFile(file: File, options: UploadOptions = {}) {
   return ''
 }
 
-function getProfileFormErrors(form: ProfileFormState, targetStep = 3): ProfileFormErrors {
+function getProfileFormErrors(form: ProfileFormState, targetStep = 5): ProfileFormErrors {
   const errors: ProfileFormErrors = {}
   const phone = normalizePhone(form.sdtLienHe)
   const taxCode = onlyDigits(form.maSoThue)
@@ -419,9 +421,26 @@ function getProfileFormErrors(form: ProfileFormState, targetStep = 3): ProfileFo
     errors.toaDoGPS = 'Tọa độ phải đúng định dạng lat,lng và nằm trong phạm vi hợp lệ.'
   }
 
+  if (targetStep >= 4 && form.danhSachAnh.length === 0) {
+    errors.danhSachAnh = 'Vui lòng tải lên ít nhất một ảnh cơ sở.'
+  }
+
+  if (targetStep >= 5) {
+    if (form.loaiDichVu === 'KHACH_SAN') {
+      if (!form.gioNhanPhong.trim()) errors.gioNhanPhong = 'Vui lòng nhập giờ nhận phòng.'
+      if (!form.gioTraPhong.trim()) errors.gioTraPhong = 'Vui lòng nhập giờ trả phòng.'
+    } else {
+      if (!form.gioMoCua.trim()) errors.gioMoCua = 'Vui lòng nhập giờ mở cửa.'
+      if (!form.gioDongCua.trim()) errors.gioDongCua = 'Vui lòng nhập giờ đóng cửa.'
+    }
+
+    if (!form.chinhSachHuy.trim()) errors.chinhSachHuy = 'Vui lòng nhập chính sách hủy.'
+    if (!form.quyDinhTreEm.trim()) errors.quyDinhTreEm = 'Vui lòng nhập chính sách trẻ em và thú cưng.'
+    if (!form.ghiChuKhac.trim()) errors.ghiChuKhac = 'Vui lòng nhập ghi chú hoặc quy định khác.'
+  }
+
   return errors
 }
-
 function getFirstError(errors: ProfileFormErrors) {
   return Object.values(errors)[0] ?? ''
 }
@@ -464,6 +483,19 @@ function hydrateProfileForm(profile: BusinessProfileResponse): ProfileFormState 
     giaCoBan: String(profile.danhSachTaiSan?.[0]?.giaCoBan ?? initialProfileForm.giaCoBan),
   }
 }
+
+function getBusinessCoverImage(form: ProfileFormState) {
+  return form.danhSachAnh.find((image) => image.laAnhDaiDien)?.url ?? form.danhSachAnh[0]?.url ?? heroImage
+}
+
+function getRoomCoverImage(room: RoomResponse) {
+  return room.danhSachAnh?.find((image) => image.laAnhDaiDien)?.duongDanUrl ?? room.danhSachAnh?.[0]?.duongDanUrl ?? ''
+}
+
+function getMenuItemCoverImage(item: MenuItemResponse) {
+  return item.duongDanUrl ?? ''
+}
+
 
 function buildLocalRoom(roomForm: typeof initialRoomForm, id = makeLocalId('room')): RoomResponse {
   return {
@@ -561,7 +593,163 @@ function ProfessionalNotification({ type, message, onClose }: ProfessionalNotifi
     </div>
   )
 }
+type ConfirmationDialogState = {
+  title: string
+  message: string
+  confirmText: string
+  cancelText?: string
+  details?: string
+  onConfirm: () => Promise<void> | void
+}
 
+function ConfirmationDialog({
+  confirmation,
+  isConfirming,
+  onCancel,
+  onConfirm,
+}: {
+  confirmation: ConfirmationDialogState
+  isConfirming: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <div
+      role="presentation"
+      onClick={onCancel}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'grid',
+        placeItems: 'center',
+        padding: 24,
+        background: 'rgba(11, 20, 15, 0.52)',
+        backdropFilter: 'blur(4px)',
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-confirm-title"
+        onClick={(event) => event.stopPropagation()}
+        style={{
+          width: 'min(520px, 100%)',
+          display: 'grid',
+          gridTemplateColumns: '56px minmax(0, 1fr)',
+          gap: 18,
+          padding: 24,
+          borderRadius: 22,
+          border: '1px solid rgba(193, 18, 31, 0.18)',
+          background: '#ffffff',
+          boxShadow: '0 28px 90px rgba(11, 20, 15, 0.32)',
+        }}
+      >
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 18,
+            display: 'grid',
+            placeItems: 'center',
+            color: '#c1121f',
+            background: '#fff0f0',
+          }}
+        >
+          <AlertTriangle size={26} />
+        </div>
+
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 14,
+            }}
+          >
+            <div>
+              <h2
+                id="delete-confirm-title"
+                style={{
+                  margin: 0,
+                  color: '#102016',
+                  fontSize: 22,
+                  lineHeight: 1.25,
+                }}
+              >
+                {confirmation.title}
+              </h2>
+              <p
+                style={{
+                  margin: '8px 0 0',
+                  color: '#4f5b54',
+                  lineHeight: 1.55,
+                  fontWeight: 700,
+                }}
+              >
+                {confirmation.message}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onCancel}
+              aria-label="Đóng hộp xác nhận"
+              style={{
+                width: 36,
+                height: 36,
+                minWidth: 36,
+                border: '1px solid #dce4de',
+                borderRadius: 12,
+                display: 'grid',
+                placeItems: 'center',
+                color: '#26342c',
+                background: '#ffffff',
+                cursor: 'pointer',
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {confirmation.details && (
+            <div
+              style={{
+                marginTop: 14,
+                padding: '12px 14px',
+                borderRadius: 14,
+                color: '#7a1b22',
+                background: '#fff6f6',
+                border: '1px solid #ffd6d9',
+                fontWeight: 800,
+                lineHeight: 1.45,
+              }}
+            >
+              {confirmation.details}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: 10,
+              marginTop: 22,
+            }}
+          >
+            <button className="secondary-btn" type="button" onClick={onCancel} disabled={isConfirming}>
+              {confirmation.cancelText ?? 'Hủy'}
+            </button>
+            <button className="danger-btn" type="button" onClick={onConfirm} disabled={isConfirming}>
+              {isConfirming ? 'Đang xử lý...' : confirmation.confirmText}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 export function PartnerDashboardPage() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -599,7 +787,20 @@ export function PartnerDashboardPage() {
   const [isComboSaving, setIsComboSaving] = useState(false)
   const [roomSearch, setRoomSearch] = useState('')
   const [menuSearch, setMenuSearch] = useState('')
+  const [confirmation, setConfirmation] = useState<ConfirmationDialogState | null>(null)
+  const [isConfirming, setIsConfirming] = useState(false)
+  const runConfirmedAction = async () => {
+    if (!confirmation) return
 
+    setIsConfirming(true)
+
+    try {
+      await confirmation.onConfirm()
+      setConfirmation(null)
+    } finally {
+      setIsConfirming(false)
+    }
+  }
   const assetId = profile?.danhSachTaiSan?.[0]?.idTaiSan
   const isHotel = profile?.loaiDichVu === 'KHACH_SAN'
   const isRestaurant = profile?.loaiDichVu === 'NHA_HANG'
@@ -752,7 +953,7 @@ export function PartnerDashboardPage() {
   }
 
   const saveProfile = async () => {
-    const errors = getProfileFormErrors(profileForm, 3)
+    const errors = getProfileFormErrors(profileForm, 5)
     setProfileErrors(errors)
 
     const validationMessage = getFirstError(errors)
@@ -777,15 +978,38 @@ export function PartnerDashboardPage() {
         : await partnerAssetService.createBusinessProfile(payload)
 
       setProfile(response)
-      setStep(3)
+      setStep(5)
 
-      setProfileForm((current) => ({
-        ...hydrateProfileForm(response),
-        moTa: current.moTa,
-        hangSao: current.hangSao,
-        loaiAmThuc: current.loaiAmThuc,
-        sucChua: current.sucChua,
-      }))
+      setProfileForm((current) => {
+        const hydrated = hydrateProfileForm(response)
+
+        return {
+          ...hydrated,
+          moTa: current.moTa,
+          hangSao: current.hangSao,
+          loaiAmThuc: current.loaiAmThuc,
+          sucChua: current.sucChua,
+          emailLienHe: current.emailLienHe,
+          diaChi: current.diaChi,
+          thanhPho: current.thanhPho,
+          quanHuyen: current.quanHuyen,
+          phuongXa: current.phuongXa,
+          kinhDo: current.kinhDo,
+          viDo: current.viDo,
+          chinhSachHuy: current.chinhSachHuy,
+          chinhSachHoanTien: current.chinhSachHoanTien,
+          gioNhanPhong: current.gioNhanPhong,
+          gioTraPhong: current.gioTraPhong,
+          gioMoCua: current.gioMoCua,
+          gioDongCua: current.gioDongCua,
+          quyDinhTreEm: current.quyDinhTreEm,
+          quyDinhVatNuoi: current.quyDinhVatNuoi,
+          ghiChuKhac: current.ghiChuKhac,
+          tienIchKhachSan: current.tienIchKhachSan,
+          tienIchNhaHang: current.tienIchNhaHang,
+          danhSachAnh: current.danhSachAnh,
+        }
+      })
 
       localStorage.setItem('partner:lastProfile', JSON.stringify(response))
       localStorage.removeItem('partner:profileDraft')
@@ -918,36 +1142,56 @@ export function PartnerDashboardPage() {
     }
   }
 
-  const deleteRoom = async (roomId: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa phòng này?')) return
-    if (!assetId || roomId.startsWith('room-')) {
-      setRooms((current) => current.filter((room) => room.id !== roomId))
-      showMessage('Đã xóa phòng tạm thời.')
-      return
-    }
-    try {
-      await partnerAssetService.deleteRoom(assetId, roomId)
-      setRooms((current) => current.filter((room) => room.id !== roomId))
-      showMessage('Đã xóa phòng.')
-    } catch (err) {
-      showError(err, 'Không thể xóa phòng.')
-    }
+  const deleteRoom = (roomId: string) => {
+    setConfirmation({
+      title: 'Xóa phòng này?',
+      message: 'Phòng sẽ bị gỡ khỏi danh sách quản lý và khách hàng sẽ không còn thấy phòng này trên hệ thống.',
+      details: 'Hành động này không thể hoàn tác sau khi xác nhận.',
+      confirmText: 'Xóa phòng',
+      cancelText: 'Giữ lại',
+      onConfirm: async () => {
+        setRooms((current) => current.filter((room) => room.id !== roomId))
+
+        if (!assetId || roomId.startsWith('room-')) {
+          showMessage('Đã xóa phòng tạm thời.')
+          return
+        }
+
+        try {
+          await partnerAssetService.deleteRoom(assetId, roomId)
+          showMessage('Đã xóa phòng.')
+        } catch (err) {
+          console.error(err)
+          showMessage('Đã gỡ phòng khỏi giao diện. Backend hiện chưa cho quyền xóa nên dữ liệu có thể hiện lại sau khi tải lại trang.')
+        }
+      },
+    })
   }
 
-  const deleteTable = async (tableId: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa bàn này?')) return
-    if (!assetId || tableId.startsWith('table-')) {
-      setTables((current) => current.filter((table) => table.id !== tableId))
-      showMessage('Đã xóa bàn tạm thời.')
-      return
-    }
-    try {
-      await partnerAssetService.deleteTable(assetId, tableId)
-      setTables((current) => current.filter((table) => table.id !== tableId))
-      showMessage('Đã xóa bàn.')
-    } catch (err) {
-      showError(err, 'Không thể xóa bàn.')
-    }
+  const deleteTable = (tableId: string) => {
+    setConfirmation({
+      title: 'Xóa bàn này?',
+      message: 'Bàn sẽ bị xóa khỏi sơ đồ bố trí hiện tại của nhà hàng.',
+      details: 'Bạn nên chỉ xóa khi chắc chắn bàn này không còn được sử dụng trong vận hành.',
+      confirmText: 'Xóa bàn',
+      cancelText: 'Giữ lại',
+      onConfirm: async () => {
+        setTables((current) => current.filter((table) => table.id !== tableId))
+
+        if (!assetId || tableId.startsWith('table-')) {
+          showMessage('Đã xóa bàn tạm thời.')
+          return
+        }
+
+        try {
+          await partnerAssetService.deleteTable(assetId, tableId)
+          showMessage('Đã xóa bàn.')
+        } catch (err) {
+          console.error(err)
+          showMessage('Đã gỡ bàn khỏi giao diện. Backend hiện chưa cho quyền xóa nên dữ liệu có thể hiện lại sau khi tải lại trang.')
+        }
+      },
+    })
   }
 
   const createTables = async () => {
@@ -1060,6 +1304,8 @@ export function PartnerDashboardPage() {
       soChoNgoi: String(table.soChoNgoi),
       viTriSanh: table.viTriSanh,
     })
+    showMessage('Đã chọn bàn để sửa. Cập nhật thông tin ở form bên trên rồi bấm Cập nhật bàn.')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const createMenuItem = async () => {
@@ -1143,20 +1389,30 @@ export function PartnerDashboardPage() {
     }
   }
 
-  const deleteMenuItem = async (itemId: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa món này?')) return
-    if (!assetId || itemId.startsWith('menu-')) {
-      setMenuItems((current) => current.filter((item) => item.id !== itemId))
-      showMessage('Đã xóa món tạm thời.')
-      return
-    }
-    try {
-      await partnerAssetService.deleteMenuItem(assetId, itemId)
-      setMenuItems((current) => current.filter((item) => item.id !== itemId))
-      showMessage('Đã xóa món.')
-    } catch (err) {
-      showError(err, 'Không thể xóa món.')
-    }
+  const deleteMenuItem = (itemId: string) => {
+    setConfirmation({
+      title: 'Xóa món ăn này?',
+      message: 'Món ăn sẽ bị gỡ khỏi thực đơn điện tử và không còn xuất hiện trong danh sách phục vụ.',
+      details: 'Nếu món chỉ tạm hết, bạn nên dùng công tắc trạng thái thay vì xóa.',
+      confirmText: 'Xóa món',
+      cancelText: 'Giữ lại',
+      onConfirm: async () => {
+        setMenuItems((current) => current.filter((item) => item.id !== itemId))
+
+        if (!assetId || itemId.startsWith('menu-')) {
+          showMessage('Đã xóa món tạm thời.')
+          return
+        }
+
+        try {
+          await partnerAssetService.deleteMenuItem(assetId, itemId)
+          showMessage('Đã xóa món.')
+        } catch (err) {
+          console.error(err)
+          showMessage('Đã gỡ món khỏi giao diện. Backend hiện chưa cho quyền xóa nên dữ liệu có thể hiện lại sau khi tải lại trang.')
+        }
+      },
+    })
   }
 
   const saveCombo = async () => {
@@ -1232,21 +1488,30 @@ export function PartnerDashboardPage() {
     setIsComboModalOpen(true)
   }
 
-  const deleteCombo = async (comboId: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa combo này?')) return
-    if (!assetId || comboId.startsWith('combo-')) {
-      setCombos((current) => current.filter((combo) => combo.id !== comboId))
-      showMessage('Đã xóa combo tạm thời.')
-      return
-    }
+  const deleteCombo = (comboId: string) => {
+    setConfirmation({
+      title: 'Xóa combo này?',
+      message: 'Combo sẽ bị gỡ khỏi khu vực combo trong thực đơn.',
+      details: 'Các món lẻ trong combo vẫn được giữ lại, chỉ xóa cấu hình combo hiện tại.',
+      confirmText: 'Xóa combo',
+      cancelText: 'Giữ lại',
+      onConfirm: async () => {
+        setCombos((current) => current.filter((combo) => combo.id !== comboId))
 
-    try {
-      await partnerAssetService.deleteCombo(assetId, comboId)
-      setCombos((current) => current.filter((combo) => combo.id !== comboId))
-      showMessage('Đã xóa combo.')
-    } catch (err) {
-      showError(err, 'Không thể xóa combo.')
-    }
+        if (!assetId || comboId.startsWith('combo-')) {
+          showMessage('Đã xóa combo tạm thời.')
+          return
+        }
+
+        try {
+          await partnerAssetService.deleteCombo(assetId, comboId)
+          showMessage('Đã xóa combo.')
+        } catch (err) {
+          console.error(err)
+          showMessage('Đã gỡ combo khỏi giao diện. Backend hiện chưa cho quyền xóa nên dữ liệu có thể hiện lại sau khi tải lại trang.')
+        }
+      },
+    })
   }
 
   const toggleAmenity = (amenity: string) => {
@@ -1442,7 +1707,18 @@ export function PartnerDashboardPage() {
           />
         )}
       </main>
-
+      {confirmation && (
+        <ConfirmationDialog
+          confirmation={confirmation}
+          isConfirming={isConfirming}
+          onCancel={() => {
+            if (!isConfirming) setConfirmation(null)
+          }}
+          onConfirm={() => {
+            void runConfirmedAction()
+          }}
+        />
+      )}
       {isRoomModalOpen && (
         <RoomModal
           roomForm={roomForm}
@@ -1725,7 +2001,45 @@ function SettingsIcon() {
     </svg>
   )
 }
+function getBusinessProfileStatus(profile: BusinessProfileResponse | null) {
+  if (!profile) {
+    return {
+      label: 'Chưa lưu',
+      className: 'yellow',
+      description: 'Hồ sơ mới chỉ đang nhập trên giao diện, chưa lưu lên hệ thống.',
+    }
+  }
 
+  switch (profile.trangThaiHoatDong) {
+    case 'DANG_HOAT_DONG':
+      return {
+        label: 'Đang hoạt động',
+        className: 'green',
+        description: 'Hồ sơ đã được kích hoạt và có thể hiển thị trên hệ thống.',
+      }
+
+    case 'TAM_DUNG':
+      return {
+        label: 'Tạm dừng',
+        className: 'yellow',
+        description: 'Hồ sơ đang tạm dừng hoạt động.',
+      }
+
+    case 'BI_KHOA':
+      return {
+        label: 'Bị khóa',
+        className: 'red',
+        description: 'Hồ sơ đang bị khóa, cần liên hệ quản trị viên.',
+      }
+
+    default:
+      return {
+        label: profile.trangThaiHoatDong || 'Chưa rõ trạng thái',
+        className: 'gray',
+        description: 'Trạng thái hồ sơ hiện tại.',
+      }
+  }
+}
 type BusinessProfileViewProps = {
   step: number
   setStep: (step: number) => void
@@ -1753,6 +2067,7 @@ function BusinessProfileView({
   updateProfileField,
   saveProfile,
   saveDraft,
+  uploadFile,
   uploadBusinessLicense,
   isUploadingLicense,
   toggleAmenity,
@@ -1762,10 +2077,64 @@ function BusinessProfileView({
     Object.entries(profileErrors).filter(([key]) => {
       if (step === 1) return ['tenCoSo', 'sdtLienHe', 'moTa', 'giaCoBan', 'hangSao', 'loaiAmThuc', 'sucChua'].includes(key)
       if (step === 2) return ['maSoThue', 'businessLicense'].includes(key)
-      return ['toaDoGPS'].includes(key)
+      if (step === 3) return ['toaDoGPS'].includes(key)
+      if (step === 4) return ['danhSachAnh'].includes(key)
+      return ['gioNhanPhong', 'gioTraPhong', 'gioMoCua', 'gioDongCua', 'chinhSachHuy', 'quyDinhTreEm', 'ghiChuKhac'].includes(key)
     }),
   ) as ProfileFormErrors
+
   const currentStepError = getFirstError(currentStepErrors)
+  const profileStatus = getBusinessProfileStatus(profile)
+  const businessCoverImage = getBusinessCoverImage(profileForm)
+  const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false)
+
+  const setBusinessCoverImage = (selectedIndex: number) => {
+    updateProfileField(
+      'danhSachAnh',
+      profileForm.danhSachAnh.map((image, index) => ({
+        ...image,
+        laAnhDaiDien: index === selectedIndex,
+      })),
+    )
+  }
+
+  const removeBusinessImage = (selectedIndex: number) => {
+    const nextImages = profileForm.danhSachAnh.filter((_, index) => index !== selectedIndex)
+
+    if (nextImages.length > 0 && !nextImages.some((image) => image.laAnhDaiDien)) {
+      nextImages[0] = { ...nextImages[0], laAnhDaiDien: true }
+    }
+
+    updateProfileField('danhSachAnh', nextImages)
+  }
+
+  const addBusinessImage = (url: string) => {
+    const imageUrl = url.trim()
+    if (!imageUrl) return
+
+    updateProfileField('danhSachAnh', [
+      ...profileForm.danhSachAnh,
+      {
+        url: imageUrl,
+        moTa: '',
+        laAnhDaiDien: profileForm.danhSachAnh.length === 0,
+      },
+    ])
+  }
+
+  const handleBusinessImageUpload = async (file: File) => {
+    setIsUploadingProfileImage(true)
+
+    try {
+      const uploaded = await uploadFile(file, { allowPdf: false })
+
+      if (uploaded) {
+        addBusinessImage(uploaded.url)
+      }
+    } finally {
+      setIsUploadingProfileImage(false)
+    }
+  }
 
   return (
     <>
@@ -1774,11 +2143,11 @@ function BusinessProfileView({
           <h1>Thiết lập hồ sơ kinh doanh</h1>
           <p>Hoàn thiện thông tin cơ sở kinh doanh để kích hoạt hiển thị trên hệ thống.</p>
         </div>
-        <div className="status-cluster">
-          <span className={`mini-pill ${!profile ? 'yellow' : 'gray'}`}>Chưa lưu</span>
-          <span className={`mini-pill ${profile?.trangThaiHoatDong === 'TAM_DUNG' ? 'yellow' : 'gray'}`}>Tạm dừng</span>
-          <span className={`mini-pill ${profile?.trangThaiHoatDong === 'BI_KHOA' ? 'red' : 'gray'}`}>Bị khóa</span>
-          <span className={`mini-pill ${profile?.trangThaiHoatDong === 'DANG_HOAT_DONG' ? 'green' : 'gray'}`}>Đang hoạt động</span>
+
+        <div className="status-cluster single-status">
+          <span className={`mini-pill ${profileStatus.className}`}>
+            {profileStatus.label}
+          </span>
         </div>
       </header>
 
@@ -1789,18 +2158,22 @@ function BusinessProfileView({
               {step > 1 ? <Check size={20} /> : <span>1</span>}
               Cơ bản
             </button>
+
             <button className={step > 2 ? 'done' : step === 2 ? 'active' : ''} onClick={() => setStep(2)}>
               {step > 2 ? <Check size={20} /> : <span>2</span>}
               Pháp lý
             </button>
+
             <button className={step > 3 ? 'done' : step === 3 ? 'active' : ''} onClick={() => setStep(3)}>
               {step > 3 ? <Check size={20} /> : <span>3</span>}
               Vị trí
             </button>
+
             <button className={step > 4 ? 'done' : step === 4 ? 'active' : ''} onClick={() => setStep(4)}>
               {step > 4 ? <Check size={20} /> : <span>4</span>}
               Ảnh & Tiện ích
             </button>
+
             <button className={step === 5 ? 'active' : ''} onClick={() => setStep(5)}>
               <span>5</span>
               Chính sách
@@ -1821,34 +2194,59 @@ function BusinessProfileView({
                   <Building2 size={22} />
                   <h2>Thông tin cơ bản</h2>
                 </div>
+
                 <div className="business-profile-step">
                   <div className="form-grid single">
                     <label className={profileErrors.tenCoSo ? 'field-error' : ''}>
                       Tên cơ sở
-                      <input value={profileForm.tenCoSo} onChange={(event) => updateProfileField('tenCoSo', event.target.value)} placeholder="Ví dụ: TraVi Resort & Spa" />
+                      <input
+                        value={profileForm.tenCoSo}
+                        onChange={(event) => updateProfileField('tenCoSo', event.target.value)}
+                        placeholder="Ví dụ: TraVi Resort & Spa"
+                      />
                       {profileErrors.tenCoSo && <small>{profileErrors.tenCoSo}</small>}
                     </label>
+
                     <label className={profileErrors.sdtLienHe ? 'field-error' : ''}>
                       Số điện thoại liên hệ
-                      <input value={profileForm.sdtLienHe} onChange={(event) => updateProfileField('sdtLienHe', event.target.value)} placeholder="Ví dụ: 0912345678" />
+                      <input
+                        value={profileForm.sdtLienHe}
+                        onChange={(event) => updateProfileField('sdtLienHe', event.target.value)}
+                        placeholder="Ví dụ: 0912345678"
+                      />
                       {profileErrors.sdtLienHe && <small>{profileErrors.sdtLienHe}</small>}
                     </label>
+
                     <label>
                       Loại dịch vụ
-                      <select value={profileForm.loaiDichVu} onChange={(event) => updateProfileField('loaiDichVu', event.target.value as ServiceType)}>
+                      <select
+                        value={profileForm.loaiDichVu}
+                        onChange={(event) => updateProfileField('loaiDichVu', event.target.value as ServiceType)}
+                      >
                         <option value="KHACH_SAN">Khách sạn</option>
                         <option value="NHA_HANG">Nhà hàng</option>
                       </select>
                     </label>
+
                     <label className={profileErrors.giaCoBan ? 'field-error' : ''}>
                       Giá cơ bản (VND)
-                      <input type="number" min="1000" value={profileForm.giaCoBan} onChange={(event) => updateProfileField('giaCoBan', event.target.value)} placeholder="500000" />
+                      <input
+                        type="number"
+                        min="1000"
+                        value={profileForm.giaCoBan}
+                        onChange={(event) => updateProfileField('giaCoBan', event.target.value)}
+                        placeholder="500000"
+                      />
                       {profileErrors.giaCoBan && <small>{profileErrors.giaCoBan}</small>}
                     </label>
+
                     {profileForm.loaiDichVu === 'KHACH_SAN' ? (
                       <label className={profileErrors.hangSao ? 'field-error' : ''}>
                         Hạng sao khách sạn
-                        <select value={profileForm.hangSao} onChange={(event) => updateProfileField('hangSao', event.target.value)}>
+                        <select
+                          value={profileForm.hangSao}
+                          onChange={(event) => updateProfileField('hangSao', event.target.value)}
+                        >
                           <option value="1">1 sao</option>
                           <option value="2">2 sao</option>
                           <option value="3">3 sao</option>
@@ -1861,30 +2259,52 @@ function BusinessProfileView({
                       <>
                         <label className={profileErrors.loaiAmThuc ? 'field-error' : ''}>
                           Loại ẩm thực
-                          <input value={profileForm.loaiAmThuc} onChange={(event) => updateProfileField('loaiAmThuc', event.target.value)} placeholder="Việt Nam, Nhật, Hải sản..." />
+                          <input
+                            value={profileForm.loaiAmThuc}
+                            onChange={(event) => updateProfileField('loaiAmThuc', event.target.value)}
+                            placeholder="Việt Nam, Nhật, Hải sản..."
+                          />
                           {profileErrors.loaiAmThuc && <small>{profileErrors.loaiAmThuc}</small>}
                         </label>
+
                         <label className={profileErrors.sucChua ? 'field-error' : ''}>
                           Sức chứa nhà hàng
-                          <input type="number" min="1" value={profileForm.sucChua} onChange={(event) => updateProfileField('sucChua', event.target.value)} placeholder="80" />
+                          <input
+                            type="number"
+                            min="1"
+                            value={profileForm.sucChua}
+                            onChange={(event) => updateProfileField('sucChua', event.target.value)}
+                            placeholder="80"
+                          />
                           {profileErrors.sucChua && <small>{profileErrors.sucChua}</small>}
                         </label>
                       </>
                     )}
+
                     <label className={profileErrors.moTa ? 'field-error' : ''}>
                       Mô tả ngắn
-                      <textarea value={profileForm.moTa} onChange={(event) => updateProfileField('moTa', event.target.value)} placeholder="Giới thiệu cơ sở kinh doanh trong vài câu..." />
+                      <textarea
+                        value={profileForm.moTa}
+                        onChange={(event) => updateProfileField('moTa', event.target.value)}
+                        placeholder="Giới thiệu cơ sở kinh doanh trong vài câu..."
+                      />
                       {profileErrors.moTa && <small>{profileErrors.moTa}</small>}
                     </label>
                   </div>
+
                   <div className="business-preview-card">
                     <p><Eye size={14} /> Xem trước hiển thị</p>
-                    <img src={heroImage} alt="Ảnh xem trước cơ sở" />
+                    <img src={businessCoverImage} alt="Ảnh đại diện cơ sở" />
+
                     <div>
                       <strong>{profileForm.tenCoSo || 'Tên cơ sở của bạn'}</strong>
                       <span>$$$</span>
                     </div>
-                    <small>{profileForm.moTa || 'Mô tả của bạn sẽ hiển thị tại đây để giúp khách hiểu rõ trải nghiệm dịch vụ.'}</small>
+
+                    <small>
+                      {profileForm.moTa || 'Mô tả của bạn sẽ hiển thị tại đây để giúp khách hiểu rõ trải nghiệm dịch vụ.'}
+                    </small>
+
                     <button>Xem chi tiết</button>
                   </div>
                 </div>
@@ -1897,19 +2317,27 @@ function BusinessProfileView({
                   <FileText size={22} />
                   <h2>Giấy tờ pháp lý</h2>
                 </div>
+
                 <div className="form-grid single">
                   <label className={profileErrors.maSoThue ? 'field-error' : ''}>
                     Mã số thuế
-                    <input value={profileForm.maSoThue} onChange={(event) => updateProfileField('maSoThue', event.target.value)} placeholder="Nhập mã số thuế 10 hoặc 13 chữ số" />
+                    <input
+                      value={profileForm.maSoThue}
+                      onChange={(event) => updateProfileField('maSoThue', event.target.value)}
+                      placeholder="Nhập mã số thuế 10 hoặc 13 chữ số"
+                    />
                     <small>Thông tin này dùng cho xuất hóa đơn và xác minh pháp lý.</small>
                     {profileErrors.maSoThue && <small>{profileErrors.maSoThue}</small>}
                   </label>
+
                   <label
                     className={`license-drop-zone ${profileErrors.businessLicense ? 'has-error' : ''}`}
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={(event) => {
                       event.preventDefault()
+
                       const file = event.dataTransfer.files?.[0]
+
                       if (file) {
                         void uploadBusinessLicense(file)
                       }
@@ -1918,26 +2346,34 @@ function BusinessProfileView({
                     <UploadCloud size={30} />
                     <strong>{isUploadingLicense ? 'Đang tải giấy phép kinh doanh...' : 'Kéo thả file hoặc bấm để chọn'}</strong>
                     <span>PDF, JPG hoặc PNG, tối đa 10MB</span>
+
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                       onChange={async (event) => {
                         const file = event.target.files?.[0]
                         if (!file) return
+
                         await uploadBusinessLicense(file)
                         event.target.value = ''
                       }}
                     />
                   </label>
+
                   {profileErrors.businessLicense && <p className="field-error-text">{profileErrors.businessLicense}</p>}
+
                   {profileForm.giayPhepKinhDoanh && (
                     <div className="uploaded-file">
                       <FileText />
+
                       <div>
                         <strong>{profileForm.giayPhepKinhDoanh.split('/').pop()}</strong>
                         <span>Vừa tải lên</span>
                       </div>
-                      <button onClick={() => updateProfileField('giayPhepKinhDoanh', '')}><Trash2 size={18} /></button>
+
+                      <button onClick={() => updateProfileField('giayPhepKinhDoanh', '')}>
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -1950,14 +2386,19 @@ function BusinessProfileView({
                   <MapPin size={22} />
                   <h2>Vị trí</h2>
                 </div>
+
                 <div className="map-section">
                   <BusinessLocationMap
                     value={profileForm.toaDoGPS}
                     onChange={(coordinates) => updateProfileField('toaDoGPS', coordinates)}
                   />
+
                   <label className={profileErrors.toaDoGPS ? 'field-error' : ''}>
                     Tọa độ GPS
-                    <input value={profileForm.toaDoGPS} onChange={(event) => updateProfileField('toaDoGPS', event.target.value)} />
+                    <input
+                      value={profileForm.toaDoGPS}
+                      onChange={(event) => updateProfileField('toaDoGPS', event.target.value)}
+                    />
                     {profileErrors.toaDoGPS && <small>{profileErrors.toaDoGPS}</small>}
                   </label>
                 </div>
@@ -1970,70 +2411,145 @@ function BusinessProfileView({
                   <UploadCloud size={22} />
                   <h2>Ảnh & Tiện ích</h2>
                 </div>
+
                 <div className="form-grid single">
                   <div>
                     <label>Tiện ích</label>
-                    <div className="tag-row" style={{ marginTop: 8, flexWrap: 'wrap', gap: 10 }}>
+
+                    <div className="amenity-options-grid">
                       {(profileForm.loaiDichVu === 'KHACH_SAN' ? HOTEL_AMENITY_OPTIONS : RESTAURANT_AMENITY_OPTIONS).map((amenity) => {
                         const checked = profileForm.loaiDichVu === 'KHACH_SAN'
                           ? profileForm.tienIchKhachSan.includes(amenity)
                           : profileForm.tienIchNhaHang.includes(amenity)
+
                         return (
-                          <label key={amenity} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                            <input type="checkbox" checked={checked} onChange={() => toggleAmenity(amenity)} />
+                          <label key={amenity} className={`amenity-option ${checked ? 'selected' : ''}`}>
+                            <input
+                              className="amenity-checkbox-input"
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleAmenity(amenity)}
+                            />
                             <span>{amenity}</span>
                           </label>
                         )
                       })}
                     </div>
+
                     <input
                       style={{ marginTop: 12 }}
                       placeholder="Thêm tiện ích khác rồi nhấn Enter..."
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          addCustomAmenity(e.currentTarget.value)
-                          e.currentTarget.value = ''
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault()
+                          addCustomAmenity(event.currentTarget.value)
+                          event.currentTarget.value = ''
                         }
                       }}
                     />
+
                     <small>Có thể chọn nhanh bằng checkbox hoặc nhập tiện ích riêng.</small>
                   </div>
-                  <label>
-                    Ảnh cơ sở (URL ảnh tạm thời cho demo)
-                    <input 
-                      placeholder="https://example.com/image.jpg" 
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const val = e.currentTarget.value.trim();
-                          if (val) {
-                            const newArr = [...profileForm.danhSachAnh, {url: val, moTa: '', laAnhDaiDien: profileForm.danhSachAnh.length === 0}];
-                            updateProfileField('danhSachAnh', newArr);
-                            e.currentTarget.value = '';
-                          }
+
+                  <div className="business-image-uploader">
+                    <label
+                      className="license-drop-zone business-image-drop-zone"
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault()
+
+                        const file = event.dataTransfer.files?.[0]
+
+                        if (file) {
+                          void handleBusinessImageUpload(file)
                         }
                       }}
-                    />
-                    <small>Nhập URL ảnh và ấn Enter để thêm.</small>
-                  </label>
+                    >
+                      <UploadCloud size={30} />
+
+                      <strong>
+                        {isUploadingProfileImage ? 'Đang tải ảnh cơ sở...' : 'Kéo thả ảnh cơ sở hoặc bấm để chọn'}
+                      </strong>
+
+                      <span>JPG hoặc PNG, tối đa 10MB. Ảnh sẽ được lưu và gửi kèm hồ sơ.</span>
+
+                      <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0]
+                          if (!file) return
+
+                          await handleBusinessImageUpload(file)
+                          event.target.value = ''
+                        }}
+                      />
+                    </label>
+
+                    <label>
+                      Hoặc thêm bằng URL ảnh
+
+                      <input
+                        placeholder="https://example.com/image.jpg"
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault()
+                            addBusinessImage(event.currentTarget.value)
+                            event.currentTarget.value = ''
+                          }
+                        }}
+                      />
+
+                      <small>Có thể upload trực tiếp hoặc nhập URL ảnh rồi nhấn Enter.</small>
+                    </label>
+                  </div>
+
+                  {profileErrors.danhSachAnh && <p className="field-error-text">{profileErrors.danhSachAnh}</p>}
+
+                  {profileForm.danhSachAnh.length > 0 && (
+                    <div className="business-cover-preview-card">
+                      <img src={businessCoverImage} alt="Ảnh đại diện cơ sở đang chọn" />
+                      <div>
+                        <strong>Ảnh đại diện cơ sở</strong>
+                        <span>Ảnh này sẽ dùng làm ảnh chính khi hiển thị hồ sơ.</span>
+                      </div>
+                    </div>
+                  )}
+
                   {profileForm.danhSachAnh.length > 0 && (
                     <div className="uploaded-file-list">
-                      {profileForm.danhSachAnh.map((img, i) => (
-                        <div key={i} className="uploaded-file">
-                          <img src={img.url} alt="thumb" style={{width: 40, height: 40, objectFit: 'cover', borderRadius: 4}} />
-                          <div style={{flex: 1, marginLeft: 10}}>
-                            <input value={img.moTa} onChange={(e) => {
-                              const newArr = [...profileForm.danhSachAnh];
-                              newArr[i].moTa = e.target.value;
-                              updateProfileField('danhSachAnh', newArr);
-                            }} placeholder="Mô tả ảnh..." style={{padding: 4, width: '100%', fontSize: 12}} />
+                      {profileForm.danhSachAnh.map((img, index) => (
+                        <div key={index} className={`uploaded-file business-image-row ${img.laAnhDaiDien ? 'is-cover' : ''}`}>
+                          <img className="uploaded-image-thumb" src={img.url} alt="Ảnh cơ sở" />
+
+                          <div className="uploaded-image-info">
+                            <div className="uploaded-image-title-row">
+                              <strong>{img.laAnhDaiDien ? 'Ảnh đại diện' : `Ảnh cơ sở ${index + 1}`}</strong>
+                              {img.laAnhDaiDien && <span>Đang làm ảnh chính</span>}
+                            </div>
+
+                            <input
+                              value={img.moTa}
+                              onChange={(event) => {
+                                const newImages = [...profileForm.danhSachAnh]
+                                newImages[index].moTa = event.target.value
+                                updateProfileField('danhSachAnh', newImages)
+                              }}
+                              placeholder="Mô tả ảnh..."
+                            />
                           </div>
-                          <button onClick={() => {
-                              const newArr = [...profileForm.danhSachAnh];
-                              newArr.splice(i, 1);
-                              updateProfileField('danhSachAnh', newArr);
-                          }}><Trash2 size={16} /></button>
+
+                          <div className="uploaded-image-actions">
+                            {!img.laAnhDaiDien && (
+                              <button type="button" className="secondary-btn compact-btn" onClick={() => setBusinessCoverImage(index)}>
+                                Đặt đại diện
+                              </button>
+                            )}
+
+                            <button type="button" className="icon-btn danger" onClick={() => removeBusinessImage(index)} title="Xóa ảnh">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -2048,42 +2564,111 @@ function BusinessProfileView({
                   <FileText size={22} />
                   <h2>Chính sách & Quy định</h2>
                 </div>
+
                 <div className="form-grid single">
                   {profileForm.loaiDichVu === 'KHACH_SAN' ? (
                     <div className="form-grid">
-                      <label>Giờ nhận phòng <input type="time" value={profileForm.gioNhanPhong} onChange={e => updateProfileField('gioNhanPhong', e.target.value)} /></label>
-                      <label>Giờ trả phòng <input type="time" value={profileForm.gioTraPhong} onChange={e => updateProfileField('gioTraPhong', e.target.value)} /></label>
+                      <label>
+                        Giờ nhận phòng
+                        <input
+                          type="time"
+                          value={profileForm.gioNhanPhong}
+                          onChange={(event) => updateProfileField('gioNhanPhong', event.target.value)}
+                        />
+                        {profileErrors.gioNhanPhong && <small>{profileErrors.gioNhanPhong}</small>}
+                      </label>
+
+                      <label>
+                        Giờ trả phòng
+                        <input
+                          type="time"
+                          value={profileForm.gioTraPhong}
+                          onChange={(event) => updateProfileField('gioTraPhong', event.target.value)}
+                        />
+                        {profileErrors.gioTraPhong && <small>{profileErrors.gioTraPhong}</small>}
+                      </label>
                     </div>
                   ) : (
                     <div className="form-grid">
-                      <label>Giờ mở cửa <input type="time" value={profileForm.gioMoCua} onChange={e => updateProfileField('gioMoCua', e.target.value)} /></label>
-                      <label>Giờ đóng cửa <input type="time" value={profileForm.gioDongCua} onChange={e => updateProfileField('gioDongCua', e.target.value)} /></label>
+                      <label>
+                        Giờ mở cửa
+                        <input
+                          type="time"
+                          value={profileForm.gioMoCua}
+                          onChange={(event) => updateProfileField('gioMoCua', event.target.value)}
+                        />
+                        {profileErrors.gioMoCua && <small>{profileErrors.gioMoCua}</small>}
+                      </label>
+
+                      <label>
+                        Giờ đóng cửa
+                        <input
+                          type="time"
+                          value={profileForm.gioDongCua}
+                          onChange={(event) => updateProfileField('gioDongCua', event.target.value)}
+                        />
+                        {profileErrors.gioDongCua && <small>{profileErrors.gioDongCua}</small>}
+                      </label>
                     </div>
                   )}
-                  <label>Chính sách hủy <textarea value={profileForm.chinhSachHuy} onChange={e => updateProfileField('chinhSachHuy', e.target.value)} placeholder="Ví dụ: Miễn phí hủy trước 24h..." /></label>
-                  <label>Chính sách trẻ em & thú cưng <textarea value={profileForm.quyDinhTreEm} onChange={e => updateProfileField('quyDinhTreEm', e.target.value)} placeholder="Trẻ em dưới 6 tuổi miễn phí..." /></label>
-                  <label>Ghi chú khác <textarea value={profileForm.ghiChuKhac} onChange={e => updateProfileField('ghiChuKhac', e.target.value)} placeholder="Các quy định khác..." /></label>
+
+                  <label>
+                    Chính sách hủy
+                    <textarea
+                      value={profileForm.chinhSachHuy}
+                      onChange={(event) => updateProfileField('chinhSachHuy', event.target.value)}
+                      placeholder="Ví dụ: Miễn phí hủy trước 24h..."
+                    />
+                    {profileErrors.chinhSachHuy && <small>{profileErrors.chinhSachHuy}</small>}
+                  </label>
+
+                  <label>
+                    Chính sách trẻ em & thú cưng
+                    <textarea
+                      value={profileForm.quyDinhTreEm}
+                      onChange={(event) => updateProfileField('quyDinhTreEm', event.target.value)}
+                      placeholder="Trẻ em dưới 6 tuổi miễn phí..."
+                    />
+                    {profileErrors.quyDinhTreEm && <small>{profileErrors.quyDinhTreEm}</small>}
+                  </label>
+
+                  <label>
+                    Ghi chú khác
+                    <textarea
+                      value={profileForm.ghiChuKhac}
+                      onChange={(event) => updateProfileField('ghiChuKhac', event.target.value)}
+                      placeholder="Các quy định khác..."
+                    />
+                    {profileErrors.ghiChuKhac && <small>{profileErrors.ghiChuKhac}</small>}
+                  </label>
                 </div>
               </>
             )}
-
           </section>
 
           <div className="profile-actions">
             <button className="text-btn" onClick={() => setStep(Math.max(1, step - 1))}>
               <ArrowLeft size={18} /> Quay lại
             </button>
+
             <div>
               <button className="secondary-btn" disabled={isSubmitting} onClick={saveDraft}>
                 Lưu bản nháp
               </button>
+
               {step < 5 ? (
-                <button className="primary-btn" onClick={() => setStep(step + 1)}>
-                  {step === 1 ? 'Tiếp tục: Giấy tờ pháp lý' : step === 2 ? 'Tiếp tục: Vị trí' : step === 3 ? 'Tiếp tục: Ảnh & Tiện ích' : 'Tiếp tục: Chính sách'}
+                <button className="primary-btn" type="button" onClick={() => setStep(step + 1)}>
+                  {step === 1
+                    ? 'Tiếp tục: Giấy tờ pháp lý'
+                    : step === 2
+                      ? 'Tiếp tục: Vị trí'
+                      : step === 3
+                        ? 'Tiếp tục: Ảnh & Tiện ích'
+                        : 'Tiếp tục: Chính sách'}
                   <ArrowRight size={18} />
                 </button>
               ) : (
-                <button className="primary-btn" disabled={isSubmitting} onClick={saveProfile}>
+                <button className="primary-btn" type="button" disabled={isSubmitting} onClick={saveProfile}>
                   {isSubmitting ? 'Đang lưu hồ sơ...' : profile ? 'Lưu cập nhật hồ sơ' : 'Kích hoạt hồ sơ'}
                   <ArrowRight size={18} />
                 </button>
@@ -2091,7 +2676,6 @@ function BusinessProfileView({
             </div>
           </div>
         </section>
-
       </div>
     </>
   )
@@ -2113,7 +2697,8 @@ function HotelSetupView({
         <p>Cấu hình thông tin khách sạn trước khi quản lý danh sách phòng.</p>
       </header>
       <section className="hotel-setup-grid">
-        <div className="panel feature-panel">
+        <div className="panel feature-panel with-cover">
+          <img className="feature-cover-image" src={getBusinessCoverImage(profileForm)} alt="Ảnh đại diện khách sạn" />
           <Hotel size={32} />
           <h2>{profileForm.tenCoSo || 'Khách sạn Grand Horizon'}</h2>
           <p>{profileForm.moTa || 'Cơ sở lưu trú chất lượng cao đã sẵn sàng phục vụ khách hàng TraVi.'}</p>
@@ -2181,14 +2766,18 @@ function RoomManagementView({
           <tbody>
             {rooms.map((room) => (
               <tr key={room.id}>
-                <td><div className="room-thumb"><Bed size={22} /></div></td>
+                <td>
+                  <div className={`room-thumb ${getRoomCoverImage(room) ? 'has-image' : ''}`}>
+                    {getRoomCoverImage(room) ? <img src={getRoomCoverImage(room)} alt={`Ảnh phòng ${room.soPhong}`} /> : <Bed size={22} />}
+                  </div>
+                </td>
                 <td><strong>{room.soPhong}</strong></td>
                 <td><strong>{room.loaiPhong}</strong><span className="table-subtext">{room.tienIch.join(' · ')}</span></td>
                 <td>{room.sucChuaToiDa} Người</td>
                 <td>{room.dienTich} m²</td>
                 <td><strong>{room.phanTramGiamGia > 0 ? `-${room.phanTramGiamGia}%` : 'Giá cơ bản'}</strong></td>
                 <td><span className="badge green">Còn phòng</span></td>
-                <td className="table-actions"><button className="icon-btn" onClick={() => startRoomEdit(room)}><Pencil size={16} /></button><button className="icon-btn danger" onClick={() => deleteRoom(room.id)}><Trash2 size={16} /></button></td>
+                <td className="table-actions"><button className="secondary-btn row-action-btn" type="button" onClick={() => startRoomEdit(room)}><Pencil size={16} /> Sửa</button><button className="danger-btn row-action-btn" type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); deleteRoom(room.id) }}><Trash2 size={16} /> Xóa</button></td>
               </tr>
             ))}
             {!rooms.length && <tr><td colSpan={8} className="empty-cell">Chưa có phòng nào. Hãy thêm phòng đầu tiên để bắt đầu.</td></tr>}
@@ -2215,7 +2804,8 @@ function RestaurantSetupView({
         <p>Chuẩn bị sức chứa nhà hàng, định vị ẩm thực và các công cụ vận hành.</p>
       </header>
       <section className="hotel-setup-grid">
-        <div className="panel feature-panel">
+        <div className="panel feature-panel with-cover">
+          <img className="feature-cover-image" src={getBusinessCoverImage(profileForm)} alt="Ảnh đại diện nhà hàng" />
           <Utensils size={32} />
           <h2>{profileForm.tenCoSo || 'The Emerald Garden'}</h2>
           <p>{profileForm.loaiAmThuc} · {profileForm.sucChua} chỗ · {profile ? profile.trangThaiHoatDong : 'BẢN NHÁP'}</p>
@@ -2329,7 +2919,7 @@ function TableLayoutView({
                 <td>{getTableArea(table.viTriSanh)}</td>
                 <td>{table.soChoNgoi} người</td>
                 <td><span className="badge green">Còn trống</span></td>
-                <td className="table-actions"><button className="icon-btn" onClick={() => startTableEdit(table)}><Pencil size={16} /></button><button className="icon-btn danger" onClick={() => deleteTable(table.id)}><Trash2 size={16} /></button></td>
+                <td className="table-actions"><button className="secondary-btn row-action-btn" type="button" onClick={() => startTableEdit(table)}><Pencil size={16} /> Sửa</button><button className="danger-btn row-action-btn" type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); deleteTable(table.id) }}><Trash2 size={16} /> Xóa</button></td>
               </tr>
             ))}
             {!tables.length && <tr><td colSpan={5} className="empty-cell">Chưa có bàn nào được tạo.</td></tr>}
@@ -2374,113 +2964,187 @@ function MenuManagementView({
           <h1>Quản lý thực đơn</h1>
           <p>Quản lý thực đơn điện tử và trạng thái phục vụ tức thời.</p>
         </div>
+
         <div className="header-actions">
-          <div className="search-box"><Search size={20} /><input value={menuSearch} onChange={(event) => setMenuSearch(event.target.value)} placeholder="Tìm kiếm món ăn..." /></div>
-          <button className="primary-btn" onClick={() => setIsMenuModalOpen(true)}><Plus size={18} /> Thêm món ăn</button>
+          <div className="search-box">
+            <Search size={20} />
+            <input
+              value={menuSearch}
+              onChange={(event) => setMenuSearch(event.target.value)}
+              placeholder="Tìm kiếm món ăn..."
+            />
+          </div>
+
+          <button className="primary-btn" onClick={() => setIsMenuModalOpen(true)}>
+            <Plus size={18} /> Thêm món ăn
+          </button>
         </div>
       </header>
 
       <section className="metric-grid partner-metrics">
-        <div className="metric-card"><span>Tổng số món</span><strong>{menuStats.total}</strong><Utensils /></div>
-        <div className="metric-card"><span>Đang bán</span><strong>{menuStats.active}</strong><CheckCircle2 /></div>
-        <div className="metric-card danger"><span>Tạm hết</span><strong>{menuStats.outOfStock}</strong><XCircle /></div>
-        <div className="menu-health"><span>Chất lượng thực đơn</span><strong>Cao cấp</strong><p>Cơ sở được đánh giá nổi bật</p></div>
-      </section>
-
-      <section className="panel table-panel">
-        <table className="data-table menu-table">
-          <thead><tr><th>Món ăn</th><th>Giá</th><th>Danh mục / Thẻ</th><th>Trạng thái phục vụ</th><th>Hành động</th></tr></thead>
-          <tbody>
-            {menuItems.map((item) => (
-              <tr key={item.id}>
-                <td><div className="dish-cell"><div className="dish-thumb"><Utensils size={18} /></div><div><strong>{item.tenMon}</strong><span>{item.theNguCanh[0] || 'Món ăn'}</span></div></div></td>
-                <td><strong className="price-text">{formatMoney(item.giaBan)}</strong></td>
-                <td><div className="tag-row">{item.theNguCanh.map((tag) => <span key={tag}>{tag}</span>)}</div></td>
-                <td>
-                  <button
-                    className={`availability-toggle ${item.trangThai === 'DANG_BAN' ? 'on' : ''}`}
-                    onClick={() => toggleMenuStatus(item)}
-                    type="button"
-                  >
-                    <span />
-                  </button>
-                  <strong className={item.trangThai === 'DANG_BAN' ? 'available-text' : 'stockout-text'}>
-                    {item.trangThai === 'DANG_BAN' ? 'Đang bán' : 'Tạm hết'}
-                  </strong>
-                </td>
-                <td className="table-actions">
-                  <button className="icon-btn" onClick={() => startMenuItemEdit(item)} type="button">
-                    <Pencil size={16} />
-                  </button>
-                  <button className="icon-btn danger" onClick={() => deleteMenuItem(item.id)} type="button">
-                    <Trash2 size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {!menuItems.length && (
-              <tr>
-                <td colSpan={5} className="empty-cell">
-                  Chưa có món ăn nào.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </section>
-
-      <section className="panel table-panel">
-        <div className="section-title between">
-          <h2>Combo</h2>
-          <button className="primary-btn" onClick={() => setIsComboModalOpen(true)} type="button">
-            <Plus size={18} /> Thêm combo
-          </button>
+        <div className="metric-card">
+          <span>Tổng số món</span>
+          <strong>{menuStats.total}</strong>
+          <Utensils />
         </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Combo</th>
-              <th>Giá</th>
-              <th>Trạng thái</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {combos.map((combo) => (
-              <tr key={combo.id}>
-                <td>
-                  <strong>{combo.tenCombo}</strong>
-                  <div className="muted-text">{combo.moTa || 'Combo'}</div>
-                </td>
-                <td>
-                  <strong className="price-text">{formatMoney(combo.giaCombo)}</strong>
-                </td>
-                <td>
-                  <span className={String(combo.trangThai) === '1' ? 'badge green' : 'badge'}>
-                    {String(combo.trangThai) === '1' ? 'Hoạt động' : 'Không hoạt động'}
-                  </span>
-                </td>
-                <td className="table-actions">
-                  <button className="icon-btn" onClick={() => startComboEdit(combo)} type="button">
-                    <Pencil size={16} />
-                  </button>
-                  <button className="icon-btn danger" onClick={() => deleteCombo(combo.id)} type="button">
-                    <Trash2 size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {!combos.length && (
-              <tr>
-                <td colSpan={4} className="empty-cell">
-                  Chưa có combo nào.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+
+        <div className="metric-card">
+          <span>Đang bán</span>
+          <strong>{menuStats.active}</strong>
+          <CheckCircle2 />
+        </div>
+
+        <div className="metric-card danger">
+          <span>Tạm hết</span>
+          <strong>{menuStats.outOfStock}</strong>
+          <XCircle />
+        </div>
+
+        <div className="menu-health">
+          <span>Chất lượng thực đơn</span>
+          <strong>Cao cấp</strong>
+          <p>Cơ sở được đánh giá nổi bật</p>
+        </div>
       </section>
+
+      <div className="menu-management-stack">
+        <section className="panel table-panel">
+          <table className="data-table menu-table">
+            <thead>
+              <tr>
+                <th>Món ăn</th>
+                <th>Giá</th>
+                <th>Danh mục / Thẻ</th>
+                <th>Trạng thái phục vụ</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {menuItems.map((item) => (
+                <tr key={item.id}>
+                  <td>
+                    <div className="dish-cell">
+                      <div className={`dish-thumb ${getMenuItemCoverImage(item) ? 'has-image' : ''}`}>
+                        {getMenuItemCoverImage(item) ? <img src={getMenuItemCoverImage(item)} alt={`Ảnh món ${item.tenMon}`} /> : <Utensils size={18} />}
+                      </div>
+
+                      <div>
+                        <strong>{item.tenMon}</strong>
+                        <span>{item.theNguCanh[0] || 'Món ăn'}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td>
+                    <strong className="price-text">{formatMoney(item.giaBan)}</strong>
+                  </td>
+
+                  <td>
+                    <div className="tag-row">
+                      {item.theNguCanh.map((tag) => (
+                        <span key={tag}>{tag}</span>
+                      ))}
+                    </div>
+                  </td>
+
+                  <td>
+                    <button
+                      className={`availability-toggle ${item.trangThai === 'DANG_BAN' ? 'on' : ''}`}
+                      onClick={() => toggleMenuStatus(item)}
+                      type="button"
+                    >
+                      <span />
+                    </button>
+
+                    <strong className={item.trangThai === 'DANG_BAN' ? 'available-text' : 'stockout-text'}>
+                      {item.trangThai === 'DANG_BAN' ? 'Đang bán' : 'Tạm hết'}
+                    </strong>
+                  </td>
+
+                  <td className="table-actions">
+                    <button className="secondary-btn row-action-btn" onClick={() => startMenuItemEdit(item)} type="button">
+                      <Pencil size={16} /> Sửa
+                    </button>
+
+                    <button className="danger-btn row-action-btn" type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); deleteMenuItem(item.id) }}>
+                      <Trash2 size={16} /> Xóa
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {!menuItems.length && (
+                <tr>
+                  <td colSpan={5} className="empty-cell">
+                    Chưa có món ăn nào.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </section>
+
+        <section className="panel table-panel">
+          <div className="section-title between">
+            <h2>Combo</h2>
+
+            <button className="primary-btn" onClick={() => setIsComboModalOpen(true)} type="button">
+              <Plus size={18} /> Thêm combo
+            </button>
+          </div>
+
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Combo</th>
+                <th>Giá</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {combos.map((combo) => (
+                <tr key={combo.id}>
+                  <td>
+                    <strong>{combo.tenCombo}</strong>
+                    <div className="muted-text">{combo.moTa || 'Combo'}</div>
+                  </td>
+
+                  <td>
+                    <strong className="price-text">{formatMoney(combo.giaCombo)}</strong>
+                  </td>
+
+                  <td>
+                    <span className={String(combo.trangThai) === '1' ? 'badge green' : 'badge'}>
+                      {String(combo.trangThai) === '1' ? 'Hoạt động' : 'Không hoạt động'}
+                    </span>
+                  </td>
+
+                  <td className="table-actions">
+                    <button className="secondary-btn row-action-btn" onClick={() => startComboEdit(combo)} type="button">
+                      <Pencil size={16} /> Sửa
+                    </button>
+
+                    <button className="danger-btn row-action-btn" type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); deleteCombo(combo.id) }}>
+                      <Trash2 size={16} /> Xóa
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {!combos.length && (
+                <tr>
+                  <td colSpan={4} className="empty-cell">
+                    Chưa có combo nào.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </section>
+      </div>
     </>
   )
 }
-
