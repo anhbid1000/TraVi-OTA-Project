@@ -91,6 +91,8 @@ type ProfileFormState = {
   danhSachAnh: Array<{url: string, moTa: string, laAnhDaiDien: boolean}>
 }
 
+type ProfileFormValue = ProfileFormState[keyof ProfileFormState]
+
 type ProfileFormErrors = Partial<Record<keyof ProfileFormState | 'businessLicense', string>>
 
 type UploadedAsset = {
@@ -675,7 +677,7 @@ export function PartnerDashboardPage() {
     void loadPartnerData()
   }, [])
 
-  const updateProfileField = (name: keyof ProfileFormState, value: string) => {
+  const updateProfileField = (name: keyof ProfileFormState, value: ProfileFormValue) => {
     setProfileForm((current) => ({ ...current, [name]: value }))
     setProfileErrors((current) => ({ ...current, [name]: undefined }))
     if (name === 'giayPhepKinhDoanh') {
@@ -1253,7 +1255,7 @@ export function PartnerDashboardPage() {
     const next = current.includes(amenity)
       ? current.filter((item) => item !== amenity)
       : [...current, amenity]
-    updateProfileField(field, next as any)
+    updateProfileField(field, next)
   }
 
   const addCustomAmenity = (value: string) => {
@@ -1261,7 +1263,7 @@ export function PartnerDashboardPage() {
     if (!amenity) return
     const field = profileForm.loaiDichVu === 'KHACH_SAN' ? 'tienIchKhachSan' : 'tienIchNhaHang'
     if (!profileForm[field].includes(amenity)) {
-      updateProfileField(field, [...profileForm[field], amenity] as any)
+      updateProfileField(field, [...profileForm[field], amenity])
     }
   }
 
@@ -1731,7 +1733,7 @@ type BusinessProfileViewProps = {
   profileForm: ProfileFormState
   profileErrors: ProfileFormErrors
   isSubmitting: boolean
-  updateProfileField: (name: keyof ProfileFormState, value: string) => void
+  updateProfileField: (name: keyof ProfileFormState, value: ProfileFormValue) => void
   saveProfile: () => void
   saveDraft: () => void
   uploadFile: (file: File, options?: UploadOptions) => Promise<UploadedAsset | null>
@@ -2007,7 +2009,7 @@ function BusinessProfileView({
                           const val = e.currentTarget.value.trim();
                           if (val) {
                             const newArr = [...profileForm.danhSachAnh, {url: val, moTa: '', laAnhDaiDien: profileForm.danhSachAnh.length === 0}];
-                            updateProfileField('danhSachAnh', newArr as any);
+                            updateProfileField('danhSachAnh', newArr);
                             e.currentTarget.value = '';
                           }
                         }
@@ -2024,13 +2026,13 @@ function BusinessProfileView({
                             <input value={img.moTa} onChange={(e) => {
                               const newArr = [...profileForm.danhSachAnh];
                               newArr[i].moTa = e.target.value;
-                              updateProfileField('danhSachAnh', newArr as any);
+                              updateProfileField('danhSachAnh', newArr);
                             }} placeholder="Mô tả ảnh..." style={{padding: 4, width: '100%', fontSize: 12}} />
                           </div>
                           <button onClick={() => {
                               const newArr = [...profileForm.danhSachAnh];
                               newArr.splice(i, 1);
-                              updateProfileField('danhSachAnh', newArr as any);
+                              updateProfileField('danhSachAnh', newArr);
                           }}><Trash2 size={16} /></button>
                         </div>
                       ))}
