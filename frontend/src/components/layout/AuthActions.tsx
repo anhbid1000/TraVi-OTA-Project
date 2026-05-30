@@ -69,16 +69,32 @@ export function AuthActions() {
                 <p className="truncate text-sm font-semibold text-on-surface">{user.email}</p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  void handleLogout()
-                }}
-                disabled={isLoading || isLoggingOut}
-                className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <LogOut size={16} /> {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
-              </button>
+              <div className="border-b border-outline-variant/30 py-1">
+                <Link
+                  to="/user/bookings-v2"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block px-3 py-2.5 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
+                >
+                  Đơn đặt của tôi
+                </Link>
+                <Link
+                  to="/user/complaints"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block px-3 py-2.5 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
+                >
+                  Khiếu nại
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleLogout();
+                  }}
+                  disabled={isLoading || isLoggingOut}
+                  className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <LogOut size={16} /> {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -91,6 +107,6 @@ export function AuthActions() {
         </Link>
       )}
     </div>
-  )
+  );
 }
 

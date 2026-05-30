@@ -21,6 +21,9 @@ import ManageReview from './pages/partner/manageReview/ManageReview';
 import DisputeCenter from './pages/partner/DisputeCenter/DisputeCenter';
 import TribunalView from './pages/admin/tribunalView/TribunalView';
 import './App.css';
+import MyBookingsV2 from './pages/user/dashboard/MyBookingsV2.tsx';
+import MyComplaintsPage from './pages/user/complaints/MyComplaintsPage.tsx';
+import MyComplaintDetailPage from './pages/user/complaints/MyComplaintDetailPage.tsx';
 
 function PaymentPage() {
   const { isLoading, logout, user } = useAuth();
@@ -137,6 +140,9 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/user/bookings-v2" element={<MyBookingsV2 />} />
+          <Route path="/user/complaints" element={<MyComplaintsPage />} />
+          <Route path="/user/complaints/:complaintId" element={<MyComplaintDetailPage />} />
         </Route>
 
         <Route element={<AdminRoute />}>
