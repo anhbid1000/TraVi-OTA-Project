@@ -32,9 +32,11 @@ CREATE TABLE review_danh_gia (
     CONSTRAINT fk_review_ho_so FOREIGN KEY (ho_so_kinh_doanh_id) REFERENCES ho_so_kinh_doanh(id_ho_so) ON DELETE CASCADE
 );
 
--- Unique constraint for reviewing
-CREATE UNIQUE INDEX uk_review_booking ON review_danh_gia (khach_hang_id, booking_id) WHERE booking_id IS NOT NULL;
-CREATE UNIQUE INDEX uk_review_reservation ON review_danh_gia (khach_hang_id, reservation_id) WHERE reservation_id IS NOT NULL;
+-- Unique constraint for reviewing (H2 + PostgreSQL compatible)
+-- Không dùng partial index WHERE ... IS NOT NULL vì H2 không hỗ trợ.
+-- Với unique index composite, NULL vẫn được phép lặp trong H2/PostgreSQL nên vẫn đáp ứng logic cần thiết.
+CREATE UNIQUE INDEX IF NOT EXISTS uk_review_booking ON review_danh_gia (khach_hang_id, booking_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_review_reservation ON review_danh_gia (khach_hang_id, reservation_id);
 
 -- =============================================================
 -- 2. BANG: REVIEW REPLY (PhanHoiDanhGia)
