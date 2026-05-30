@@ -129,7 +129,7 @@ public class UserService {
         don.setSoDem(soDem);
         don.setSoKhach(request.soKhach());
         don.setGioNhanPhongDuKien(request.gioNhanPhongDuKien());
-        don.setTrangThaiDon(TrangThaiDon.CHO_THANH_TOAN);
+        don.setTrangThai(TrangThaiDon.CHO_THANH_TOAN);
         don.setHoldExpiredAt(LocalDateTime.now().plusMinutes(20));
         don.setPaymentExpiredAt(LocalDateTime.now().plusMinutes(20));
 
@@ -210,7 +210,7 @@ public class UserService {
                 saved.getTongTienGoc(),
                 saved.getTienKhuyenMai(),
                 saved.getTongTienThanhToan(),
-                saved.getTrangThaiDon(),
+                saved.getTrangThai(),
                 saved.getPaymentExpiredAt(),
                 calculatePaymentExpiresInSeconds(saved.getPaymentExpiredAt()),
                 roomResponses
@@ -268,7 +268,7 @@ public class UserService {
         don.setSdtNguoiDat(request.sdtNguoiDat());
         don.setEmailNguoiDat(request.emailNguoiDat());
         don.setGhiChu(request.ghiChu());
-        don.setTrangThaiDon(TrangThaiDon.CHO_THANH_TOAN);
+        don.setTrangThai(TrangThaiDon.CHO_THANH_TOAN);
         don.setHoldExpiredAt(LocalDateTime.now().plusMinutes(20));
         don.setPaymentExpiredAt(LocalDateTime.now().plusMinutes(20));
         don.setNgayGioBatDau(start);
@@ -384,12 +384,12 @@ public class UserService {
         DonNhaHang booking = donNhaHangRepository.findByIdAndKhachHang_Username(bookingId, username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt nhà hàng"));
 
-        if (booking.getTrangThaiDon() == TrangThaiDon.DA_HUY) {
+        if (booking.getTrangThai() == TrangThaiDon.DA_HUY) {
             throw new RuntimeException("Đơn đã bị hủy, không thể thanh toán giả lập");
         }
 
-        if (booking.getTrangThaiDon() != TrangThaiDon.DA_THANH_TOAN) {
-            booking.setTrangThaiDon(TrangThaiDon.DA_THANH_TOAN);
+        if (booking.getTrangThai() != TrangThaiDon.DA_THANH_TOAN) {
+            booking.setTrangThai(TrangThaiDon.DA_THANH_TOAN);
             hotelBookingPaymentHoldService.removePending(booking.getId());
             booking = donNhaHangRepository.save(booking);
         }
@@ -402,12 +402,12 @@ public class UserService {
         DonKhachSan booking = donKhachSanRepository.findByIdAndKhachHang_Username(bookingId, username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt khách sạn"));
 
-        if (booking.getTrangThaiDon() == TrangThaiDon.DA_HUY) {
+        if (booking.getTrangThai() == TrangThaiDon.DA_HUY) {
             throw new RuntimeException("Đơn đã bị hủy, không thể thanh toán giả lập");
         }
 
-        if (booking.getTrangThaiDon() != TrangThaiDon.DA_THANH_TOAN) {
-            booking.setTrangThaiDon(TrangThaiDon.DA_THANH_TOAN);
+        if (booking.getTrangThai() != TrangThaiDon.DA_THANH_TOAN) {
+            booking.setTrangThai(TrangThaiDon.DA_THANH_TOAN);
             hotelBookingPaymentHoldService.removePending(booking.getId());
             booking = donKhachSanRepository.save(booking);
         }
@@ -420,12 +420,12 @@ public class UserService {
         DonKhachSan booking = donKhachSanRepository.findByIdAndKhachHang_Username(bookingId, username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt khách sạn"));
 
-        if (booking.getTrangThaiDon() != TrangThaiDon.CHO_THANH_TOAN) {
+        if (booking.getTrangThai() != TrangThaiDon.CHO_THANH_TOAN) {
             throw new RuntimeException("Đơn không còn ở trạng thái chờ thanh toán");
         }
 
         if (booking.getPaymentExpiredAt() != null && booking.getPaymentExpiredAt().isBefore(LocalDateTime.now())) {
-            booking.setTrangThaiDon(TrangThaiDon.DA_HUY);
+            booking.setTrangThai(TrangThaiDon.DA_HUY);
             booking.setCancelledAt(LocalDateTime.now());
             booking.setCancelReason("Quá thời gian thanh toán");
             donKhachSanRepository.save(booking);
@@ -437,7 +437,7 @@ public class UserService {
             throw new RuntimeException("Phiên thanh toán đã hết hạn");
         }
 
-        booking.setTrangThaiDon(TrangThaiDon.DA_THANH_TOAN);
+        booking.setTrangThai(TrangThaiDon.DA_THANH_TOAN);
         hotelBookingPaymentHoldService.removePending(booking.getId());
         DonKhachSan saved = donKhachSanRepository.save(booking);
 
@@ -468,7 +468,7 @@ public class UserService {
                 booking.getSoNguoi(),
                 booking.getTienCoc(),
                 booking.getTongTienThanhToan(),
-                booking.getTrangThaiDon(),
+                booking.getTrangThai(),
                 booking.getPaymentExpiredAt(),
                 calculatePaymentExpiresInSeconds(booking.getPaymentExpiredAt()),
                 tables
@@ -504,7 +504,7 @@ public class UserService {
                 booking.getTongTienGoc(),
                 booking.getTienKhuyenMai(),
                 booking.getTongTienThanhToan(),
-                booking.getTrangThaiDon(),
+                booking.getTrangThai(),
                 booking.getPaymentExpiredAt(),
                 calculatePaymentExpiresInSeconds(booking.getPaymentExpiredAt()),
                 rooms

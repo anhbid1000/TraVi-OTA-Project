@@ -23,13 +23,13 @@ public class HotelBookingExpirationScheduler {
     @Scheduled(fixedDelay = 60_000)
     @Transactional
     public void cancelExpiredPendingHotelBookings() {
-        List<DonKhachSan> expiredBookings = donKhachSanRepository.findByTrangThaiDonAndPaymentExpiredAtBeforeAndDeletedFalse(
+        List<DonKhachSan> expiredBookings = donKhachSanRepository.findByTrangThaiAndPaymentExpiredAtBeforeAndDeletedFalse(
                 TrangThaiDon.CHO_THANH_TOAN,
                 LocalDateTime.now()
         );
 
         for (DonKhachSan booking : expiredBookings) {
-            booking.setTrangThaiDon(TrangThaiDon.DA_HUY);
+            booking.setTrangThai(TrangThaiDon.DA_HUY);
             booking.setCancelledAt(LocalDateTime.now());
             booking.setCancelReason("Quá thời gian thanh toán 20 phút");
             hotelBookingPaymentHoldService.removePending(booking.getId());

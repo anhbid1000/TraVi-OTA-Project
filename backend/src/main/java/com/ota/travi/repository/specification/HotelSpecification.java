@@ -5,7 +5,6 @@ import com.ota.travi.entity.HoSoKinhDoanh;
 import com.ota.travi.entity.KhachSan;
 import com.ota.travi.entity.TienIchKhachSan;
 import com.ota.travi.enums.TrangThaiHoatDong;
-import com.ota.travi.enums.TrangThaiKiemDuyet;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
@@ -33,7 +32,6 @@ public final class HotelSpecification {
         return (root, query, cb) -> {
             Join<KhachSan, HoSoKinhDoanh> hoSoJoin = root.join("hoSoKinhDoanh", JoinType.INNER);
             return cb.and(
-                    cb.equal(hoSoJoin.get("trangThaiKiemDuyet"), TrangThaiKiemDuyet.DA_DUYET),
                     cb.equal(hoSoJoin.get("trangThaiHoatDong"), TrangThaiHoatDong.DANG_HOAT_DONG),
                     cb.isFalse(hoSoJoin.get("deleted"))
             );

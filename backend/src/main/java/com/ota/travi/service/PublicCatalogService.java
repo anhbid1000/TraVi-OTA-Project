@@ -739,7 +739,7 @@ public class PublicCatalogService {
                             table.getTenBan(),
                             table.getSoChoNgoi(),
                             table.getViTriSanh(),
-                            table.getTrangThai(),
+                            table.getTrangThai().ordinal(),
                             !overlap && enoughSeats
                     );
                 })
@@ -976,14 +976,12 @@ public class PublicCatalogService {
 
     private boolean isPublicVisible(KhachSan hotel) {
         return hotel.getHoSoKinhDoanh() != null
-                && hotel.getHoSoKinhDoanh().getTrangThaiKiemDuyet() == TrangThaiKiemDuyet.DA_DUYET
                 && hotel.getHoSoKinhDoanh().getTrangThaiHoatDong() == TrangThaiHoatDong.DANG_HOAT_DONG
                 && Boolean.FALSE.equals(hotel.getHoSoKinhDoanh().getDeleted());
     }
 
     private boolean isPublicVisible(NhaHang restaurant) {
         return restaurant.getHoSoKinhDoanh() != null
-                && restaurant.getHoSoKinhDoanh().getTrangThaiKiemDuyet() == TrangThaiKiemDuyet.DA_DUYET
                 && restaurant.getHoSoKinhDoanh().getTrangThaiHoatDong() == TrangThaiHoatDong.DANG_HOAT_DONG
                 && Boolean.FALSE.equals(restaurant.getHoSoKinhDoanh().getDeleted());
     }

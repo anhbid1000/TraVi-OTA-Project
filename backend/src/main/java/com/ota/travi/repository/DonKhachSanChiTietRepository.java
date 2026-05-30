@@ -19,7 +19,7 @@ public interface DonKhachSanChiTietRepository extends JpaRepository<DonKhachSanC
             FROM DonKhachSanChiTiet ct
             WHERE ct.phong.id = :roomId
               AND ct.donKhachSan.deleted = false
-              AND ct.donKhachSan.trangThaiDon IN :activeStatuses
+              AND ct.donKhachSan.trangThai IN :activeStatuses
               AND ct.donKhachSan.ngayCheckIn < :requestedCheckOut
               AND ct.donKhachSan.ngayCheckOut > :requestedCheckIn
             """)
@@ -35,7 +35,7 @@ public interface DonKhachSanChiTietRepository extends JpaRepository<DonKhachSanC
             FROM DonKhachSanChiTiet ct
             WHERE ct.phong.khachSan.idTaiSan = :hotelId
               AND ct.donKhachSan.deleted = false
-              AND ct.donKhachSan.trangThaiDon IN :activeStatuses
+              AND ct.donKhachSan.trangThai IN :activeStatuses
               AND ct.donKhachSan.ngayTao >= :fromDateTime
             """)
     Integer sumRecentBookedQuantityByHotel(

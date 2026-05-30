@@ -18,7 +18,7 @@ public interface DonNhaHangRepository extends JpaRepository<DonNhaHang, String> 
             FROM DonNhaHang dn
             WHERE dn.hoSoKinhDoanh.idHoSo = :businessProfileId
               AND dn.deleted = false
-              AND dn.trangThaiDon IN :activeStatuses
+              AND dn.trangThai IN :activeStatuses
               AND dn.ngayGioBatDau < :requestedEnd
               AND dn.ngayGioKetThuc > :requestedStart
             """)
@@ -34,7 +34,7 @@ public interface DonNhaHangRepository extends JpaRepository<DonNhaHang, String> 
             FROM DonNhaHangBan link
             WHERE link.ban.id = :tableId
               AND link.donNhaHang.deleted = false
-              AND link.donNhaHang.trangThaiDon IN :activeStatuses
+              AND link.donNhaHang.trangThai IN :activeStatuses
               AND link.donNhaHang.ngayGioBatDau < :requestedEnd
               AND link.donNhaHang.ngayGioKetThuc > :requestedStart
             """)
@@ -51,7 +51,7 @@ public interface DonNhaHangRepository extends JpaRepository<DonNhaHang, String> 
             JOIN dn.banDaGan link
             WHERE link.ban.nhaHang.idTaiSan = :restaurantId
               AND dn.deleted = false
-              AND dn.trangThaiDon IN :activeStatuses
+              AND dn.trangThai IN :activeStatuses
               AND dn.ngayTao >= :fromDateTime
             """)
     Integer countRecentReservationsByRestaurant(
@@ -62,8 +62,8 @@ public interface DonNhaHangRepository extends JpaRepository<DonNhaHang, String> 
 
     java.util.Optional<DonNhaHang> findByIdAndKhachHang_Username(String id, String username);
 
-    List<DonNhaHang> findByTrangThaiDonAndPaymentExpiredAtBeforeAndDeletedFalse(
-            TrangThaiDon trangThaiDon,
+    List<DonNhaHang> findByTrangThaiAndPaymentExpiredAtBeforeAndDeletedFalse(
+            TrangThaiDon trangThai,
             LocalDateTime dateTime
     );
 }

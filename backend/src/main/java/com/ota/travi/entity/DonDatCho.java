@@ -1,31 +1,36 @@
 package com.ota.travi.entity;
 
-import com.ota.travi.enums.TrangThaiDonDatCho;
-import jakarta.persistence.CascadeType;
+import com.ota.travi.enums.TrangThaiDon;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "don_dat_cho")
-@Getter
+@Inheritance(strategy = InheritanceType.JOINED)
 @Setter
+@Getter
 @NoArgsConstructor
-public class DonDatCho {
+@AllArgsConstructor
+public abstract class DonDatCho {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -61,7 +66,7 @@ public class DonDatCho {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TrangThaiDon trangThaiDon = TrangThaiDon.CHO_THANH_TOAN;
+    private TrangThaiDon trangThai = TrangThaiDon.CHO_THANH_TOAN;
 
     private LocalDateTime holdExpiredAt;
 
@@ -81,4 +86,3 @@ public class DonDatCho {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 }
-
