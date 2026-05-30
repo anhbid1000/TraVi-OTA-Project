@@ -83,6 +83,12 @@ public class SecurityConfig {
                         .requestMatchers(AUTH_PREFIX + "/**").permitAll()
                         .requestMatchers(PUBLIC_PREFIX + "/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
 
                         // 2. CÁC API PHÂN QUYỀN (Roles theo Seed Data DB)
                         .requestMatchers(ADMIN_PREFIX +"/**").hasRole("QUAN_TRI_VIEN")

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Building2, Compass, ShieldCheck, Users } from 'lucide-react'
+import { ArrowLeft, Building2, Compass, ShieldCheck, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import heroImage from '../../../assets/hero.png'
 
@@ -64,10 +64,10 @@ export function LoginTemplate({
             style={{ backgroundImage: `url(${heroImage})` }}
             aria-hidden="true"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#13202a]/92 via-[#13202a]/30 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-[#13202a]/92 via-[#13202a]/30 to-transparent" />
           <div className="relative z-10 flex flex-1 flex-col justify-end p-12 text-white">
             <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-[#d1fae5] shadow-lg shadow-black/10">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-mint-green shadow-lg shadow-black/10">
                 <Compass size={25} strokeWidth={2.2} aria-hidden="true" />
               </div>
               <div>
@@ -92,15 +92,22 @@ export function LoginTemplate({
         </section>
 
         <section className="relative flex w-full items-start justify-center overflow-y-auto bg-[#f8f9fb] px-6 py-8 sm:px-10 md:w-1/2 md:px-16 md:py-10 lg:items-center">
-          <div className="absolute top-0 right-0 h-72 w-72 -translate-y-1/2 translate-x-1/3 rounded-full bg-[#d1fae5]/30 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-80 w-80 -translate-x-1/4 translate-y-1/3 rounded-full bg-[#b1f2be]/25 blur-3xl" />
+          <div className="absolute top-0 right-0 h-72 w-72 -translate-y-1/2 translate-x-1/3 rounded-full bg-mint-green/30 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-80 w-80 -translate-x-1/4 translate-y-1/3 rounded-full bg-primary-fixed/25 blur-3xl" />
+          <Link
+            to="/"
+            className="absolute top-5 left-5 z-20 inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-outline-variant/50 bg-white/90 text-on-surface-variant shadow-sm transition-colors hover:border-primary hover:text-primary"
+            aria-label="Quay lại trang chủ"
+          >
+            <ArrowLeft size={18} aria-hidden="true" />
+          </Link>
 
-          <div className="relative z-10 w-full max-w-[540px] lg:max-h-[calc(100vh-5rem)]">
+          <div className="relative z-10 w-full max-w-135 lg:max-h-[calc(100vh-5rem)]">
             <div className="mb-6 flex items-center gap-2 md:hidden">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#003b1b] text-white shadow-lg shadow-[#003b1b]/20">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20">
                 <Compass size={20} strokeWidth={2.4} aria-hidden="true" />
               </div>
-              <span className="text-2xl font-bold tracking-tight text-[#003b1b]">TraVi</span>
+              <span className="text-2xl font-bold tracking-tight text-primary">TraVi</span>
             </div>
 
             <div className="rounded-3xl border border-white/70 bg-white/90 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-8 md:p-10 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
@@ -119,7 +126,7 @@ export function LoginTemplate({
                 <p className="text-sm text-[#5b6470] sm:text-base">{subtitle}</p>
               </div>
 
-              <div className="mb-6 grid grid-cols-3 gap-2 rounded-2xl bg-[#e7e8ea] p-1">
+              <div className="mb-6 grid grid-cols-3 gap-2 rounded-2xl bg-surface-container-high p-1">
                 {(Object.entries(roleMeta) as Array<[LoginRole, (typeof roleMeta)[LoginRole]]>).map(
                   ([role, meta]) => {
                     const isActive = role === activeRole;
@@ -138,7 +145,7 @@ export function LoginTemplate({
                       <Link
                         key={role}
                         to={meta.route}
-                        className="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-[#404941] transition-all hover:bg-white/60 hover:text-[#191c1e]"
+                        className="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-on-surface-variant transition-all hover:bg-white/60 hover:text-[#191c1e]"
                       >
                         {meta.icon}
                         <span>{meta.label}</span>

@@ -1,4 +1,92 @@
 @import 'tailwindcss';
+
+@theme {
+  /* === TraVi Brand Colors === */
+  --color-primary:            #003b1b;
+  --color-primary-container:  #14532d;
+  --color-primary-fixed:      #b1f2be;
+  --color-primary-fixed-dim:  #96d5a3;
+  --color-on-primary:         #ffffff;
+  --color-on-primary-fixed:   #00210d;
+  --color-inverse-primary:    #96d5a3;
+  --color-surface-tint:       #2e6a41;
+
+  --color-secondary:               #006c49;
+  --color-secondary-container:     #6cf8bb;
+  --color-secondary-fixed:         #6ffbbe;
+  --color-secondary-fixed-dim:     #4edea3;
+  --color-on-secondary:            #ffffff;
+  --color-on-secondary-container:  #00714d;
+  --color-on-secondary-fixed:      #002113;
+
+  --color-tertiary:              #422f00;
+  --color-tertiary-container:    #5e4400;
+  --color-tertiary-fixed:        #ffdf9f;
+  --color-tertiary-fixed-dim:    #f9bd22;
+  --color-on-tertiary:           #ffffff;
+  --color-on-tertiary-container: #e8ae06;
+  --color-on-tertiary-fixed:     #261a00;
+
+  --color-error:           #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error:        #ffffff;
+  --color-on-error-container: #93000a;
+
+  /* === Surface system === */
+  --color-background:                  #f8f9fb;
+  --color-surface:                     #f8f9fb;
+  --color-surface-bright:              #f8f9fb;
+  --color-surface-dim:                 #d9dadc;
+  --color-surface-variant:             #e1e2e4;
+  --color-surface-container-lowest:    #ffffff;
+  --color-surface-container-low:       #f3f4f6;
+  --color-surface-container:           #edeef0;
+  --color-surface-container-high:      #e7e8ea;
+  --color-surface-container-highest:   #e1e2e4;
+  --color-inverse-surface:             #2e3132;
+  --color-inverse-on-surface:          #f0f1f3;
+
+  --color-on-background:     #191c1e;
+  --color-on-surface:        #191c1e;
+  --color-on-surface-variant:#404941;
+
+  --color-outline:         #717970;
+  --color-outline-variant: #c0c9be;
+
+  /* === Extra named tokens === */
+  --color-pure-white:  #ffffff;
+  --color-mint-green:  #d1fae5;
+  --color-deep-slate:  #1f2937;
+
+  /* === Typography === */
+  --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    "Inter",       ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    color: #191c1e;
+    background-color: #f8f9fb;
+  }
+
+  a,
+  button,
+  select,
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='date'],
+  input[type='time'] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  input:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+}
+
 @layer components;
 @layer utilities;
 

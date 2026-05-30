@@ -15,6 +15,11 @@ public interface PhongRepository extends JpaRepository<Phong, String> {
     List<Phong> findByKhachSan_IdTaiSanAndTrangThaiAndDeletedFalse(String khachSanId, TrangThaiPhong trangThai);
 
     boolean existsByKhachSan_IdTaiSanAndSoPhongAndDeletedFalse(String khachSanId, String soPhong);
+    List<Phong> findByKhachSan_IdTaiSan(String khachSanId);
+
+    List<Phong> findByKhachSan_IdTaiSanAndTrangThai(String khachSanId, TrangThaiPhong trangThai);
+
+    boolean existsByKhachSan_IdTaiSanAndSoPhong(String khachSanId, String soPhong);
 
     void deleteByKhachSan_IdTaiSan(String khachSanId);
 }

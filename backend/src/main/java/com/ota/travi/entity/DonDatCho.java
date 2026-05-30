@@ -30,27 +30,55 @@ public class DonDatCho {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String maDon;
 
-    @CreationTimestamp
-    private LocalDateTime ngayLap;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "khach_hang_id", nullable = false)
+    private KhachHang khachHang;
 
-    private Double tongTien = 0.0;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ho_so_kinh_doanh_id", nullable = false)
+    private HoSoKinhDoanh hoSoKinhDoanh;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TrangThaiDonDatCho trangThai = TrangThaiDonDatCho.DANG_CHO;
+    private LocalDateTime ngayTao;
 
-    private Double soTienDaThanhToan = 0.0;
+    private Double tongTienGoc;
 
-    private String emailNguoiDat;
+    private Double tienKhuyenMai;
+
+    private Double tongTienThanhToan;
+
+    private String tenNguoiDat;
 
     private String sdtNguoiDat;
 
-    @OneToMany(mappedBy = "donDatCho", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DatPhong> datPhong = new ArrayList<>();
+    private String emailNguoiDat;
 
-    @OneToMany(mappedBy = "donDatCho", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DonDatMon> donDatMon = new ArrayList<>();
+    @Column(length = 1000)
+    private String ghiChu;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TrangThaiDon trangThaiDon = TrangThaiDon.CHO_THANH_TOAN;
+
+    private LocalDateTime holdExpiredAt;
+
+    private LocalDateTime paymentExpiredAt;
+
+    private LocalDateTime cancelledAt;
+
+    @Column(length = 500)
+    private String cancelReason;
+
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }
+

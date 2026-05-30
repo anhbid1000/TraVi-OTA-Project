@@ -12,6 +12,9 @@ public interface BanRepository extends JpaRepository<Ban, String> {
     List<Ban> findByNhaHang_IdTaiSanAndDeletedFalse(String nhaHangId);
 
     List<Ban> findByNhaHang_IdTaiSanAndTrangThaiAndDeletedFalse(String nhaHangId, TrangThaiBan trangThai);
+    List<Ban> findByNhaHang_IdTaiSan(String nhaHangId);
+
+    List<Ban> findByNhaHang_IdTaiSanAndTrangThai(String nhaHangId, Integer trangThai);
 
     void deleteByNhaHang_IdTaiSan(String nhaHangId);
 }

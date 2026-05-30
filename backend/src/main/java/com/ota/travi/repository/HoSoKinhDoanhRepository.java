@@ -23,4 +23,3 @@ public interface HoSoKinhDoanhRepository extends JpaRepository<HoSoKinhDoanh, St
 
     boolean existsByMaSoThueAndIdHoSoNot(String maSoThue, String idHoSo);
 }
-

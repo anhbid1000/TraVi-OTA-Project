@@ -7,6 +7,7 @@ import {
 } from 'react'
 import { authService } from '../services/authService'
 import { tokenStorage } from '../services/tokenStorage'
+import { userService } from '../services/userService'
 import { AuthContext, type AuthContextValue } from './authContext'
 import type { AuthUser, GoogleAuthRequest, LoginRequest } from '../types/auth'
 
@@ -106,12 +107,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
     void refreshSession().catch(clearSession)
   }, [accessToken, clearSession, refreshSession])
 
+  const isAuthenticated = Boolean(accessToken && !tokenStorage.isAccessTokenExpired())
+
+  // Fetch user profile when authenticated
+  useEffect(() => {
+    if (!isAuthenticated || user?.email) {
+      return
+    }
+
+    const fetchUserProfile = async () => {
+      try {
+        const profile = await userService.getProfile()
+        setUser({
+          ...user,
+          email: profile.email,
+          hoTen: profile.hoTen,
+          soDienThoai: profile.soDienThoai,
+        } as AuthUser)
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error)
+      }
+    }
+
+    void fetchUserProfile()
+  }, [isAuthenticated, user])
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       accessToken,
       refreshToken,
-      isAuthenticated: Boolean(accessToken && !tokenStorage.isAccessTokenExpired()),
+      isAuthenticated,
       isLoading,
       login,
       loginWithGoogle,

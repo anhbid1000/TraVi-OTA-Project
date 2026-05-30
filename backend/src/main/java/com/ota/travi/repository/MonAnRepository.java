@@ -15,4 +15,9 @@ public interface MonAnRepository extends JpaRepository<MonAn, String> {
     List<MonAn> findByThucDon_NhaHang_IdTaiSanAndDeletedFalse(String nhaHangId);
 
     List<MonAn> findByTrangThaiAndDeletedFalse(TrangThaiMonAn trangThai);
+    List<MonAn> findByThucDon_Id(String thucDonId);
+
+    List<MonAn> findByThucDon_NhaHang_IdTaiSan(String nhaHangId);
+
+    List<MonAn> findByTrangThai(TrangThaiMonAn trangThai);
 }
