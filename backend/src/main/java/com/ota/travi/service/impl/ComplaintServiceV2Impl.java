@@ -1,5 +1,9 @@
 package com.ota.travi.service.impl;
 
+import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
+import com.ota.travi.service.AttachmentService;
+import com.ota.travi.dto.response.AttachmentResponse;
 import com.ota.travi.dto.request.ComplaintCreateRequest;
 import com.ota.travi.dto.request.ComplaintMessageCreateRequest;
 import com.ota.travi.dto.request.ComplaintStatusUpdateRequest;
@@ -41,6 +45,7 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
     private final DonKhachSanRepository donKhachSanRepository;
     private final DonNhaHangRepository donNhaHangRepository;
     private final ProfanityFilterService filterService;
+    private final AttachmentService attachmentService;
 
     public ComplaintServiceV2Impl(
             ComplaintRepository complaintRepository,
@@ -49,7 +54,8 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
             HoSoKinhDoanhRepository hoSoKinhDoanhRepository,
             DonKhachSanRepository donKhachSanRepository,
             DonNhaHangRepository donNhaHangRepository,
-            ProfanityFilterService filterService
+            ProfanityFilterService filterService,
+            AttachmentService attachmentService
     ) {
         this.complaintRepository = complaintRepository;
         this.messageRepository = messageRepository;
@@ -58,12 +64,13 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
         this.donKhachSanRepository = donKhachSanRepository;
         this.donNhaHangRepository = donNhaHangRepository;
         this.filterService = filterService;
+        this.attachmentService = attachmentService;
     }
 
     // --- 1. Service TẠO COMPLAINT ---
     @Override
     @Transactional
-    public ComplaintResponse createComplaint(String customerId, ComplaintCreateRequest request) {
+    public ComplaintResponse createComplaint(String customerId, ComplaintCreateRequest request, List<MultipartFile> files) {
         // 1. Validate invariant booking/reservation theo loại dịch vụ
         validateComplaintInvariant(request);
 
@@ -103,6 +110,12 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
         messageRepository.save(initialMsg);
 
         savedComplaint.getMessages().add(initialMsg);
+
+        // 7. Lưu danh sách file đính kèm cho khiếu nại (tối đa 10 file)
+        if (files != null && !files.isEmpty()) {
+            attachmentService.saveComplaintAttachments(savedComplaint.getId(), customerId, "KHACH_HANG", files);
+        }
+
         return mapToComplaintResponse(savedComplaint);
     }
 
@@ -126,7 +139,7 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
     // --- 3. Service KHÁCH GỬI TIN NHẮN ---
     @Override
     @Transactional
-    public ComplaintResponse postCustomerMessage(String customerId, String complaintId, ComplaintMessageCreateRequest request) {
+    public ComplaintResponse postCustomerMessage(String customerId, String complaintId, ComplaintMessageCreateRequest request, List<MultipartFile> files) {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khiếu nại"));
 
@@ -158,6 +171,11 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
         message.setVaiTroNguoiGui(VaiTroTinNhan.KHACH_HANG);
         message.setNoiDung(request.noiDung());
         messageRepository.save(message);
+        
+        // 7. Lưu danh sách file đính kèm cho tin nhắn khách hàng (tối đa 5 file)
+        if (files != null && !files.isEmpty()) {
+            attachmentService.saveComplaintMessageAttachments(message.getId(), customerId, "KHACH_HANG", files);
+        }
 
         complaint.getMessages().add(message);
         return mapToComplaintResponse(complaintRepository.save(complaint));
@@ -166,7 +184,7 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
     // --- 4. Service PARTNER GỬI TIN NHẮN ---
     @Override
     @Transactional
-    public ComplaintResponse postPartnerMessage(String partnerId, String complaintId, ComplaintMessageCreateRequest request) {
+    public ComplaintResponse postPartnerMessage(String partnerId, String complaintId, ComplaintMessageCreateRequest request, List<MultipartFile> files) {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khiếu nại"));
 
@@ -198,6 +216,11 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
         message.setVaiTroNguoiGui(VaiTroTinNhan.DOI_TAC);
         message.setNoiDung(request.noiDung());
         messageRepository.save(message);
+        
+        // 7. Lưu danh sách file đính kèm cho tin nhắn (tối đa 5 file)
+        if (files != null && !files.isEmpty()) {
+            attachmentService.saveComplaintMessageAttachments(message.getId(), partnerId, "DOI_TAC", files);
+        }
 
         complaint.getMessages().add(message);
         return mapToComplaintResponse(complaintRepository.save(complaint));
@@ -371,15 +394,42 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
     }
 
     private ComplaintResponse mapToComplaintResponse(Complaint complaint) {
-        // 1. Map danh sách tin nhắn
+        // 1. Map danh sách tin nhắn cùng với file đính kèm của từng tin nhắn
         List<ComplaintMessageResponse> msgResponses = complaint.getMessages().stream()
-                .map(msg -> new ComplaintMessageResponse(
-                        msg.getVaiTroNguoiGui(),
-                        msg.getNoiDung(),
-                        msg.getCreatedAt()
-                )).toList();
+                .map(msg -> {
+                    List<AttachmentResponse> msgAttachments = attachmentService.getAttachmentsByOwner(AttachmentOwnerType.COMPLAINT_MESSAGE, msg.getId())
+                            .stream()
+                            .map(att -> new AttachmentResponse(
+                                    att.getId(),
+                                    com.ota.travi.constant.ApiEndpoints.BASE_PREFIX + "/attachments/" + att.getId(),
+                                    att.getFileName(),
+                                    att.getFileType().name(),
+                                    att.getMimeType(),
+                                    att.getFileSize()
+                            )).collect(Collectors.toList());
 
-        // 2. Tạo response với computed field overdue
+                    return new ComplaintMessageResponse(
+                            msg.getId(),
+                            msg.getVaiTroNguoiGui(),
+                            msg.getNoiDung(),
+                            msg.getCreatedAt(),
+                            msgAttachments
+                    );
+                }).toList();
+
+        // 2. Map danh sách file đính kèm chung của cả khiếu nại (bằng chứng lúc tạo)
+        List<AttachmentResponse> complaintAttachments = attachmentService.getAttachmentsByOwner(AttachmentOwnerType.COMPLAINT, complaint.getId())
+                .stream()
+                .map(att -> new AttachmentResponse(
+                        att.getId(),
+                        com.ota.travi.constant.ApiEndpoints.BASE_PREFIX + "/attachments/" + att.getId(),
+                        att.getFileName(),
+                        att.getFileType().name(),
+                        att.getMimeType(),
+                        att.getFileSize()
+                )).collect(Collectors.toList());
+
+        // 3. Tạo response với computed field overdue
         return new ComplaintResponse(
                 complaint.getId(),
                 complaint.getTieuDe(),
@@ -389,8 +439,8 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
                 isOverdue(complaint),
                 complaint.getCreatedAt(),
                 complaint.getUpdatedAt(),
+                complaintAttachments,
                 msgResponses
         );
     }
 }
-

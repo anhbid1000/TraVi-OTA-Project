@@ -4,23 +4,24 @@ import com.ota.travi.dto.request.ComplaintCreateRequest;
 import com.ota.travi.dto.request.ComplaintMessageCreateRequest;
 import com.ota.travi.dto.request.ComplaintStatusUpdateRequest;
 import com.ota.travi.dto.response.ComplaintResponse;
-import com.ota.travi.enums.MucDoKhieuNai;
-import com.ota.travi.enums.TrangThaiKhieuNai;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * Service Module 5 (v2): xử lý ticket khiếu nại + tin nhắn.
  */
 public interface ComplaintServiceV2 {
 
-    ComplaintResponse createComplaint(String customerId, ComplaintCreateRequest request);
+    ComplaintResponse createComplaint(String customerId, ComplaintCreateRequest request, List<MultipartFile> files);
 
     ComplaintResponse closeComplaintByCustomer(String customerId, String complaintId);
 
-    ComplaintResponse postCustomerMessage(String customerId, String complaintId, ComplaintMessageCreateRequest request);
+    ComplaintResponse postCustomerMessage(String customerId, String complaintId, ComplaintMessageCreateRequest request, List<MultipartFile> files);
 
-    ComplaintResponse postPartnerMessage(String partnerId, String complaintId, ComplaintMessageCreateRequest request);
+    ComplaintResponse postPartnerMessage(String partnerId, String complaintId, ComplaintMessageCreateRequest request, List<MultipartFile> files);
 
     ComplaintResponse updateComplaintStatusByPartner(String partnerId, String complaintId, ComplaintStatusUpdateRequest request);
 

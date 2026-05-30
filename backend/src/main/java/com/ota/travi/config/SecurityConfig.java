@@ -84,6 +84,7 @@ public class SecurityConfig {
                         // 1. CÁC API MỞ TỰ DO (Không cần đăng nhập)
                         .requestMatchers(AUTH_PREFIX + "/**").permitAll()
                         .requestMatchers(PUBLIC_PREFIX + "/**").permitAll()
+                        .requestMatchers(BASE_PREFIX + "/attachments/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",

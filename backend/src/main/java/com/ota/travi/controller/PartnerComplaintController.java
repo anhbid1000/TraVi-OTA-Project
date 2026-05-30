@@ -1,5 +1,9 @@
 package com.ota.travi.controller;
 
+import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+import com.ota.travi.validation.ValidUploadFiles;
 import com.ota.travi.dto.request.ComplaintMessageCreateRequest;
 import com.ota.travi.dto.request.ComplaintStatusUpdateRequest;
 import com.ota.travi.dto.response.ComplaintResponse;
@@ -81,17 +85,19 @@ public class PartnerComplaintController {
     }
 
     // --- 3. API GỬI TIN NHẮN ---
-    @PostMapping("/{complaintId}/messages")
+    @PostMapping(value = "/{complaintId}/messages", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<?> postMessage(
             @PathVariable String complaintId,
-            @Valid @RequestBody ComplaintMessageCreateRequest request
+            @Valid @RequestPart("request") ComplaintMessageCreateRequest request,
+            @ValidUploadFiles(maxFiles = 5, allowPdf = true)
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) {
         try {
             // 1. Lấy partnerId từ SecurityContext
             String partnerId = getCurrentUserId();
 
             // 2. Gọi service gửi tin nhắn
-            ComplaintResponse response = complaintService.postPartnerMessage(partnerId, complaintId, request);
+            ComplaintResponse response = complaintService.postPartnerMessage(partnerId, complaintId, request, files);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (RuntimeException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);

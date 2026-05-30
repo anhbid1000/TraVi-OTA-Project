@@ -4,6 +4,7 @@ import com.ota.travi.enums.LoaiDichVu;
 import com.ota.travi.enums.TrangThaiDanhGia;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Response review công khai.
@@ -17,6 +18,7 @@ public record ReviewResponse(
         String content,
         TrangThaiDanhGia status,
         LocalDateTime createdAt,
+        List<AttachmentResponse> attachments,
         ReviewReplyResponse partnerReply
 ) {
 }

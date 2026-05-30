@@ -506,3 +506,25 @@ VALUES ('RES-734', CURRENT_TIMESTAMP + INTERVAL '1' DAY, (CURRENT_TIMESTAMP + IN
 -- =============================================================
 -- END EXTRA DATASET MAMMO
 -- =============================================================
+
+-- Cập nhật rating và review count cho các tài sản dựa trên dữ liệu mẫu
+UPDATE tai_san ts
+SET
+    rating_average = (
+        SELECT AVG(r.so_sao)
+        FROM review_danh_gia r
+        WHERE r.ho_so_kinh_doanh_id = ts.ho_so_kinh_doanh_id
+          AND r.trang_thai = 'DA_HIEN_THI'
+    ),
+    review_count = (
+        SELECT COUNT(*)
+        FROM review_danh_gia r
+        WHERE r.ho_so_kinh_doanh_id = ts.ho_so_kinh_doanh_id
+          AND r.trang_thai = 'DA_HIEN_THI'
+    )
+WHERE EXISTS (
+    SELECT 1
+    FROM review_danh_gia r
+    WHERE r.ho_so_kinh_doanh_id = ts.ho_so_kinh_doanh_id
+      AND r.trang_thai = 'DA_HIEN_THI'
+);

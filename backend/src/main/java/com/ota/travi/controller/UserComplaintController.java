@@ -1,5 +1,9 @@
 package com.ota.travi.controller;
 
+import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+import com.ota.travi.validation.ValidUploadFiles;
 import com.ota.travi.dto.request.ComplaintCreateRequest;
 import com.ota.travi.dto.request.ComplaintMessageCreateRequest;
 import com.ota.travi.dto.response.ComplaintResponse;
@@ -31,14 +35,18 @@ public class UserComplaintController {
     private ComplaintServiceV2 complaintService;
 
     // --- 1. API TẠO COMPLAINT ---
-    @PostMapping
-    public ResponseEntity<?> createComplaint(@Valid @RequestBody ComplaintCreateRequest request) {
+    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    public ResponseEntity<?> createComplaint(
+            @Valid @RequestPart("request") ComplaintCreateRequest request,
+            @ValidUploadFiles(maxFiles = 10, allowPdf = true)
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
+    ) {
         try {
             // 1. Lấy customerId từ SecurityContext
             String customerId = getCurrentUserId();
 
             // 2. Gọi service tạo complaint
-            ComplaintResponse response = complaintService.createComplaint(customerId, request);
+            ComplaintResponse response = complaintService.createComplaint(customerId, request, files);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (RuntimeException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -95,17 +103,19 @@ public class UserComplaintController {
     }
 
     // --- 4. API GỬI TIN NHẮN ---
-    @PostMapping("/{complaintId}/messages")
+    @PostMapping(value = "/{complaintId}/messages", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public ResponseEntity<?> postMessage(
             @PathVariable String complaintId,
-            @Valid @RequestBody ComplaintMessageCreateRequest request
+            @Valid @RequestPart("request") ComplaintMessageCreateRequest request,
+            @ValidUploadFiles(maxFiles = 5, allowPdf = true)
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) {
         try {
             // 1. Lấy customerId từ SecurityContext
             String customerId = getCurrentUserId();
 
             // 2. Gọi service gửi tin nhắn
-            ComplaintResponse response = complaintService.postCustomerMessage(customerId, complaintId, request);
+            ComplaintResponse response = complaintService.postCustomerMessage(customerId, complaintId, request, files);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (RuntimeException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);

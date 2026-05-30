@@ -19,6 +19,7 @@ public record ComplaintResponse(
         boolean overdue,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
+        List<AttachmentResponse> attachments,
         List<ComplaintMessageResponse> messages
 ) {
 }

@@ -1,5 +1,11 @@
 package com.ota.travi.service.impl;
 
+import java.util.stream.Collectors;
+import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
+import com.ota.travi.enums.AttachmentOwnerType;
+import com.ota.travi.service.AttachmentService;
+import com.ota.travi.dto.response.AttachmentResponse;
 import com.ota.travi.dto.request.PartnerReviewReplyRequest;
 import com.ota.travi.dto.request.ReviewCreateRequest;
 import com.ota.travi.dto.response.ReviewReplyResponse;
@@ -41,6 +47,7 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
     private final HoSoKinhDoanhRepository hoSoKinhDoanhRepository;
     private final DoiTacRepository doiTacRepository;
     private final ProfanityFilterService filterService;
+    private final AttachmentService attachmentService;
 
     public ReviewServiceV2Impl(
             ReviewRepository reviewRepository,
@@ -50,7 +57,8 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
             KhachHangRepository khachHangRepository,
             HoSoKinhDoanhRepository hoSoKinhDoanhRepository,
             DoiTacRepository doiTacRepository,
-            ProfanityFilterService filterService
+            ProfanityFilterService filterService,
+            AttachmentService attachmentService
     ) {
         this.reviewRepository = reviewRepository;
         this.replyRepository = replyRepository;
@@ -60,12 +68,13 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
         this.hoSoKinhDoanhRepository = hoSoKinhDoanhRepository;
         this.doiTacRepository = doiTacRepository;
         this.filterService = filterService;
+        this.attachmentService = attachmentService;
     }
 
     // --- 1. Service TẠO REVIEW ---
     @Override
     @Transactional
-    public ReviewResponse createReview(String customerId, ReviewCreateRequest request) {
+    public ReviewResponse createReview(String customerId, ReviewCreateRequest request, List<MultipartFile> files) {
         KhachHang khachHang = khachHangRepository.findById(customerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khách hàng"));
 
@@ -97,7 +106,13 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
 
         Review saved = reviewRepository.save(review);
 
-        // 5. Nếu review hiển thị công khai thì cập nhật rating/reviewCount
+        // 5. Lưu danh sách file đính kèm nếu có (tối đa 5 file ảnh)
+        if (files != null && !files.isEmpty()) {
+            attachmentService.saveReviewAttachments(saved.getId(), customerId, "KHACH_HANG", files);
+        }
+
+
+        // 6. Nếu review hiển thị công khai thì cập nhật rating/reviewCount
         if (finalStatus == TrangThaiDanhGia.DA_HIEN_THI) {
             recalculateBusinessProfileRating(hoSoKinhDoanh.getIdHoSo());
         }
@@ -265,6 +280,19 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
             );
         }
 
+        // Map danh sách file đính kèm của Review
+        List<AttachmentResponse> attachmentResponses = attachmentService.getAttachmentsByOwner(AttachmentOwnerType.REVIEW, review.getId())
+                .stream()
+                .map(att -> new AttachmentResponse(
+                        att.getId(),
+                        com.ota.travi.constant.ApiEndpoints.BASE_PREFIX + "/attachments/" + att.getId(),
+                        att.getFileName(),
+                        att.getFileType().name(),
+                        att.getMimeType(),
+                        att.getFileSize()
+                ))
+                .collect(Collectors.toList());
+
         return new ReviewResponse(
                 review.getId(),
                 review.getKhachHang().getHoTen(),
@@ -274,6 +302,7 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
                 review.getNoiDung(),
                 review.getTrangThai(),
                 review.getCreatedAt(),
+                attachmentResponses,
                 replyResponse
         );
     }

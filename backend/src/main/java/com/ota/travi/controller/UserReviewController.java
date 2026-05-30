@@ -6,15 +6,17 @@ import com.ota.travi.security.CustomUserDetails;
 import com.ota.travi.service.ReviewServiceV2;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import com.ota.travi.validation.ValidUploadFiles;
 
 import static com.ota.travi.constant.ApiEndpoints.USER_PREFIX;
 
@@ -29,22 +31,34 @@ public class UserReviewController {
     @Autowired
     private ReviewServiceV2 reviewService;
 
-    // --- 1. API TẠO REVIEW ---
-    @PostMapping
-    public ResponseEntity<?> createReview(@Valid @RequestBody ReviewCreateRequest request) {
+    // API tạo review hỗ trợ đính kèm ảnh (multipart/form-data)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createReviewMultipart(
+            @Valid @RequestPart("request") ReviewCreateRequest request,
+            @ValidUploadFiles(maxFiles = 5, allowPdf = false)
+            @RequestPart(name = "files", required = false) List<MultipartFile> files
+    ) {
         try {
-            // 1. Lấy customerId từ SecurityContext
             String customerId = getCurrentUserId();
-
-            // 2. Gọi service tạo review
-            ReviewResponse response = reviewService.createReview(customerId, request);
+            ReviewResponse response = reviewService.createReview(customerId, request, files);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (RuntimeException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    // --- 2. API LẤY DANH SÁCH REVIEW CỦA KHÁCH ---
+    // API tạo review không đính kèm file (giữ tương thích cũ)
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createReviewJson(@Valid @RequestBody ReviewCreateRequest request) {
+        try {
+            String customerId = getCurrentUserId();
+            ReviewResponse response = reviewService.createReview(customerId, request, null);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @GetMapping
     public ResponseEntity<?> getMyReviews(
             @RequestParam(defaultValue = "0") int page,
@@ -52,19 +66,10 @@ public class UserReviewController {
             @RequestParam(defaultValue = "newest") String sort
     ) {
         try {
-            // 1. Lấy customerId từ SecurityContext
             String customerId = getCurrentUserId();
-
-            // 2. Xử lý sort
-            Sort sortOrder = sort.equals("oldest") 
-                    ? Sort.by("createdAt").ascending() 
-                    : Sort.by("createdAt").descending();
-
-            // 3. Validate pagination
+            Sort sortOrder = sort.equals("oldest") ? Sort.by("createdAt").ascending() : Sort.by("createdAt").descending();
             if (size > 20) size = 20;
             Pageable pageable = PageRequest.of(page, size, sortOrder);
-
-            // 4. Gọi service lấy danh sách review
             Page<ReviewResponse> reviews = reviewService.getCustomerReviews(customerId, pageable);
             return new ResponseEntity<>(reviews, HttpStatus.OK);
         } catch (RuntimeException ex) {
@@ -72,7 +77,6 @@ public class UserReviewController {
         }
     }
 
-    // --- Private helper method ---
     private String getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
