@@ -20,7 +20,7 @@ export function useQueryParams() {
 
   const query = useMemo(() => searchParams, [searchParams])
 
-  const setQuery = (updates: QueryUpdates, options?: { resetPage?: boolean }) => {
+  const setQuery = (updates: QueryUpdates, options?: { resetPage?: boolean; replace?: boolean }) => {
     const next = new URLSearchParams(searchParams)
 
     Object.entries(updates).forEach(([key, value]) => {
@@ -35,7 +35,7 @@ export function useQueryParams() {
       next.set('page', '0')
     }
 
-    setSearchParams(next)
+    setSearchParams(next, { replace: options?.replace })
   }
 
   const getString = (key: string, fallback = '') => searchParams.get(key) ?? fallback
@@ -60,4 +60,3 @@ export function useQueryParams() {
     getCsvArray,
   }
 }
-

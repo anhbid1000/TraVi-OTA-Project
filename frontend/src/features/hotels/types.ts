@@ -58,6 +58,22 @@ export type RoomAvailability = {
   availableQuantity: number
 }
 
+export type RoomComboItem = {
+  roomId: string
+  roomName: string
+  roomType: string
+  quantity: number
+  capacityPerRoom: number
+  pricePerRoom: number
+}
+
+export type RoomCombinationOption = {
+  totalCapacity: number
+  totalRooms: number
+  totalPricePerNight: number
+  items: RoomComboItem[]
+}
+
 export type HotelPolicy = {
   title: string
   description: string
@@ -79,6 +95,7 @@ export type HotelDetail = {
   amenities: Amenity[]
   policies: HotelPolicy[]
   rooms: RoomAvailability[]
+  roomCombinationOptions?: RoomCombinationOption[]
 }
 
 export type HotelSearchParams = PaginationParams &

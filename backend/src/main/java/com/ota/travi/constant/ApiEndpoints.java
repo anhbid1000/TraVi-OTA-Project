@@ -21,6 +21,7 @@ public final class ApiEndpoints {
     public static final String PUBLIC_RESTAURANTS_FILTER_OPTIONS = PUBLIC_PREFIX + "/restaurants/filter-options/data";
     public static final String PUBLIC_RESTAURANT_DETAIL = PUBLIC_PREFIX + "/restaurants/{id}";
     public static final String PUBLIC_WEATHER_FORECAST = PUBLIC_PREFIX + "/weather/forecast";
+    public static final String PUBLIC_WEATHER_FORECAST_RANGE = PUBLIC_PREFIX + "/weather/forecast/range";
     public static final String PUBLIC_CITIES = PUBLIC_PREFIX + "/locations/cities";
     public static final String PUBLIC_ROOMS_SEARCH = PUBLIC_PREFIX + "/rooms/search"; // planned
     public static final String PUBLIC_CULTURE_SPOTS = PUBLIC_PREFIX + "/culture-spots"; // planned

@@ -12,3 +12,21 @@ export type WeatherForecastParams = {
   date?: string
 }
 
+export type WeatherForecastSummary = {
+  averageTemperature: number
+  condition: string
+  icon?: string
+  message?: string
+}
+
+export type WeatherForecastRange = {
+  forecasts: WeatherForecast[]
+  summary: WeatherForecastSummary
+}
+
+export type WeatherForecastRangeParams = {
+  latitude?: number
+  longitude?: number
+  startDate?: string
+  endDate?: string
+}

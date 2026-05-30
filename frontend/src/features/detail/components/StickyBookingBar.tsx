@@ -6,12 +6,20 @@ type HotelStickyBookingProps = {
   checkOut: string
   guests: number
   selectedRoom?: string
+  selectedRooms?: Array<{
+    id: string
+    name: string
+    quantity: number
+    availableQuantity: number
+  }>
   quantity: number
   totalPrice: number
   canDecreaseQuantity?: boolean
   canIncreaseQuantity?: boolean
   onDecreaseQuantity?: () => void
   onIncreaseQuantity?: () => void
+  onDecreaseRoomQuantity?: (roomId: string) => void
+  onIncreaseRoomQuantity?: (roomId: string) => void
   onAction: () => void
   actionLabel?: string
   actionDisabled?: boolean
@@ -53,10 +61,37 @@ export function StickyBookingBar(props: StickyBookingBarProps) {
               <Users size={14} />
               <span>{props.guests} khách</span>
             </div>
-            <div className="text-on-surface">
-              <span className="font-semibold">Phòng:</span> {props.selectedRoom || 'Chưa chọn'}
-            </div>
-            {props.selectedRoom ? (
+            {props.selectedRooms && props.selectedRooms.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-on-surface">Phòng đã chọn:</span>
+                {props.selectedRooms.map((room) => (
+                  <div key={room.id} className="inline-flex items-center gap-2 rounded-xl bg-surface-container-low px-2 py-1">
+                    <span className="max-w-40 truncate font-medium text-on-surface">{room.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => props.onDecreaseRoomQuantity?.(room.id)}
+                      className="cursor-pointer rounded p-1 text-on-surface-variant hover:bg-surface-container"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-6 text-center font-semibold text-on-surface">{room.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => props.onIncreaseRoomQuantity?.(room.id)}
+                      disabled={room.quantity >= room.availableQuantity}
+                      className="cursor-pointer rounded p-1 text-on-surface-variant hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-on-surface">
+                <span className="font-semibold">Phòng:</span> {props.selectedRoom || 'Chưa chọn'}
+              </div>
+            )}
+            {props.selectedRoom && (!props.selectedRooms || props.selectedRooms.length === 0) && (props.onDecreaseQuantity || props.onIncreaseQuantity) ? (
               <div className="inline-flex items-center gap-2 rounded-xl bg-surface-container-low px-2 py-1">
                 <button
                   type="button"
@@ -116,4 +151,3 @@ export function StickyBookingBar(props: StickyBookingBarProps) {
     </div>
   )
 }
-

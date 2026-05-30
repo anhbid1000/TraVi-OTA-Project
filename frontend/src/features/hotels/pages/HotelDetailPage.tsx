@@ -15,6 +15,8 @@ import {
 } from '../../detail/components'
 import { useHotelDetail } from '../hooks/useHotelDetail'
 import { formatVnd } from '../../../utils/display'
+import { formatDateInputValue, getDefaultHotelStay } from '../../../utils/date'
+import type { RoomAvailability, RoomCombinationOption } from '../types'
 
 function toPositiveNumber(value: string | null, fallback: number) {
   const parsed = Number(value)
@@ -34,15 +36,42 @@ function getNights(checkIn: string, checkOut: string) {
   return Math.max(1, days)
 }
 
+function getStayWeatherEndDate(checkIn: string, checkOut: string) {
+  const start = new Date(`${checkIn}T00:00:00`)
+  const end = new Date(`${checkOut}T00:00:00`)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    return checkIn
+  }
+  end.setDate(end.getDate() - 1)
+  return formatDateInputValue(end)
+}
+
+function describeRoomCombo(combo: RoomCombinationOption) {
+  return combo.items
+    .map((item) => `${item.quantity}x ${item.roomType} (${item.capacityPerRoom} khách/phòng)`)
+    .join(', ')
+}
+
+function getRoomComboTitle(combo: RoomCombinationOption, index: number) {
+  const mainTypes = combo.items.map((item) => item.roomType).join(' + ')
+  return mainTypes || `Tổ hợp phòng ${index + 1}`
+}
+
+type SelectedRoomEntry = {
+  room: RoomAvailability
+  quantity: number
+}
+
 
 export function HotelDetailPage() {
   const navigate = useNavigate()
   const { id = '' } = useParams()
   const [searchParams] = useSearchParams()
 
-  const checkIn = searchParams.get('checkIn') ?? ''
-  const checkOut = searchParams.get('checkOut') ?? ''
-  const guests = toPositiveNumber(searchParams.get('guests'), 2)
+  const defaultStay = useMemo(() => getDefaultHotelStay(), [])
+  const checkIn = searchParams.get('checkIn') || defaultStay.checkIn
+  const checkOut = searchParams.get('checkOut') || defaultStay.checkOut
+  const guests = toPositiveNumber(searchParams.get('guests'), defaultStay.guests)
 
   const detailParams = useMemo(
     () => ({ checkIn, checkOut, guests }),
@@ -59,28 +88,66 @@ export function HotelDetailPage() {
     () => hotel?.rooms.filter((room) => room.availableQuantity > 0) ?? [],
     [hotel],
   )
+  const roomCombinationOptions = hotel?.roomCombinationOptions ?? []
 
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
-  const [roomQuantity, setRoomQuantity] = useState(1)
-
-  const effectiveSelectedRoomId = useMemo(() => {
-    if (availableRooms.length === 0) {
-      return null
-    }
-
-    return availableRooms.some((room) => room.id === selectedRoomId)
-      ? selectedRoomId
-      : availableRooms[0].id
-  }, [availableRooms, selectedRoomId])
-
-  const selectedRoom = useMemo(
-    () => availableRooms.find((room) => room.id === effectiveSelectedRoomId) || null,
-    [availableRooms, effectiveSelectedRoomId],
+  const [selectedRooms, setSelectedRooms] = useState<Record<string, number>>({})
+  const [selectedComboIndex, setSelectedComboIndex] = useState<number | null>(null)
+  const [selectionType, setSelectionType] = useState<'room' | 'combo' | null>(null)
+  const selectedRoomEntries = useMemo<SelectedRoomEntry[]>(
+    () => availableRooms
+      .map((room) => ({
+        room,
+        quantity: Math.min(selectedRooms[room.id] || 0, room.availableQuantity),
+      }))
+      .filter((entry) => entry.quantity > 0),
+    [availableRooms, selectedRooms],
   )
-  const effectiveRoomQuantity = selectedRoom && selectedRoom.id !== selectedRoomId ? 1 : roomQuantity
+  const selectedCombo = selectionType === 'combo' && selectedComboIndex !== null
+    ? roomCombinationOptions[selectedComboIndex] || null
+    : null
 
   const nights = getNights(checkIn, checkOut)
-  const totalPrice = selectedRoom ? selectedRoom.pricePerNight * nights * effectiveRoomQuantity : 0
+  const weatherEndDate = getStayWeatherEndDate(checkIn, checkOut)
+  const selectedRoomSummary = selectedRoomEntries
+    .map((entry) => `${entry.quantity}x ${entry.room.name}`)
+    .join(', ')
+  const selectedOptionLabel = selectedCombo
+    ? `${selectedCombo.totalRooms} phòng: ${describeRoomCombo(selectedCombo)}`
+    : selectedRoomSummary
+  const selectedQuantity = selectedCombo
+    ? selectedCombo.totalRooms
+    : selectedRoomEntries.reduce((sum, entry) => sum + entry.quantity, 0)
+  const totalPrice = selectedCombo
+    ? selectedCombo.totalPricePerNight * nights
+    : selectedRoomEntries.reduce((sum, entry) => sum + entry.room.pricePerNight * entry.quantity * nights, 0)
+
+  const setRoomSelectionQuantity = (roomId: string, quantity: number) => {
+    const room = availableRooms.find((item) => item.id === roomId)
+    if (!room) {
+      return
+    }
+
+    setSelectionType('room')
+    setSelectedComboIndex(null)
+    setSelectedRooms((current) => {
+      const nextQuantity = Math.min(room.availableQuantity, Math.max(0, quantity))
+      const next = { ...current }
+      if (nextQuantity <= 0) {
+        delete next[roomId]
+      } else {
+        next[roomId] = nextQuantity
+      }
+      return next
+    })
+  }
+
+  const increaseRoomSelection = (roomId: string) => {
+    setRoomSelectionQuantity(roomId, (selectedRooms[roomId] || 0) + 1)
+  }
+
+  const decreaseRoomSelection = (roomId: string) => {
+    setRoomSelectionQuantity(roomId, (selectedRooms[roomId] || 0) - 1)
+  }
 
   if (loading) {
     return (
@@ -167,6 +234,7 @@ export function HotelDetailPage() {
             latitude={hotel.latitude}
             longitude={hotel.longitude}
             date={checkIn}
+            endDate={weatherEndDate}
             locationName={hotel.location}
           />
         </div>
@@ -192,6 +260,47 @@ export function HotelDetailPage() {
               </div>
             </article>
 
+            {roomCombinationOptions.length > 0 && (
+              <section>
+                <h2 className="mb-5 font-display text-3xl font-bold text-primary">Gợi ý phòng cho {guests} khách</h2>
+                <div className="space-y-4">
+                  {roomCombinationOptions.map((combo, idx) => {
+                    const isSelected = selectionType === 'combo' && selectedComboIndex === idx
+                    return (
+                      <SelectableItemCard
+                        key={`${combo.totalRooms}-${combo.totalCapacity}-${idx}`}
+                        image=""
+                        title={getRoomComboTitle(combo, idx)}
+                        meta={[
+                          `${combo.totalRooms} phòng`,
+                          `Chứa tối đa ${combo.totalCapacity} khách`,
+                          ...combo.items.map((item) => `${item.quantity}x ${item.roomType}`),
+                        ]}
+                        description={describeRoomCombo(combo)}
+                        price={`${formatVnd(combo.totalPricePerNight)} / đêm`}
+                        statusLabel={isSelected ? 'Đang áp dụng' : `Phù hợp ${guests} khách`}
+                        statusTone={isSelected ? 'success' : 'neutral'}
+                        actionLabel={isSelected ? 'Đã chọn' : 'Chọn tổ hợp'}
+                        actionDisabled={isSelected}
+	                        onAction={() => {
+	                          setSelectionType('combo')
+	                          setSelectedComboIndex(idx)
+	                          setSelectedRooms({})
+	                        }}
+                        footer={
+                          isSelected ? (
+                            <span className="text-xs font-semibold text-primary">
+                              Tổng {formatVnd(combo.totalPricePerNight * nights)} cho {nights} đêm
+                            </span>
+                          ) : null
+                        }
+                      />
+                    )
+                  })}
+                </div>
+              </section>
+            )}
+
             <section>
               <h2 className="mb-5 font-display text-3xl font-bold text-primary">Phòng còn trống</h2>
 
@@ -201,11 +310,12 @@ export function HotelDetailPage() {
                   <p className="mt-2 text-sm text-on-surface-variant">Bạn có thể thử đổi ngày hoặc số khách.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {availableRooms.map((room) => {
-                    const isSelected = room.id === effectiveSelectedRoomId
-                    return (
-                      <SelectableItemCard
+	                <div className="space-y-4">
+	                  {availableRooms.map((room) => {
+	                    const selectedQuantityForRoom = selectedRooms[room.id] || 0
+	                    const isSelected = selectionType === 'room' && selectedQuantityForRoom > 0
+	                    return (
+	                      <SelectableItemCard
                         key={room.id}
                         image={room.image}
                         title={room.name}
@@ -216,20 +326,19 @@ export function HotelDetailPage() {
                           ...room.highlights,
                         ]}
                         description={room.description}
-                        price={`${formatVnd(room.pricePerNight)} / đêm`}
-                        statusLabel={`Còn ${room.availableQuantity} phòng`}
-                        statusTone={room.availableQuantity <= 2 ? 'warning' : 'success'}
-                        actionLabel={isSelected ? 'Đã chọn' : 'Chọn phòng'}
-                        actionDisabled={isSelected}
-                        onAction={() => {
-                          setSelectedRoomId(room.id)
-                          setRoomQuantity(1)
-                        }}
-                        footer={
-                          isSelected ? (
-                            <span className="text-xs font-semibold text-primary">Đang áp dụng cho đơn của bạn</span>
-                          ) : null
-                        }
+	                        price={`${formatVnd(room.pricePerNight)} / đêm`}
+	                        statusLabel={isSelected ? `Đã chọn ${selectedQuantityForRoom}` : `Còn ${room.availableQuantity} phòng`}
+	                        statusTone={isSelected ? 'success' : room.availableQuantity <= 2 ? 'warning' : 'success'}
+	                        actionLabel={selectedQuantityForRoom >= room.availableQuantity ? 'Đã chọn tối đa' : isSelected ? 'Thêm phòng' : 'Chọn phòng'}
+	                        actionDisabled={selectedQuantityForRoom >= room.availableQuantity}
+	                        onAction={() => increaseRoomSelection(room.id)}
+	                        footer={
+	                          isSelected ? (
+	                            <span className="text-xs font-semibold text-primary">
+	                              Điều chỉnh số lượng ở thanh đặt phòng
+	                            </span>
+	                          ) : null
+	                        }
                       />
                     )
                   })}
@@ -247,7 +356,7 @@ export function HotelDetailPage() {
                 <div className="space-y-2 text-sm text-on-surface-variant">
                   <p className="flex items-center gap-2"><Expand size={14} /> Số đêm: {nights}</p>
                   <p className="flex items-center gap-2"><Users size={14} /> Số khách: {guests}</p>
-                  <p className="flex items-center gap-2"><BedDouble size={14} /> Phòng chọn: {selectedRoom?.name || 'Chưa chọn'}</p>
+	                  <p className="flex items-center gap-2"><BedDouble size={14} /> Phòng chọn: {selectedOptionLabel || 'Chưa chọn'}</p>
                 </div>
               </article>
             </div>
@@ -260,40 +369,49 @@ export function HotelDetailPage() {
         checkIn={checkIn}
         checkOut={checkOut}
         guests={guests}
-        selectedRoom={selectedRoom?.name}
-        quantity={effectiveRoomQuantity}
-        totalPrice={totalPrice}
-        canDecreaseQuantity={effectiveRoomQuantity > 1}
-        canIncreaseQuantity={Boolean(selectedRoom && effectiveRoomQuantity < selectedRoom.availableQuantity)}
-        onDecreaseQuantity={() => setRoomQuantity((quantity) => Math.max(1, quantity - 1))}
-        onIncreaseQuantity={() => {
-          if (!selectedRoom) {
-            return
-          }
-          setRoomQuantity((quantity) => Math.min(selectedRoom.availableQuantity, quantity + 1))
-        }}
-        onAction={() => {
-          if (!selectedRoom) {
-            return
-          }
+	        selectedRoom={selectedCombo ? selectedOptionLabel : undefined}
+	        selectedRooms={selectedCombo ? undefined : selectedRoomEntries.map((entry) => ({
+	          id: entry.room.id,
+	          name: entry.room.name,
+	          quantity: entry.quantity,
+	          availableQuantity: entry.room.availableQuantity,
+	        }))}
+	        quantity={selectedQuantity}
+	        totalPrice={totalPrice}
+	        onDecreaseRoomQuantity={decreaseRoomSelection}
+	        onIncreaseRoomQuantity={increaseRoomSelection}
+	        onAction={() => {
+	          if (!selectedCombo && selectedRoomEntries.length === 0) {
+	            return
+	          }
 
-          navigate('/checkout', {
-            state: {
-              type: 'hotel',
-              hotelId: hotel.id,
-              roomId: selectedRoom.id,
-              checkIn,
-              checkOut,
-              guests,
-              nights,
-              quantity: effectiveRoomQuantity,
-              totalPrice,
-            },
-          })
-        }}
-        actionLabel="Đặt ngay"
-        actionDisabled={!selectedRoom}
-      />
+	          navigate('/checkout', {
+	            state: {
+	              type: 'hotel',
+	              hotelId: hotel.id,
+	              roomId: selectedRoomEntries.length === 1 ? selectedRoomEntries[0].room.id : undefined,
+	              roomSelections: selectedRoomEntries.map((entry) => ({
+	                roomId: entry.room.id,
+	                roomName: entry.room.name,
+	                quantity: entry.quantity,
+	                pricePerNight: entry.room.pricePerNight,
+	              })),
+	              roomCombination: selectedCombo?.items,
+	              roomCombinationTotalRooms: selectedCombo?.totalRooms,
+	              roomCombinationTotalCapacity: selectedCombo?.totalCapacity,
+	              roomCombinationPricePerNight: selectedCombo?.totalPricePerNight,
+	              checkIn,
+	              checkOut,
+	              guests,
+	              nights,
+	              quantity: selectedQuantity,
+	              totalPrice,
+	            },
+	          })
+	        }}
+	        actionLabel="Đặt ngay"
+	        actionDisabled={!selectedCombo && selectedRoomEntries.length === 0}
+	      />
 
       <footer className="border-t border-outline-variant/30 bg-surface-container-lowest">
         <div className="mx-auto grid w-full max-w-7xl gap-6 px-5 py-10 text-sm md:grid-cols-4 md:px-12">

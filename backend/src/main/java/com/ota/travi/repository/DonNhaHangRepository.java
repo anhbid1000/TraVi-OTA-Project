@@ -59,5 +59,12 @@ public interface DonNhaHangRepository extends JpaRepository<DonNhaHang, String> 
             @Param("fromDateTime") LocalDateTime fromDateTime,
             @Param("activeStatuses") List<TrangThaiDon> activeStatuses
     );
+
+    java.util.Optional<DonNhaHang> findByIdAndKhachHang_Username(String id, String username);
+
+    List<DonNhaHang> findByTrangThaiDonAndPaymentExpiredAtBeforeAndDeletedFalse(
+            TrangThaiDon trangThaiDon,
+            LocalDateTime dateTime
+    );
 }
 

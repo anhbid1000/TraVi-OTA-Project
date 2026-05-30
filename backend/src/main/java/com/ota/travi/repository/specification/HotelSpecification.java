@@ -3,7 +3,6 @@ package com.ota.travi.repository.specification;
 import com.ota.travi.dto.request.HotelSearchRequest;
 import com.ota.travi.entity.HoSoKinhDoanh;
 import com.ota.travi.entity.KhachSan;
-import com.ota.travi.entity.Phong;
 import com.ota.travi.entity.TienIchKhachSan;
 import com.ota.travi.enums.TrangThaiHoatDong;
 import com.ota.travi.enums.TrangThaiKiemDuyet;
@@ -27,8 +26,7 @@ public final class HotelSpecification {
                 .and(keywordContains(request.keyword()))
                 .and(priceBetween(request.minPrice(), request.maxPrice()))
                 .and(hasStarRatings(request.stars()))
-                .and(hasAmenities(request.amenities()))
-                .and(hasGuestCapacity(request.guests()));
+                .and(hasAmenities(request.amenities()));
     }
 
     public static Specification<KhachSan> isPublicVisible() {
@@ -114,22 +112,7 @@ public final class HotelSpecification {
         };
     }
 
-    public static Specification<KhachSan> hasGuestCapacity(Integer guests) {
-        return (root, query, cb) -> {
-            if (guests == null) {
-                return null;
-            }
-            query.distinct(true);
-            Join<KhachSan, Phong> roomJoin = root.join("danhSachPhong", JoinType.INNER);
-            return cb.and(
-                    cb.isFalse(roomJoin.get("deleted")),
-                    cb.greaterThanOrEqualTo(roomJoin.get("sucChuaToiDa"), guests)
-            );
-        };
-    }
-
     private static boolean hasText(String value) {
         return value != null && !value.isBlank();
     }
 }
-

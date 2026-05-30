@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { CalendarDays, Clock3, Search, Users } from 'lucide-react'
+import { CalendarDays, Clock3, Search, Users, X } from 'lucide-react'
 import { CityAutocomplete } from './CityAutocomplete'
 
 // ─── Types ────────────────────────────────────────────────────
@@ -21,16 +21,18 @@ type RestaurantForm = {
 type CatalogSearchBarProps =
   | {
       mode: 'hotels'
-      form: HotelForm
-      onChange: (form: HotelForm) => void
-      onSubmit: (event: FormEvent<HTMLFormElement>) => void
-    }
-  | {
-      mode: 'restaurants'
-      form: RestaurantForm
-      onChange: (form: RestaurantForm) => void
-      onSubmit: (event: FormEvent<HTMLFormElement>) => void
-    }
+	      form: HotelForm
+	      onChange: (form: HotelForm) => void
+	      onSubmit: (event: FormEvent<HTMLFormElement>) => void
+	      onClear?: () => void
+	    }
+	  | {
+	      mode: 'restaurants'
+	      form: RestaurantForm
+	      onChange: (form: RestaurantForm) => void
+	      onSubmit: (event: FormEvent<HTMLFormElement>) => void
+	      onClear?: () => void
+	    }
 
 // ─── Divider ────────────────────────────────────────────────
 
@@ -41,8 +43,8 @@ function Divider() {
 // ─── Main component ───────────────────────────────────────────
 
 export function CatalogSearchBar(props: CatalogSearchBarProps) {
-  if (props.mode === 'hotels') {
-    const { form, onChange, onSubmit } = props
+	  if (props.mode === 'hotels') {
+	    const { form, onChange, onSubmit, onClear } = props
 
     return (
       <form
@@ -93,18 +95,29 @@ export function CatalogSearchBar(props: CatalogSearchBarProps) {
         <span className="shrink-0 whitespace-nowrap text-on-surface-variant">khách</span>
 
         {/* Submit */}
-        <button
-          type="submit"
-          className="ml-1 shrink-0 cursor-pointer rounded-xl bg-primary px-4 py-1 text-xs font-bold text-on-primary transition hover:bg-surface-tint active:scale-95"
-        >
-          Tìm
-        </button>
-      </form>
-    );
-  }
+	        <button
+	          type="submit"
+	          className="ml-1 shrink-0 cursor-pointer rounded-xl bg-primary px-4 py-1 text-xs font-bold text-on-primary transition hover:bg-surface-tint active:scale-95"
+	        >
+	          Tìm
+	        </button>
+	        {onClear && (
+	          <button
+	            type="button"
+	            onClick={onClear}
+	            className="shrink-0 cursor-pointer rounded-xl border border-outline-variant/60 px-2.5 py-1 text-xs font-bold text-on-surface-variant transition hover:border-error hover:text-error active:scale-95"
+	          >
+	            <span className="flex items-center gap-1">
+	              <X size={12} /> Xóa
+	            </span>
+	          </button>
+	        )}
+	      </form>
+	    );
+	  }
 
   // ── Restaurants ──────────────────────────────────────────────
-  const { form, onChange, onSubmit } = props
+	  const { form, onChange, onSubmit, onClear } = props
 
   return (
     <form
@@ -159,14 +172,24 @@ export function CatalogSearchBar(props: CatalogSearchBarProps) {
       <span className="shrink-0 whitespace-nowrap text-on-surface-variant">khách</span>
 
       {/* Submit */}
-      <button
-        type="submit"
-        className="ml-1 shrink-0 cursor-pointer rounded-xl bg-primary px-4 py-1 text-xs font-bold text-on-primary transition hover:bg-surface-tint active:scale-95"
-      >
-        Tìm
-      </button>
-    </form>
-  );
-}
-
+	      <button
+	        type="submit"
+	        className="ml-1 shrink-0 cursor-pointer rounded-xl bg-primary px-4 py-1 text-xs font-bold text-on-primary transition hover:bg-surface-tint active:scale-95"
+	      >
+	        Tìm
+	      </button>
+	      {onClear && (
+	        <button
+	          type="button"
+	          onClick={onClear}
+	          className="shrink-0 cursor-pointer rounded-xl border border-outline-variant/60 px-2.5 py-1 text-xs font-bold text-on-surface-variant transition hover:border-error hover:text-error active:scale-95"
+	        >
+	          <span className="flex items-center gap-1">
+	            <X size={12} /> Xóa
+	          </span>
+	        </button>
+	      )}
+	    </form>
+	  );
+	}
 

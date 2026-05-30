@@ -11,7 +11,15 @@ type UseRestaurantSearchResult = {
   refetch: () => Promise<void>
 }
 
-export function useRestaurantSearch(params: RestaurantSearchParams): UseRestaurantSearchResult {
+type UseRestaurantSearchOptions = {
+  enabled?: boolean
+}
+
+export function useRestaurantSearch(
+  params: RestaurantSearchParams,
+  options: UseRestaurantSearchOptions = {},
+): UseRestaurantSearchResult {
+  const enabled = options.enabled ?? true
   const [data, setData] = useState<PageResponse<RestaurantCatalog> | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -24,6 +32,10 @@ export function useRestaurantSearch(params: RestaurantSearchParams): UseRestaura
   const paramsKey = JSON.stringify(params)
 
   const fetchData = useCallback(async () => {
+    if (!enabled) {
+      return
+    }
+
     const requestId = requestIdRef.current + 1
     requestIdRef.current = requestId
 
@@ -49,11 +61,15 @@ export function useRestaurantSearch(params: RestaurantSearchParams): UseRestaura
         setLoading(false)
       }
     }
-  }, [])
+  }, [enabled])
 
   useEffect(() => {
+    if (!enabled) {
+      return
+    }
+
     void fetchData()
-  }, [fetchData, paramsKey])
+  }, [enabled, fetchData, paramsKey])
 
   return {
     data,
@@ -62,4 +78,3 @@ export function useRestaurantSearch(params: RestaurantSearchParams): UseRestaura
     refetch: fetchData,
   }
 }
-

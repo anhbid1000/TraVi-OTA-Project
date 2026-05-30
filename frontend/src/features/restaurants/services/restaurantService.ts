@@ -146,6 +146,35 @@ function buildSearchParams(params: RestaurantSearchParams) {
   }
 }
 
+function hasRestaurantSearchCriteria(params: RestaurantSearchParams) {
+  return Boolean(
+    params.city?.trim() ||
+    params.keyword?.trim() ||
+    params.date ||
+    params.time ||
+    (params.cuisine && params.cuisine.length > 0) ||
+    params.minPrice ||
+    params.maxPrice ||
+    (params.amenities && params.amenities.length > 0) ||
+    params.rating,
+  )
+}
+
+function pageFromItems<T>(items: T[], params: RestaurantSearchParams): PageResponse<T> {
+  const page = Math.max(DEFAULT_PAGE, params.page ?? DEFAULT_PAGE)
+  const size = clampSize(params.size)
+
+  return {
+    content: items,
+    page,
+    size,
+    totalElements: items.length,
+    totalPages: Math.max(1, Math.ceil(items.length / Math.max(1, size))),
+    hasNext: false,
+    hasPrevious: page > 0,
+  }
+}
+
 function mapRestaurantCatalogItem(item: BackendRestaurantCatalogItem): RestaurantCatalog {
   return {
     id: item.id,
@@ -240,6 +269,14 @@ function mapRestaurantDetail(payload: BackendRestaurantDetail): RestaurantDetail
 export async function searchRestaurants(
   params: RestaurantSearchParams,
 ): Promise<PageResponse<RestaurantCatalog>> {
+  if (!hasRestaurantSearchCriteria(params)) {
+    const featuredRestaurants = await getFeaturedRestaurants({
+      guests: params.guests,
+      size: params.size,
+    })
+    return pageFromItems(featuredRestaurants, params)
+  }
+
   const response = await api.get('/v1/public/restaurants/search', {
     params: buildSearchParams(params),
   })
@@ -288,5 +325,4 @@ export async function getRestaurantFilterOptions(): Promise<RestaurantFilterOpti
   const response = await api.get<RestaurantFilterOptions>('/v1/public/restaurants/filter-options/data')
   return response.data
 }
-
 

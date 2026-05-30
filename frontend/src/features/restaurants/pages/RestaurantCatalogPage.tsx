@@ -11,6 +11,12 @@ import { getRestaurantFilterOptions } from '../services/restaurantService'
 import type { RestaurantCatalog } from '../types'
 import type { FilterOption } from '../../hotels/types'
 import { formatFilterLabel, formatPriceBounds } from '../../../utils/display'
+import {
+  clearSearchCriteria,
+  readSearchCriteria,
+  RESTAURANT_SEARCH_CRITERIA_KEY,
+  writeSearchCriteria,
+} from '../../catalog/utils/searchCriteriaMemory'
 
 // ─── Helpers ─────────────────────────────────────────────────
 function toggleItem(list: string[], item: string): string[] {
@@ -26,7 +32,7 @@ type RestaurantHeaderForm = {
 
 // ─── Component ───────────────────────────────────────────────
 export function RestaurantCatalogPage() {
-  const { getString, getNumber, getCsvArray, setQuery } = useQueryParams()
+  const { query, getString, getNumber, getCsvArray, setQuery } = useQueryParams()
   const [cuisineOptions, setCuisineOptions] = useState<FilterOption[]>([])
   const [amenityOptions, setAmenityOptions] = useState<FilterOption[]>([])
 
@@ -43,6 +49,10 @@ export function RestaurantCatalogPage() {
   const sort = getString('sort', 'popular')
   const page = Math.max(0, getNumber('page', 0))
   const size = Math.min(50, Math.max(1, getNumber('size', 10)))
+  const savedHeaderCriteria = useMemo(
+    () => (query.toString() ? null : readSearchCriteria(RESTAURANT_SEARCH_CRITERIA_KEY)),
+    [query],
+  )
 
   const searchParams = useMemo(
     () => ({
@@ -70,7 +80,7 @@ export function RestaurantCatalogPage() {
     [amenities, city, cuisineTypes, date, guests, keyword, maxPrice, minPrice, page, rating, size, sort, time],
   )
 
-  const { data, loading, error, refetch } = useRestaurantSearch(searchParams)
+  const { data, loading, error, refetch } = useRestaurantSearch(searchParams, { enabled: !savedHeaderCriteria })
 
   const headerSearch = useMemo<RestaurantHeaderForm>(() => ({
     city,
@@ -79,6 +89,14 @@ export function RestaurantCatalogPage() {
     guests,
   }), [city, date, guests, time])
   const [headerForm, setHeaderForm] = useState<RestaurantHeaderForm>(headerSearch)
+
+  useEffect(() => {
+    if (!savedHeaderCriteria) {
+      return
+    }
+
+    setQuery({ ...savedHeaderCriteria, page: 0, size }, { replace: true })
+  }, [savedHeaderCriteria, setQuery, size])
 
   useEffect(() => {
     setHeaderForm(headerSearch)
@@ -109,13 +127,41 @@ export function RestaurantCatalogPage() {
   const handleHeaderSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
+    const nextCriteria = {
+      city: headerForm.city,
+      date: headerForm.date,
+      time: headerForm.time,
+      guests: Math.max(1, headerForm.guests || 1),
+    }
+
+    writeSearchCriteria(RESTAURANT_SEARCH_CRITERIA_KEY, nextCriteria)
     setQuery({
-      city: headerForm.city || null,
-      date: headerForm.date || null,
-      time: headerForm.time || null,
-      guests: String(Math.max(1, headerForm.guests || 1)),
+      city: nextCriteria.city || null,
+      date: nextCriteria.date || null,
+      time: nextCriteria.time || null,
+      guests: nextCriteria.guests,
       page: 0,
       size,
+    }, { resetPage: true })
+  }
+
+  const handleHeaderCriteriaClear = () => {
+    clearSearchCriteria(RESTAURANT_SEARCH_CRITERIA_KEY)
+    setHeaderForm({
+      city: '',
+      date: '',
+      time: '',
+      guests: 4,
+    })
+    setQuery({
+      city: null,
+      date: null,
+      time: null,
+      guests: null,
+      cuisine: null,
+      page: 0,
+      size,
+      sort: 'popular',
     }, { resetPage: true })
   }
 
@@ -123,7 +169,18 @@ export function RestaurantCatalogPage() {
   const currentPage = data?.page ?? page
   const restaurants: RestaurantCatalog[] = data?.content ?? []
 
-  const displayCity = city || 'Việt Nam'
+  const hasCatalogCriteria = Boolean(
+    city ||
+    keyword ||
+    date ||
+    time ||
+    cuisineTypes.length > 0 ||
+    minPrice > 0 ||
+    maxPrice > 0 ||
+    amenities.length > 0 ||
+    rating > 0,
+  )
+  const resultsTitle = hasCatalogCriteria ? `Nhà hàng tại ${city || 'Việt Nam'}` : 'Nhà hàng phổ biến'
 
   // ─── Render ───────────────────────────────────────────────
   return (
@@ -142,8 +199,9 @@ export function RestaurantCatalogPage() {
               onChange={(form) => {
                 setHeaderForm(form)
               }}
-              onSubmit={handleHeaderSearchSubmit}
-            />
+	              onSubmit={handleHeaderSearchSubmit}
+	              onClear={handleHeaderCriteriaClear}
+	            />
           </div>
 
           {/* Center: Nav */}
@@ -271,7 +329,7 @@ export function RestaurantCatalogPage() {
           {/* Sort header */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="font-display text-2xl font-bold text-on-surface">Nhà hàng tại {displayCity}</h1>
+              <h1 className="font-display text-2xl font-bold text-on-surface">{resultsTitle}</h1>
               <p className="mt-1 text-sm text-on-surface-variant">{data?.totalElements ?? 0} kết quả được tìm thấy</p>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -448,5 +506,3 @@ export function RestaurantCatalogPage() {
     </div>
   )
 }
-
-

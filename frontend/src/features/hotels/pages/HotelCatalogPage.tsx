@@ -10,6 +10,13 @@ import { useQueryParams } from '../../../hooks/useQueryParams'
 import { useHotelSearch } from '../hooks/useHotelSearch'
 import type { FilterOption, HotelCatalog } from '../types'
 import { formatFilterLabel, formatPriceBounds, formatVnd } from '../../../utils/display'
+import { getDefaultHotelStay } from '../../../utils/date'
+import {
+  clearSearchCriteria,
+  HOTEL_SEARCH_CRITERIA_KEY,
+  readSearchCriteria,
+  writeSearchCriteria,
+} from '../../catalog/utils/searchCriteriaMemory'
 
 function toggleItem(list: string[], item: string): string[] {
   return list.includes(item) ? list.filter((x) => x !== item) : [...list, item]
@@ -24,7 +31,7 @@ type HotelHeaderForm = {
 
 // ─── Component ───────────────────────────────────────────────
 export function HotelCatalogPage() {
-  const { getString, getNumber, getCsvArray, setQuery } = useQueryParams()
+  const { query, getString, getNumber, getCsvArray, setQuery } = useQueryParams()
   const [amenityOptions, setAmenityOptions] = useState<FilterOption[]>([])
 
   const city = getString('city')
@@ -37,9 +44,17 @@ export function HotelCatalogPage() {
   const stars = getCsvArray('stars').map(Number).filter((value) => !Number.isNaN(value))
   const amenities = getCsvArray('amenities')
   const rating = Math.max(0, getNumber('rating', 0))
-  const sort = getString('sort', 'priceAsc')
+  const sort = getString('sort', 'popular')
   const page = Math.max(0, getNumber('page', 0))
   const size = Math.min(50, Math.max(1, getNumber('size', 10)))
+  const defaultStay = useMemo(() => getDefaultHotelStay(), [])
+  const displayCheckIn = checkIn || defaultStay.checkIn
+  const displayCheckOut = checkOut || defaultStay.checkOut
+  const displayGuests = guests || defaultStay.guests
+  const savedHeaderCriteria = useMemo(
+    () => (query.toString() ? null : readSearchCriteria(HOTEL_SEARCH_CRITERIA_KEY)),
+    [query],
+  )
 
   const searchParams = useMemo(
     () => ({
@@ -67,15 +82,23 @@ export function HotelCatalogPage() {
     [amenities, checkIn, checkOut, city, guests, keyword, maxPrice, minPrice, page, rating, size, sort, stars],
   )
 
-  const { data, loading, error, refetch } = useHotelSearch(searchParams)
+  const { data, loading, error, refetch } = useHotelSearch(searchParams, { enabled: !savedHeaderCriteria })
 
   const headerSearch = useMemo<HotelHeaderForm>(() => ({
     city,
-    checkIn,
-    checkOut,
-    guests,
-  }), [checkIn, checkOut, city, guests])
+    checkIn: displayCheckIn,
+    checkOut: displayCheckOut,
+    guests: displayGuests,
+  }), [city, displayCheckIn, displayCheckOut, displayGuests])
   const [headerForm, setHeaderForm] = useState<HotelHeaderForm>(headerSearch)
+
+  useEffect(() => {
+    if (!savedHeaderCriteria) {
+      return
+    }
+
+    setQuery({ ...savedHeaderCriteria, page: 0, size }, { replace: true })
+  }, [savedHeaderCriteria, setQuery, size])
 
   useEffect(() => {
     setHeaderForm(headerSearch)
@@ -105,13 +128,40 @@ export function HotelCatalogPage() {
   const handleHeaderSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
+    const nextCriteria = {
+      city: headerForm.city,
+      checkIn: headerForm.checkIn,
+      checkOut: headerForm.checkOut,
+      guests: Math.max(1, headerForm.guests || 1),
+    }
+
+    writeSearchCriteria(HOTEL_SEARCH_CRITERIA_KEY, nextCriteria)
     setQuery({
-      city: headerForm.city || null,
-      checkIn: headerForm.checkIn || null,
-      checkOut: headerForm.checkOut || null,
-      guests: String(Math.max(1, headerForm.guests || 1)),
+      city: nextCriteria.city || null,
+      checkIn: nextCriteria.checkIn || null,
+      checkOut: nextCriteria.checkOut || null,
+      guests: nextCriteria.guests,
       page: 0,
       size,
+    }, { resetPage: true })
+  }
+
+  const handleHeaderCriteriaClear = () => {
+    clearSearchCriteria(HOTEL_SEARCH_CRITERIA_KEY)
+    setHeaderForm({
+      city: '',
+      checkIn: defaultStay.checkIn,
+      checkOut: defaultStay.checkOut,
+      guests: defaultStay.guests,
+    })
+    setQuery({
+      city: null,
+      checkIn: null,
+      checkOut: null,
+      guests: null,
+      page: 0,
+      size,
+      sort: 'popular',
     }, { resetPage: true })
   }
 
@@ -120,7 +170,18 @@ export function HotelCatalogPage() {
   const hotels: HotelCatalog[] = data?.content ?? []
 
   // ─── render ────────────────────────────────────────────────
-  const displayCity = city || 'Việt Nam'
+  const hasCatalogCriteria = Boolean(
+    city ||
+    keyword ||
+    checkIn ||
+    checkOut ||
+    minPrice > 0 ||
+    maxPrice > 0 ||
+    stars.length > 0 ||
+    amenities.length > 0 ||
+    rating > 0,
+  )
+  const resultsTitle = hasCatalogCriteria ? `Khách sạn tại ${city || 'Việt Nam'}` : 'Khách sạn phổ biến'
 
   return (
     <div className="flex min-h-screen flex-col bg-surface font-sans text-on-surface antialiased">
@@ -138,8 +199,9 @@ export function HotelCatalogPage() {
               onChange={(form) => {
                 setHeaderForm(form)
               }}
-              onSubmit={handleHeaderSearchSubmit}
-            />
+	              onSubmit={handleHeaderSearchSubmit}
+	              onClear={handleHeaderCriteriaClear}
+	            />
           </div>
 
           {/* Center: Nav */}
@@ -172,7 +234,7 @@ export function HotelCatalogPage() {
                     guests,
                     page: 0,
                     size,
-                    sort: 'priceAsc',
+                    sort: 'popular',
                     keyword: null,
                     minPrice: null,
                     maxPrice: null,
@@ -268,17 +330,17 @@ export function HotelCatalogPage() {
           {/* Sort header */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="font-display text-2xl font-bold text-on-surface">Khách sạn tại {displayCity}</h1>
+              <h1 className="font-display text-2xl font-bold text-on-surface">{resultsTitle}</h1>
               <p className="mt-1 text-sm text-on-surface-variant">{data?.totalElements ?? 0} kết quả được tìm thấy</p>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Sắp xếp theo</span>
               <select value={sort} onChange={(e) => setQuery({ sort: e.target.value }, { resetPage: true })}
                 className="cursor-pointer rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-3 py-2 text-sm font-medium text-on-surface focus:border-primary focus:outline-none">
+                <option value="popular">Phổ biến nhất</option>
                 <option value="priceAsc">Giá tăng dần</option>
                 <option value="priceDesc">Giá giảm dần</option>
                 <option value="ratingDesc">Đánh giá cao nhất</option>
-                <option value="popular">Phổ biến nhất</option>
               </select>
             </div>
           </div>
@@ -385,11 +447,11 @@ export function HotelCatalogPage() {
                             </p>
                           </div>
                           <Link
-                            to={`/hotels/${hotel.id}?${new URLSearchParams({
-                              checkIn,
-                              checkOut,
-                              guests: String(guests),
-                            }).toString()}`}
+	                            to={`/hotels/${hotel.id}?${new URLSearchParams({
+	                              checkIn: displayCheckIn,
+	                              checkOut: displayCheckOut,
+	                              guests: String(displayGuests),
+	                            }).toString()}`}
                             className="cursor-pointer rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-on-primary shadow-sm transition hover:bg-primary-container"
                           >
                             Xem chi tiết
@@ -449,5 +511,3 @@ export function HotelCatalogPage() {
     </div>
   )
 }
-
-

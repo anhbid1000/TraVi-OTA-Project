@@ -6,8 +6,8 @@ import com.ota.travi.dto.response.HotelCatalogResponse;
 import com.ota.travi.dto.response.HotelDetailResponse;
 import com.ota.travi.dto.response.RestaurantCatalogResponse;
 import com.ota.travi.dto.response.RestaurantDetailResponse;
-import com.ota.travi.dto.response.WeatherForecastResponse;
 import com.ota.travi.service.PublicCatalogService;
+import com.ota.travi.service.WeatherService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.springframework.data.domain.Page;
@@ -38,6 +38,7 @@ import static com.ota.travi.constant.ApiEndpoints.PUBLIC_RESTAURANTS_FEATURED;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_RESTAURANTS_FILTER_OPTIONS;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_RESTAURANTS_SEARCH;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_WEATHER_FORECAST;
+import static com.ota.travi.constant.ApiEndpoints.PUBLIC_WEATHER_FORECAST_RANGE;
 
 /**
  * Controller phục vụ dữ liệu catalog công khai (Public Catalog) cho khách vãng lai và thành viên.
@@ -45,10 +46,12 @@ import static com.ota.travi.constant.ApiEndpoints.PUBLIC_WEATHER_FORECAST;
 @RestController
 public class PublicCatalogController {
     private final PublicCatalogService publicCatalogService;
+    private final WeatherService weatherService;
     private final Validator validator;
 
-    public PublicCatalogController(PublicCatalogService publicCatalogService, Validator validator) {
+    public PublicCatalogController(PublicCatalogService publicCatalogService, WeatherService weatherService, Validator validator) {
         this.publicCatalogService = publicCatalogService;
+        this.weatherService = weatherService;
         this.validator = validator;
     }
 
@@ -336,18 +339,25 @@ public class PublicCatalogController {
             @RequestParam Double lng,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        // Mock response to keep API contract stable until weather provider integration is added.
-        boolean likelyRain = Math.abs(lat) > 10 || Math.abs(lng) > 100;
-        WeatherForecastResponse response = new WeatherForecastResponse(
-                date,
-                likelyRain ? 27.0 : 30.0,
-                likelyRain ? "MAY_CO_MUA_RAO" : "NANG_NHE",
-                likelyRain ? "cloud-rain" : "sun",
-                likelyRain
-                        ? "Du bao co mua rao, ban nen uu tien cac hoat dong trong nha."
-                        : "Thoi tiet kha dep, phu hop cho cac hoat dong ngoai troi."
-        );
-        return ResponseEntity.ok(response);
+        try {
+            return ResponseEntity.ok(weatherService.getForecast(lat, lng, date));
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_GATEWAY);
+        }
+    }
+
+    @GetMapping(PUBLIC_WEATHER_FORECAST_RANGE)
+    public ResponseEntity<?> getWeatherForecastRange(
+            @RequestParam Double lat,
+            @RequestParam Double lng,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        try {
+            return ResponseEntity.ok(weatherService.getForecastRange(lat, lng, startDate, endDate));
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_GATEWAY);
+        }
     }
 
     // --- UTILITY METHODS ---
@@ -385,6 +395,4 @@ public class PublicCatalogController {
         return violations.iterator().next().getMessage();
     }
 }
-
-
 

@@ -13,6 +13,8 @@ import com.ota.travi.dto.response.MenuResponse;
 import com.ota.travi.dto.response.RestaurantCatalogResponse;
 import com.ota.travi.dto.response.RestaurantDetailResponse;
 import com.ota.travi.dto.response.RoomAvailabilityResponse;
+import com.ota.travi.dto.response.RoomComboItemResponse;
+import com.ota.travi.dto.response.RoomCombinationOptionResponse;
 import com.ota.travi.dto.response.TableAvailabilityResponse;
 import com.ota.travi.dto.response.TienIchKhachSanResponse;
 import com.ota.travi.dto.response.TienIchNhaHangResponse;
@@ -27,10 +29,7 @@ import com.ota.travi.entity.Phong;
 import com.ota.travi.entity.ThucDon;
 import com.ota.travi.entity.TienIchKhachSan;
 import com.ota.travi.entity.TienIchNhaHang;
-import com.ota.travi.enums.TrangThaiDon;
-import com.ota.travi.enums.TrangThaiHoatDong;
-import com.ota.travi.enums.TrangThaiKiemDuyet;
-import com.ota.travi.enums.TrangThaiMonAn;
+import com.ota.travi.enums.*;
 import com.ota.travi.repository.AnhKhachSanRepository;
 import com.ota.travi.repository.AnhNhaHangRepository;
 import com.ota.travi.repository.AnhPhongRepository;
@@ -54,6 +53,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -140,6 +140,7 @@ public class PublicCatalogService {
         return new PageImpl<>(mapped, hotelPage.getPageable(), hotelPage.getTotalElements());
     }
 
+    // Lấy list khách sạn featured
     @Transactional(readOnly = true)
     public List<HotelCatalogResponse> getFeaturedHotels(LocalDate checkIn, LocalDate checkOut, Integer guests, Integer size) {
         LocalDate resolvedCheckIn = checkIn == null ? LocalDate.now().plusDays(1) : checkIn;
@@ -179,18 +180,24 @@ public class PublicCatalogService {
             throw new RuntimeException("Khach san khong kha dung tren kenh public");
         }
 
-        // 3. Lấy danh sách phòng còn trống theo ngày nhập và thông tin khách
-        List<RoomAvailabilityResponse> availableRooms = phongRepository.findByKhachSan_IdTaiSan(hotelId).stream()
+        // 3. Lấy danh sách phòng còn trống theo ngày nhập
+        List<Phong> availablePhongList = phongRepository.findByKhachSan_IdTaiSan(hotelId).stream()
                 .filter(room -> Boolean.FALSE.equals(room.getDeleted()))
-                .filter(room -> guests == null || room.getSucChuaToiDa() == null || room.getSucChuaToiDa() >= guests)
-                .map(room -> mapRoomAvailability(room, checkIn, checkOut))
-                .filter(room -> room.soLuongConTrong() > 0)
+                .filter(room -> room.getTrangThai() == TrangThaiPhong.SAN_SANG)
+                .filter(room -> calculateRoomAvailableQuantity(room, checkIn, checkOut) > 0)
                 .toList();
+
+        List<RoomAvailabilityResponse> availableRooms = availablePhongList.stream()
+                .map(room -> mapRoomAvailability(room, checkIn, checkOut))
+                .toList();
+
+        // 4. Sinh ra các lựa chọn tổ hợp phòng (nếu guests > 0)
+        List<RoomCombinationOptionResponse> combos = buildRoomCombinationOptions(availablePhongList, checkIn, checkOut, guests);
 
         List<AnhResponse> images = mapHotelImages(hotelId);
         ChinhSachResponse policy = mapPolicy(hotel.getHoSoKinhDoanh().getIdHoSo());
 
-        // 4. Xây dựng và trả về phản hồi chi tiết khách sạn đầy đủ
+        // 5. Xây dựng và trả về phản hồi chi tiết khách sạn đầy đủ
 
         return new HotelDetailResponse(
                 hotel.getIdTaiSan(),
@@ -210,7 +217,8 @@ public class PublicCatalogService {
                 0,
                 images,
                 mapHotelAmenities(hotel.getTienIch()),
-                availableRooms
+                availableRooms,
+                combos
         );
     }
 
@@ -232,6 +240,7 @@ public class PublicCatalogService {
         return new PageImpl<>(mapped, restaurantPage.getPageable(), restaurantPage.getTotalElements());
     }
 
+    // Lấy nhà hàng featured
     @Transactional(readOnly = true)
     public List<RestaurantCatalogResponse> getFeaturedRestaurants(LocalDate date, LocalTime time, Integer guests, Integer size) {
         LocalDate resolvedDate = date == null ? LocalDate.now().plusDays(1) : date;
@@ -440,10 +449,27 @@ public class PublicCatalogService {
     }
 
     // Tính toán số phòng khách sạn còn trống
+    // Logic mới: nếu có guests thì cần tồn tại ít nhất một combo phòng đủ sức chứa.
     private Integer calculateHotelAvailableRoomCount(String hotelId, LocalDate checkIn, LocalDate checkOut, Integer guests) {
-        return phongRepository.findByKhachSan_IdTaiSan(hotelId).stream()
+        List<Phong> availableRooms = phongRepository.findByKhachSan_IdTaiSan(hotelId).stream()
                 .filter(room -> Boolean.FALSE.equals(room.getDeleted()))
-                .filter(room -> guests == null || room.getSucChuaToiDa() == null || room.getSucChuaToiDa() >= guests)
+                .filter(room -> room.getTrangThai().equals(TrangThaiPhong.SAN_SANG))
+                .filter(room -> calculateRoomAvailableQuantity(room, checkIn, checkOut) > 0)
+                .toList();
+
+        if (guests == null || guests < 1) {
+            return availableRooms.stream()
+                    .map(room -> calculateRoomAvailableQuantity(room, checkIn, checkOut))
+                    .reduce(0, Integer::sum);
+        }
+
+        List<RoomCombinationOptionResponse> combos = buildRoomCombinationOptions(availableRooms, checkIn, checkOut, guests);
+        if (combos.isEmpty()) {
+            return 0;
+        }
+
+        // Vẫn trả về số lượng phòng khả dụng tổng để giữ hợp đồng API cũ.
+        return availableRooms.stream()
                 .map(room -> calculateRoomAvailableQuantity(room, checkIn, checkOut))
                 .reduce(0, Integer::sum);
     }
@@ -465,6 +491,182 @@ public class PublicCatalogService {
                 mapRoomImages(room.getId()),
                 room.getTienIch()
         );
+    }
+
+    private List<RoomCombinationOptionResponse> buildRoomCombinationOptions(
+            List<Phong> availableRooms,
+            LocalDate checkIn,
+            LocalDate checkOut,
+            Integer guests
+    ) {
+        if (guests == null || guests < 1 || availableRooms.isEmpty()) {
+            return List.of();
+        }
+
+        List<RoomInventory> inventory = availableRooms.stream()
+                .map(room -> new RoomInventory(
+                        room.getId(),
+                        room.getTenPhong(),
+                        normalizeRoomType(room),
+                        room.getSucChuaToiDa() == null ? 0 : room.getSucChuaToiDa(),
+                        room.getGiaCoBan() == null ? 0.0 : room.getGiaCoBan(),
+                        calculateRoomAvailableQuantity(room, checkIn, checkOut)
+                ))
+                .filter(item -> item.capacityPerRoom() > 0 && item.availableQty() > 0)
+                .toList();
+
+        if (inventory.isEmpty()) {
+            return List.of();
+        }
+
+        List<RoomCombinationOptionResponse> rawCandidates = new java.util.ArrayList<>();
+        backtrackRoomCombos(
+                inventory,
+                0,
+                guests,
+                0,
+                0,
+                0.0,
+                new LinkedHashMap<>(),
+                rawCandidates
+        );
+
+        if (rawCandidates.isEmpty()) {
+            return List.of();
+        }
+
+        List<RoomCombinationOptionResponse> sorted = rawCandidates.stream()
+                .sorted(Comparator
+                        .comparingInt(RoomCombinationOptionResponse::totalRooms)
+                        .thenComparingInt(RoomCombinationOptionResponse::totalPricePerNight)
+                )
+                .toList();
+
+        LinkedHashMap<String, RoomCombinationOptionResponse> uniqueByPattern = new LinkedHashMap<>();
+        for (RoomCombinationOptionResponse option : sorted) {
+            String patternKey = option.items().stream()
+                    .map(item -> item.roomType() + "x" + item.quantity())
+                    .sorted()
+                    .reduce((a, b) -> a + "|" + b)
+                    .orElse("empty");
+
+            uniqueByPattern.putIfAbsent(patternKey, option);
+            if (uniqueByPattern.size() >= 4) {
+                break;
+            }
+        }
+
+        return uniqueByPattern.values().stream().toList();
+    }
+
+    private void backtrackRoomCombos(
+            List<RoomInventory> inventory,
+            int index,
+            int targetGuests,
+            int currentCapacity,
+            int currentRooms,
+            double currentPrice,
+            LinkedHashMap<String, Integer> picked,
+            List<RoomCombinationOptionResponse> out
+    ) {
+        // ĐIỀU KIỆN DỪNG 1: Đã đủ hoặc thừa số lượng khách yêu cầu
+        if (currentCapacity >= targetGuests) {
+            List<RoomComboItemResponse> items = new java.util.ArrayList<>();
+
+            for (RoomInventory inv : inventory) {
+                Integer qty = picked.get(inv.roomId());
+                if (qty == null || qty <= 0) {
+                    continue;
+                }
+
+                items.add(new RoomComboItemResponse(
+                        inv.roomId(),
+                        inv.roomName(),
+                        inv.roomType(),
+                        qty,
+                        inv.capacityPerRoom(),
+                        inv.pricePerRoom()
+                ));
+            }
+
+            out.add(new RoomCombinationOptionResponse(
+                    currentCapacity,
+                    currentRooms,
+                    (int) Math.round(currentPrice),
+                    items
+            ));
+            return;
+        }
+
+        // ĐIỀU KIỆN DỪNG 2: Đã duyệt hết tất cả các loại phòng trong kho
+        if (index >= inventory.size()) {
+            return;
+        }
+
+        RoomInventory room = inventory.get(index);
+
+        // TRƯỜNG HỢP 1: Không chọn loại phòng hiện tại
+        backtrackRoomCombos(
+                inventory,
+                index + 1,
+                targetGuests,
+                currentCapacity,
+                currentRooms,
+                currentPrice,
+                picked,
+                out
+        );
+
+        // TRƯỜNG HỢP 2: Chọn loại phòng hiện tại với số lượng (qty) từ 1 bước tăng dần
+
+        // 1. Số lượng phòng tối đa còn lại có thể đặt (Đảm bảo tổng số phòng không vượt quá tổng số khách)
+        int maxRoomsAllowed = targetGuests - currentRooms;
+
+        // 2. Số lượng phòng tối đa dựa trên sức chứa thực tế của loại phòng này đối với số khách còn thiếu
+        int guestsStillNeeded = targetGuests - currentCapacity;
+        int maxQtyByCapacity = (int) Math.ceil((double) guestsStillNeeded / room.capacityPerRoom());
+
+        // Điều này cho phép hệ thống thử nghiệm cả các phương án "tách nhỏ nhiều phòng" (Ví dụ: đặt nhiều phòng 1-2 người)
+        int maxQtyNeeded = Math.max(maxRoomsAllowed, maxQtyByCapacity);
+
+        // Khống chế giới hạn vòng lặp không vượt quá số phòng thực tế có sẵn trong khách sạn
+        int limit = Math.min(room.availableQty(), maxQtyNeeded);
+
+        // Vòng lặp chạy thử các cấu hình phòng hợp lý
+        for (int qty = 1; qty <= limit; qty++) {
+            picked.put(room.roomId(), qty);
+
+            backtrackRoomCombos(
+                    inventory,
+                    index + 1,
+                    targetGuests,
+                    currentCapacity + (room.capacityPerRoom() * qty),
+                    currentRooms + qty,
+                    currentPrice + (room.pricePerRoom() * qty),
+                    picked,
+                    out
+            );
+
+            picked.remove(room.roomId()); // Backtrack giải phóng trạng thái
+        }
+    }
+
+    private String normalizeRoomType(Phong room) {
+        String roomType = room.getLoaiPhong();
+        if (roomType == null || roomType.isBlank()) {
+            return "unknown";
+        }
+        return roomType.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private record RoomInventory(
+            String roomId,
+            String roomName,
+            String roomType,
+            int capacityPerRoom,
+            double pricePerRoom,
+            int availableQty
+    ) {
     }
 
     // Tính toán số lượng phòng còn trống trong khoảng thời gian
@@ -786,6 +988,5 @@ public class PublicCatalogService {
                 && Boolean.FALSE.equals(restaurant.getHoSoKinhDoanh().getDeleted());
     }
 }
-
 
 

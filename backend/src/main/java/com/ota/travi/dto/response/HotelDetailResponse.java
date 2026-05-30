@@ -22,7 +22,8 @@ public record HotelDetailResponse(
         Integer soLuongDanhGia,
         List<AnhResponse> images,
         Set<TienIchKhachSanResponse> amenities,
-        List<RoomAvailabilityResponse> availableRooms
+        List<RoomAvailabilityResponse> availableRooms,
+        List<RoomCombinationOptionResponse> roomCombinationOptions
 ) {
 }
 

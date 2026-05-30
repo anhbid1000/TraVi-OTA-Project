@@ -20,6 +20,12 @@ import { getFeaturedRestaurants, getRestaurantFilterOptions } from '../features/
 import type { FilterOption, HotelCatalog } from '../features/hotels/types'
 import type { RestaurantCatalog } from '../features/restaurants/types'
 import { formatVnd } from '../utils/display'
+import {
+  HOTEL_SEARCH_CRITERIA_KEY,
+  readSearchCriteria,
+  RESTAURANT_SEARCH_CRITERIA_KEY,
+  writeSearchCriteria,
+} from '../features/catalog/utils/searchCriteriaMemory'
 
 // ─── Local types ─────────────────────────────────────────────
 type SearchTab = 'luutru' | 'amthuc'
@@ -90,6 +96,17 @@ function getDefaultRestaurantSlot() {
   }
 }
 
+function getSavedString(criteria: ReturnType<typeof readSearchCriteria>, key: string, fallback = '') {
+  const value = criteria?.[key]
+  return typeof value === 'string' ? value : fallback
+}
+
+function getSavedNumber(criteria: ReturnType<typeof readSearchCriteria>, key: string, fallback: number) {
+  const value = criteria?.[key]
+  const parsed = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
 // ─── Component ────────────────────────────────────────────────
 export function HomePage() {
   const navigate = useNavigate()
@@ -98,19 +115,21 @@ export function HomePage() {
   const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d }, [])
   const tomorrow = useMemo(() => { const d = new Date(today); d.setDate(d.getDate()+1); return d }, [today])
   const defaultRestaurantSlot = useMemo(() => getDefaultRestaurantSlot(), [])
+  const savedHotelCriteria = useMemo(() => readSearchCriteria(HOTEL_SEARCH_CRITERIA_KEY), [])
+  const savedRestaurantCriteria = useMemo(() => readSearchCriteria(RESTAURANT_SEARCH_CRITERIA_KEY), [])
 
   // state
   const [activeTab, setActiveTab] = useState<SearchTab>('luutru')
-  const [hotelCity, setHotelCity] = useState('')
-  const [hotelCheckIn, setHotelCheckIn] = useState(toDateStr(today))
-  const [hotelCheckOut, setHotelCheckOut] = useState(toDateStr(tomorrow))
-  const [hotelGuests, setHotelGuests] = useState(2)
+  const [hotelCity, setHotelCity] = useState(getSavedString(savedHotelCriteria, 'city'))
+  const [hotelCheckIn, setHotelCheckIn] = useState(getSavedString(savedHotelCriteria, 'checkIn', toDateStr(today)))
+  const [hotelCheckOut, setHotelCheckOut] = useState(getSavedString(savedHotelCriteria, 'checkOut', toDateStr(tomorrow)))
+  const [hotelGuests, setHotelGuests] = useState(getSavedNumber(savedHotelCriteria, 'guests', 2))
   const [hotelError, setHotelError] = useState('')
-  const [rstCity, setRstCity] = useState('')
-  const [rstDate, setRstDate] = useState(defaultRestaurantSlot.date)
-  const [rstTime, setRstTime] = useState(defaultRestaurantSlot.time)
-  const [rstGuests, setRstGuests] = useState(4)
-  const [rstCuisine, setRstCuisine] = useState('')
+  const [rstCity, setRstCity] = useState(getSavedString(savedRestaurantCriteria, 'city'))
+  const [rstDate, setRstDate] = useState(getSavedString(savedRestaurantCriteria, 'date', defaultRestaurantSlot.date))
+  const [rstTime, setRstTime] = useState(getSavedString(savedRestaurantCriteria, 'time', defaultRestaurantSlot.time))
+  const [rstGuests, setRstGuests] = useState(getSavedNumber(savedRestaurantCriteria, 'guests', 4))
+  const [rstCuisine, setRstCuisine] = useState(getSavedString(savedRestaurantCriteria, 'cuisine'))
   const [rstError, setRstError] = useState('')
   const [cuisineOptions, setCuisineOptions] = useState<FilterOption[]>([])
   const [featuredHotels, setFeaturedHotels] = useState<HotelCatalog[]>([])
@@ -214,11 +233,27 @@ export function HomePage() {
     if (!hotelCity.trim()) { setHotelError('Vui lòng nhập địa điểm.'); return }
     const ci = new Date(hotelCheckIn + 'T00:00:00')
     const co = new Date(hotelCheckOut + 'T00:00:00')
-    if (ci < today) { setHotelError('Ngày nhận phòng không được ở quá khứ.'); return }
-    if (co <= ci) { setHotelError('Ngày trả phòng phải sau ngày nhận phòng.'); return }
-    if (hotelGuests < 1) { setHotelError('Số khách phải ≥ 1.'); return }
-    navigate(`/hotels?city=${encodeURIComponent(hotelCity.trim())}&checkIn=${hotelCheckIn}&checkOut=${hotelCheckOut}&guests=${hotelGuests}&page=0&size=10&sort=price_asc`)
-  }
+	    if (ci < today) { setHotelError('Ngày nhận phòng không được ở quá khứ.'); return }
+	    if (co <= ci) { setHotelError('Ngày trả phòng phải sau ngày nhận phòng.'); return }
+	    if (hotelGuests < 1) { setHotelError('Số khách phải ≥ 1.'); return }
+	    const criteria = {
+	      city: hotelCity.trim(),
+	      checkIn: hotelCheckIn,
+	      checkOut: hotelCheckOut,
+	      guests: hotelGuests,
+	    }
+	    writeSearchCriteria(HOTEL_SEARCH_CRITERIA_KEY, criteria)
+	    const p = new URLSearchParams({
+	      city: criteria.city,
+	      checkIn: criteria.checkIn,
+	      checkOut: criteria.checkOut,
+	      guests: String(criteria.guests),
+	      page: '0',
+	      size: '10',
+	      sort: 'priceAsc',
+	    })
+	    navigate(`/hotels?${p.toString()}`)
+	  }
 
   const handleRstSearch = (e: FormEvent) => {
     e.preventDefault()
@@ -226,12 +261,29 @@ export function HomePage() {
     if (!rstCity.trim()) { setRstError('Vui lòng nhập địa điểm.'); return }
     if (rstGuests < 1) { setRstError('Số khách phải ≥ 1.'); return }
     const dt = new Date(`${rstDate}T${rstTime}:00`)
-    if (Number.isNaN(dt.getTime())) { setRstError('Ngày giờ không hợp lệ.'); return }
-    if (dt < new Date()) { setRstError('Ngày giờ dùng bữa không được ở trong quá khứ.'); return }
-    const p = new URLSearchParams({ city: rstCity.trim(), date: rstDate, time: rstTime, guests: String(rstGuests), page: '0', size: '10', sort: 'popular_desc' })
-    if (rstCuisine.trim()) p.set('cuisine', rstCuisine.trim())
-    navigate(`/restaurants?${p.toString()}`)
-  }
+	    if (Number.isNaN(dt.getTime())) { setRstError('Ngày giờ không hợp lệ.'); return }
+	    if (dt < new Date()) { setRstError('Ngày giờ dùng bữa không được ở trong quá khứ.'); return }
+	    const selectedCuisine = rstCuisine.trim()
+	    const criteria = {
+	      city: rstCity.trim(),
+	      date: rstDate,
+	      time: rstTime,
+	      guests: rstGuests,
+	      ...(selectedCuisine ? { cuisine: selectedCuisine } : {}),
+	    }
+	    writeSearchCriteria(RESTAURANT_SEARCH_CRITERIA_KEY, criteria)
+	    const p = new URLSearchParams({
+	      city: criteria.city,
+	      date: criteria.date,
+	      time: criteria.time,
+	      guests: String(criteria.guests),
+	      page: '0',
+	      size: '10',
+	      sort: 'popular',
+	    })
+	    if (selectedCuisine) p.set('cuisine', selectedCuisine)
+	    navigate(`/restaurants?${p.toString()}`)
+	  }
 
   // ─── Render ───────────────────────────────────────────────
   return (
@@ -679,4 +731,3 @@ export function HomePage() {
     </div>
   );
 }
-

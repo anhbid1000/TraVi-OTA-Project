@@ -2,6 +2,7 @@ import { AxiosError } from 'axios'
 import { api } from '../../../services/api'
 import type { ApiErrorResponse, PageResponse } from '../../../types/common'
 import { formatTimeValue, normalizeVietnameseText } from '../../../utils/display'
+import { getDefaultHotelStay } from '../../../utils/date'
 import type {
   Amenity,
   HotelCatalog,
@@ -10,6 +11,7 @@ import type {
   HotelDetailParams,
   HotelPolicy,
   RoomAvailability,
+  RoomCombinationOption,
   HotelSearchParams,
   Image,
 } from '../types'
@@ -69,6 +71,19 @@ type BackendHotelDetail = {
     soLuongConTrong?: number
     images?: Array<{ id: string; duongDanUrl?: string; moTaAnh?: string; laAnhDaiDien?: boolean }>
     amenities?: string[]
+  }>
+  roomCombinationOptions?: Array<{
+    totalCapacity?: number
+    totalRooms?: number
+    totalPricePerNight?: number
+    items?: Array<{
+      roomId: string
+      roomName?: string
+      roomType?: string
+      quantity?: number
+      capacityPerRoom?: number
+      pricePerRoom?: number
+    }>
   }>
 }
 
@@ -153,6 +168,35 @@ function buildSearchParams(params: HotelSearchParams) {
   }
 }
 
+function hasHotelSearchCriteria(params: HotelSearchParams) {
+  return Boolean(
+    params.city?.trim() ||
+    params.keyword?.trim() ||
+    params.checkIn ||
+    params.checkOut ||
+    params.minPrice ||
+    params.maxPrice ||
+    (params.stars && params.stars.length > 0) ||
+    (params.amenities && params.amenities.length > 0) ||
+    params.rating,
+  )
+}
+
+function pageFromItems<T>(items: T[], params: HotelSearchParams): PageResponse<T> {
+  const page = Math.max(DEFAULT_PAGE, params.page ?? DEFAULT_PAGE)
+  const size = clampSize(params.size)
+
+  return {
+    content: items,
+    page,
+    size,
+    totalElements: items.length,
+    totalPages: Math.max(1, Math.ceil(items.length / Math.max(1, size))),
+    hasNext: false,
+    hasPrevious: page > 0,
+  }
+}
+
 function mapHotelCatalogItem(item: BackendHotelCatalogItem): HotelCatalog {
   return {
     id: item.id,
@@ -223,6 +267,22 @@ function mapPolicies(payload: BackendHotelDetail['chinhSach']): HotelPolicy[] {
   return candidates.filter((item) => item.description && item.description !== 'Đang cập nhật')
 }
 
+function mapRoomComboOption(item: NonNullable<BackendHotelDetail['roomCombinationOptions']>[number]): RoomCombinationOption {
+  return {
+    totalCapacity: item.totalCapacity ?? 0,
+    totalRooms: item.totalRooms ?? 0,
+    totalPricePerNight: item.totalPricePerNight ?? 0,
+    items: (item.items ?? []).map((x) => ({
+      roomId: x.roomId,
+      roomName: normalizeVietnameseText(x.roomName, { titleCase: true }) || 'Phòng',
+      roomType: normalizeVietnameseText(x.roomType, { titleCase: true }) || 'Unknown',
+      quantity: x.quantity ?? 0,
+      capacityPerRoom: x.capacityPerRoom ?? 0,
+      pricePerRoom: x.pricePerRoom ?? 0,
+    })),
+  }
+}
+
 function mapHotelDetail(payload: BackendHotelDetail): HotelDetail {
   const locationParts = [payload.phuongXa, payload.quanHuyen, payload.thanhPho]
     .filter(Boolean)
@@ -246,10 +306,22 @@ function mapHotelDetail(payload: BackendHotelDetail): HotelDetail {
     amenities: (payload.amenities ?? []).map(mapAmenity),
     policies: mapPolicies(payload.chinhSach),
     rooms: (payload.availableRooms ?? []).map(mapRoom),
+    roomCombinationOptions: (payload.roomCombinationOptions ?? []).map(mapRoomComboOption),
   }
 }
 
 export async function searchHotels(params: HotelSearchParams): Promise<PageResponse<HotelCatalog>> {
+  if (!hasHotelSearchCriteria(params)) {
+    const defaultStay = getDefaultHotelStay()
+    const featuredHotels = await getFeaturedHotels({
+      checkIn: defaultStay.checkIn,
+      checkOut: defaultStay.checkOut,
+      guests: params.guests ?? defaultStay.guests,
+      size: params.size,
+    })
+    return pageFromItems(featuredHotels, params)
+  }
+
   const response = await api.get('/v1/public/hotels/search', {
     params: buildSearchParams(params),
   })
@@ -293,4 +365,3 @@ export async function getHotelFilterOptions(): Promise<HotelFilterOptions> {
   const response = await api.get<HotelFilterOptions>('/v1/public/hotels/filter-options/data')
   return response.data
 }
-

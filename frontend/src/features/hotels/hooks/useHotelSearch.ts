@@ -11,7 +11,12 @@ type UseHotelSearchResult = {
   refetch: () => Promise<void>
 }
 
-export function useHotelSearch(params: HotelSearchParams): UseHotelSearchResult {
+type UseHotelSearchOptions = {
+  enabled?: boolean
+}
+
+export function useHotelSearch(params: HotelSearchParams, options: UseHotelSearchOptions = {}): UseHotelSearchResult {
+  const enabled = options.enabled ?? true
   const [data, setData] = useState<PageResponse<HotelCatalog> | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -24,6 +29,10 @@ export function useHotelSearch(params: HotelSearchParams): UseHotelSearchResult 
   const paramsKey = JSON.stringify(params)
 
   const fetchData = useCallback(async () => {
+    if (!enabled) {
+      return
+    }
+
     const requestId = requestIdRef.current + 1
     requestIdRef.current = requestId
 
@@ -49,11 +58,15 @@ export function useHotelSearch(params: HotelSearchParams): UseHotelSearchResult 
         setLoading(false)
       }
     }
-  }, [])
+  }, [enabled])
 
   useEffect(() => {
+    if (!enabled) {
+      return
+    }
+
     void fetchData()
-  }, [fetchData, paramsKey])
+  }, [enabled, fetchData, paramsKey])
 
   return {
     data,
@@ -62,4 +75,3 @@ export function useHotelSearch(params: HotelSearchParams): UseHotelSearchResult 
     refetch: fetchData,
   }
 }
-
