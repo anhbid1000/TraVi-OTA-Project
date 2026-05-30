@@ -5,5 +5,6 @@ package com.ota.travi.enums;
  */
 public enum VaiTroTinNhan {
     KHACH_HANG,
-    DOI_TAC
+    DOI_TAC,
+    SYSTEM
 }

@@ -120,8 +120,8 @@ public class HoSoKinhDoanh {
     @OneToOne(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
     private ChinhSach chinhSach;
 
-    @OneToMany(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TaiSan> danhSachTaiSan = new ArrayList<>();
+    @OneToOne(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
+    private TaiSan taiSan;
 
     @OneToMany(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LichSuKiemDuyetHoSo> lichSuKiemDuyet = new ArrayList<>();

@@ -2,7 +2,6 @@ package com.ota.travi.service;
 
 import com.ota.travi.dto.request.ComplaintCreateRequest;
 import com.ota.travi.dto.request.ComplaintMessageCreateRequest;
-import com.ota.travi.dto.request.ComplaintStatusUpdateRequest;
 import com.ota.travi.dto.response.ComplaintResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,13 +22,22 @@ public interface ComplaintServiceV2 {
 
     ComplaintResponse postPartnerMessage(String partnerId, String complaintId, ComplaintMessageCreateRequest request, List<MultipartFile> files);
 
-    ComplaintResponse updateComplaintStatusByPartner(String partnerId, String complaintId, ComplaintStatusUpdateRequest request);
+    Page<ComplaintResponse> getCustomerComplaints(String customerId, String status, String mucDo, String category, Pageable pageable);
 
-    Page<ComplaintResponse> getCustomerComplaints(String customerId, String status, String mucDo, Pageable pageable);
-
-    Page<ComplaintResponse> getPartnerComplaints(String partnerId, String status, String mucDo, Pageable pageable);
+    Page<ComplaintResponse> getPartnerComplaints(String partnerId, String status, String mucDo, String category, Pageable pageable);
 
     ComplaintResponse getComplaintDetailForCustomer(String customerId, String complaintId);
 
     ComplaintResponse getComplaintDetailForPartner(String partnerId, String complaintId);
+
+    // --- Resolution Action APIs ---
+    ComplaintResponse createResolutionAction(String partnerId, String complaintId, com.ota.travi.dto.request.ResolutionActionCreateRequest request);
+
+    ComplaintResponse acceptResolutionAction(String customerId, String complaintId, String actionId);
+
+    ComplaintResponse rejectResolutionAction(String customerId, String complaintId, String actionId, com.ota.travi.dto.request.ResolutionActionRejectRequest request);
+
+    ComplaintResponse startResolutionAction(String partnerId, String complaintId, String actionId);
+
+    ComplaintResponse completeResolutionAction(String partnerId, String complaintId, String actionId, com.ota.travi.dto.request.ResolutionActionCompleteRequest request, List<MultipartFile> files);
 }

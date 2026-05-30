@@ -5,7 +5,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
 import com.ota.travi.validation.ValidUploadFiles;
 import com.ota.travi.dto.request.ComplaintMessageCreateRequest;
-import com.ota.travi.dto.request.ComplaintStatusUpdateRequest;
+import com.ota.travi.dto.request.ResolutionActionCreateRequest;
+import com.ota.travi.dto.request.ResolutionActionCompleteRequest;
 import com.ota.travi.dto.response.ComplaintResponse;
 import com.ota.travi.security.CustomUserDetails;
 import com.ota.travi.service.ComplaintServiceV2;
@@ -41,6 +42,7 @@ public class PartnerComplaintController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String mucDo,
+            @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "updated_desc") String sort
     ) {
         try {
@@ -62,7 +64,7 @@ public class PartnerComplaintController {
             Pageable pageable = PageRequest.of(page, size, sortOrder);
 
             // 4. Gọi service lấy danh sách complaint
-            Page<ComplaintResponse> complaints = complaintService.getPartnerComplaints(partnerId, status, mucDo, pageable);
+            Page<ComplaintResponse> complaints = complaintService.getPartnerComplaints(partnerId, status, mucDo, category, pageable);
             return new ResponseEntity<>(complaints, HttpStatus.OK);
         } catch (RuntimeException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -104,18 +106,49 @@ public class PartnerComplaintController {
         }
     }
 
-    // --- 4. API CẬP NHẬT TRẠNG THÁI ---
-    @PutMapping("/{complaintId}/status")
-    public ResponseEntity<?> updateStatus(
+
+    // --- 5. API TẠO PHƯƠNG ÁN XỬ LÝ ---
+    @PostMapping("/{complaintId}/resolution-actions")
+    public ResponseEntity<?> createResolutionAction(
             @PathVariable String complaintId,
-            @Valid @RequestBody ComplaintStatusUpdateRequest request
+            @Valid @RequestBody ResolutionActionCreateRequest request
     ) {
         try {
-            // 1. Lấy partnerId từ SecurityContext
             String partnerId = getCurrentUserId();
+            ComplaintResponse response = complaintService.createResolutionAction(partnerId, complaintId, request);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 
-            // 2. Gọi service cập nhật trạng thái
-            ComplaintResponse response = complaintService.updateComplaintStatusByPartner(partnerId, complaintId, request);
+    // --- 6. API BẮT ĐẦU THỰC HIỆN PHƯƠNG ÁN ---
+    @PutMapping("/{complaintId}/resolution-actions/{actionId}/start")
+    public ResponseEntity<?> startResolutionAction(
+            @PathVariable String complaintId,
+            @PathVariable String actionId
+    ) {
+        try {
+            String partnerId = getCurrentUserId();
+            ComplaintResponse response = complaintService.startResolutionAction(partnerId, complaintId, actionId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // --- 7. API HOÀN TẤT PHƯƠNG ÁN ---
+    @PutMapping(value = "/{complaintId}/resolution-actions/{actionId}/complete", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE })
+    public ResponseEntity<?> completeResolutionAction(
+            @PathVariable String complaintId,
+            @PathVariable String actionId,
+            @Valid @RequestPart("request") ResolutionActionCompleteRequest request,
+            @ValidUploadFiles(maxFiles = 5, allowPdf = true)
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
+    ) {
+        try {
+            String partnerId = getCurrentUserId();
+            ComplaintResponse response = complaintService.completeResolutionAction(partnerId, complaintId, actionId, request, files);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (RuntimeException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);

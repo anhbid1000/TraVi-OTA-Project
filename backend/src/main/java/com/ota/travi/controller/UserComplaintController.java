@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 import com.ota.travi.validation.ValidUploadFiles;
 import com.ota.travi.dto.request.ComplaintCreateRequest;
 import com.ota.travi.dto.request.ComplaintMessageCreateRequest;
+import com.ota.travi.dto.request.ResolutionActionRejectRequest;
 import com.ota.travi.dto.response.ComplaintResponse;
 import com.ota.travi.security.CustomUserDetails;
 import com.ota.travi.service.ComplaintServiceV2;
@@ -60,6 +61,7 @@ public class UserComplaintController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String mucDo,
+            @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "updated_desc") String sort
     ) {
         try {
@@ -80,7 +82,7 @@ public class UserComplaintController {
             Pageable pageable = PageRequest.of(page, size, sortOrder);
 
             // 4. Gọi service lấy danh sách complaint
-            Page<ComplaintResponse> complaints = complaintService.getCustomerComplaints(customerId, status, mucDo, pageable);
+            Page<ComplaintResponse> complaints = complaintService.getCustomerComplaints(customerId, status, mucDo, category, pageable);
             return new ResponseEntity<>(complaints, HttpStatus.OK);
         } catch (RuntimeException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
@@ -131,6 +133,38 @@ public class UserComplaintController {
 
             // 2. Gọi service đóng complaint
             ComplaintResponse response = complaintService.closeComplaintByCustomer(customerId, complaintId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
+    // --- 6. API CHẤP NHẬN PHƯƠNG ÁN ---
+    @PutMapping("/{complaintId}/resolution-actions/{actionId}/accept")
+    public ResponseEntity<?> acceptResolutionAction(
+            @PathVariable String complaintId,
+            @PathVariable String actionId
+    ) {
+        try {
+            String customerId = getCurrentUserId();
+            ComplaintResponse response = complaintService.acceptResolutionAction(customerId, complaintId, actionId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (RuntimeException ex) {
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // --- 7. API TỪ CHỐI PHƯƠNG ÁN ---
+    @PutMapping("/{complaintId}/resolution-actions/{actionId}/reject")
+    public ResponseEntity<?> rejectResolutionAction(
+            @PathVariable String complaintId,
+            @PathVariable String actionId,
+            @Valid @RequestBody ResolutionActionRejectRequest request
+    ) {
+        try {
+            String customerId = getCurrentUserId();
+            ComplaintResponse response = complaintService.rejectResolutionAction(customerId, complaintId, actionId, request);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (RuntimeException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);

@@ -17,6 +17,7 @@ import com.ota.travi.entity.HoSoKinhDoanh;
 import com.ota.travi.entity.KhachHang;
 import com.ota.travi.entity.Review;
 import com.ota.travi.entity.ReviewReply;
+import com.ota.travi.entity.TaiSan;
 import com.ota.travi.enums.LoaiDichVu;
 import com.ota.travi.enums.TrangThaiDanhGia;
 import com.ota.travi.enums.TrangThaiDon;
@@ -264,10 +265,11 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
                 .orElse(0.0);
 
         // 3. Update rating cho entity tài sản tương ứng
-        profile.getDanhSachTaiSan().forEach(taiSan -> {
+        TaiSan taiSan = profile.getTaiSan();
+        if (taiSan != null) {
             taiSan.setRatingAverage(ratingAverage);
             taiSan.setReviewCount((int) reviewCount);
-        });
+        }
     }
 
     private ReviewResponse mapToReviewResponse(Review review) {

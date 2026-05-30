@@ -84,6 +84,19 @@ public class AttachmentServiceImpl implements AttachmentService {
     }
 
     @Override
+    @Transactional
+    public List<FeedbackAttachment> saveResolutionActionAttachments(String actionId, String uploadedById, String uploadedByRole, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) return new ArrayList<>();
+        if (files.size() > 5) throw new FileValidationException("Phương án xử lý cho phép đính kèm tối đa 5 file.");
+        List<FeedbackAttachment> attachments = new ArrayList<>();
+        for (MultipartFile file : files) {
+            validateImageOrPdf(file);
+            attachments.add(processAndSaveFile(file, AttachmentOwnerType.RESOLUTION_ACTION, actionId, uploadedById, uploadedByRole));
+        }
+        return attachments;
+    }
+
+    @Override
     public List<FeedbackAttachment> getAttachmentsByOwner(AttachmentOwnerType ownerType, String ownerId) {
         return attachmentRepository.findByOwnerTypeAndOwnerIdOrderByCreatedAtAsc(ownerType, ownerId);
     }

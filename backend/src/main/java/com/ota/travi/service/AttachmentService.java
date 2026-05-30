@@ -27,6 +27,12 @@ public interface AttachmentService {
     List<FeedbackAttachment> saveComplaintMessageAttachments(String messageId, String uploadedById, String uploadedByRole, List<MultipartFile> files);
 
     /**
+     * Validate and save attachments for a ResolutionAction completion.
+     * Rule: Max 5 files, IMAGE (5MB) or PDF (10MB).
+     */
+    List<FeedbackAttachment> saveResolutionActionAttachments(String actionId, String uploadedById, String uploadedByRole, List<MultipartFile> files);
+
+    /**
      * Fetch attachments for a specific owner.
      */
     List<FeedbackAttachment> getAttachmentsByOwner(AttachmentOwnerType ownerType, String ownerId);

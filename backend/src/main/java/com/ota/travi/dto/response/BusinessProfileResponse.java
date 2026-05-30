@@ -5,7 +5,6 @@ import com.ota.travi.enums.TrangThaiHoatDong;
 import com.ota.travi.enums.TrangThaiKiemDuyet;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record BusinessProfileResponse(
         String idHoSo,
@@ -29,7 +28,7 @@ public record BusinessProfileResponse(
         LocalDateTime thoiGianCapNhat,
         LocalDateTime thoiGianDuyet,
         ChinhSachResponse chinhSach,
-        List<TaiSanResponse> danhSachTaiSan
+        TaiSanResponse taiSan
 ) {
 }
 

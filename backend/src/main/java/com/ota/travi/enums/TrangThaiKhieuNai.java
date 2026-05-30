@@ -10,6 +10,8 @@ package com.ota.travi.enums;
 public enum TrangThaiKhieuNai {
     CHO_PHAN_HOI,
     DANG_XU_LY,
+    CHO_XAC_NHAN_KHACH,
+    DANG_THUC_HIEN_PHUONG_AN,
     DA_GIAI_QUYET,
     DA_DONG
 }

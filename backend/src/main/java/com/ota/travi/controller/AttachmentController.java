@@ -45,6 +45,7 @@ public class AttachmentController {
     private final ReviewRepository reviewRepository;
     private final ComplaintRepository complaintRepository;
     private final ComplaintMessageRepository complaintMessageRepository;
+    private final com.ota.travi.repository.ComplaintResolutionActionRepository resolutionActionRepository;
     private final FileStorageService fileStorageService;
 
     @GetMapping("/{attachmentId}")
@@ -90,6 +91,11 @@ public class AttachmentController {
             ComplaintMessage message = complaintMessageRepository.findById(attachment.getOwnerId())
                     .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Không tìm thấy message của file đính kèm"));
             return canAccessComplaint(message.getComplaint());
+        }
+        if (attachment.getOwnerType() == AttachmentOwnerType.RESOLUTION_ACTION) {
+            com.ota.travi.entity.ComplaintResolutionAction action = resolutionActionRepository.findById(attachment.getOwnerId())
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Không tìm thấy action của file đính kèm"));
+            return canAccessComplaint(action.getComplaint());
         }
         return false;
     }

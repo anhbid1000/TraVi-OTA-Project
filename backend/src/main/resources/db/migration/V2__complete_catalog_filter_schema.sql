@@ -41,7 +41,7 @@ ALTER TABLE ho_so_kinh_doanh ADD CONSTRAINT fk_ho_so_kinh_doanh_doi_tac FOREIGN 
 
 CREATE TABLE IF NOT EXISTS tai_san (
     id_tai_san VARCHAR(36) PRIMARY KEY,
-    ho_so_kinh_doanh_id VARCHAR(36) NOT NULL,
+    ho_so_kinh_doanh_id VARCHAR(36) NOT NULL UNIQUE,
     mo_ta TEXT,
     trang_thai VARCHAR(50) DEFAULT 'SAN_SANG',
     gia_co_ban DOUBLE PRECISION,
@@ -50,6 +50,10 @@ CREATE TABLE IF NOT EXISTS tai_san (
 
 ALTER TABLE tai_san DROP CONSTRAINT IF EXISTS fk_tai_san_ho_so_kinh_doanh;
 ALTER TABLE tai_san ADD CONSTRAINT fk_tai_san_ho_so_kinh_doanh FOREIGN KEY (ho_so_kinh_doanh_id) REFERENCES ho_so_kinh_doanh(id_ho_so) ON DELETE CASCADE;
+
+-- Enforce 1-1 relationship: mỗi hồ sơ kinh doanh chỉ có 1 tài sản
+ALTER TABLE tai_san DROP CONSTRAINT IF EXISTS uk_tai_san_ho_so_kinh_doanh;
+ALTER TABLE tai_san ADD CONSTRAINT uk_tai_san_ho_so_kinh_doanh UNIQUE (ho_so_kinh_doanh_id);
 
 -- 2) Hotel/restaurant catalog tables
 CREATE TABLE IF NOT EXISTS khach_san (

@@ -1,5 +1,6 @@
 package com.ota.travi.entity;
 
+import com.ota.travi.enums.ComplaintCategory;
 import com.ota.travi.enums.LoaiDichVu;
 import com.ota.travi.enums.MucDoKhieuNai;
 import com.ota.travi.enums.TrangThaiKhieuNai;
@@ -45,6 +46,10 @@ public class Complaint {
 
     @Column(name = "noi_dung_tom_tat", nullable = false, columnDefinition = "TEXT")
     private String noiDungTomTat;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false, length = 50)
+    private ComplaintCategory category;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "muc_do", nullable = false)
