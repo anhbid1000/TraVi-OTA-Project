@@ -3,22 +3,18 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { tokenStorage } from '../../services/tokenStorage'
 import type { LoginRequest } from '../../types/auth'
-import { getDefaultPathByRole } from '../../routes/routeGuards'
+import { getDefaultPathByRole, normalizeRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
-import { AuthTextField } from './AuthTextField'
-import { isValidEmail } from './authValidation'
+import { AuthTextField, GoogleAuthButton, LoginTemplate } from '../../features/auth/components'
 import {
   authAlertErrorClass,
   authAlertSuccessClass,
   authButtonBaseClass,
-  authCardClass,
   authFooterClass,
   authFormGroupClass,
-  authLayoutClass,
   authSmallLinkClass,
-  authSubtitleClass,
-  authTitleClass,
-} from './authUi'
+  isValidEmail,
+} from '../../features/auth/utils'
 
 type LoginFormValues = Pick<LoginRequest, 'email' | 'matKhau'>
 
@@ -28,16 +24,18 @@ type LocationState = {
   from?: {
     pathname?: string
   }
+  email?: string
   registerMessage?: string
 }
 
 export function CustomerLogin() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login } = useAuth()
+  const { login, loginWithGoogle, logout } = useAuth()
+  const locationState = location.state as LocationState | null
 
   const [form, setForm] = useState<LoginFormValues>({
-    email: '',
+    email: locationState?.email ?? '',
     matKhau: '',
   })
 
@@ -45,9 +43,21 @@ export function CustomerLogin() {
   const [submitError, setSubmitError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const locationState = location.state as LocationState | null
   const redirectPath = locationState?.from?.pathname
   const registerMessage = locationState?.registerMessage
+
+  const validateCustomerRole = async () => {
+    const user = tokenStorage.getUserFromToken()
+    const role = normalizeRole(user?.role)
+
+    if (role !== 'KHACH_HANG') {
+      await logout()
+      setSubmitError('Tài khoản này không thể đăng nhập ở cổng khách hàng. Vui lòng dùng đúng trang đăng nhập.')
+      return null
+    }
+
+    return getDefaultPathByRole(user?.role)
+  }
 
   const updateField = (field: keyof LoginFormValues, value: string) => {
     setForm((current) => ({
@@ -96,8 +106,10 @@ export function CustomerLogin() {
         matKhau: form.matKhau,
       })
 
-      const user = tokenStorage.getUserFromToken()
-      const defaultPath = getDefaultPathByRole(user?.role)
+      const defaultPath = await validateCustomerRole()
+      if (!defaultPath) {
+        return
+      }
 
       navigate(redirectPath || defaultPath, { replace: true })
     } catch (error) {
@@ -107,84 +119,103 @@ export function CustomerLogin() {
     }
   }
 
+  const handleGoogleLogin = async (idToken: string) => {
+    setLoading(true)
+    setSubmitError('')
+
+    try {
+      await loginWithGoogle({
+        idToken,
+        loaiTaiKhoan: 'KHACH_HANG',
+      })
+
+      const defaultPath = await validateCustomerRole()
+      if (!defaultPath) {
+        return
+      }
+
+      navigate(redirectPath || defaultPath, { replace: true })
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, 'Đăng nhập Google thất bại.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className={`${authLayoutClass} bg-gradient-to-br from-blue-50 via-white to-indigo-50`}>
-      <div className={`${authCardClass} max-w-[420px] border-blue-100`}>
-        <div className="mb-8 text-center">
-          <h2 className={authTitleClass}>Đăng nhập</h2>
-          <p className={authSubtitleClass}>
-            Khám phá những chuyến đi tuyệt vời cùng TraVi
-          </p>
+    <LoginTemplate
+      activeRole="KHACH_HANG"
+      title="Chào mừng trở lại"
+      subtitle="Đăng nhập tài khoản khách hàng để đặt phòng và quản lý hành trình"
+    >
+      {registerMessage && <div className={authAlertSuccessClass}>{registerMessage}</div>}
+      {submitError && <div className={authAlertErrorClass}>{submitError}</div>}
+
+      <form onSubmit={handleSubmit} noValidate>
+        <div className={authFormGroupClass}>
+          <AuthTextField
+            id="customer-email"
+            name="email"
+            label="Địa chỉ email"
+            type="email"
+            value={form.email}
+            placeholder="name@example.com"
+            autoComplete="email"
+            error={errors.email}
+            icon="mail"
+            tone="blue"
+            onChange={(value) => updateField('email', value)}
+          />
         </div>
 
-        {registerMessage && <div className={authAlertSuccessClass}>{registerMessage}</div>}
-        {submitError && <div className={authAlertErrorClass}>{submitError}</div>}
-
-        <form onSubmit={handleSubmit} noValidate>
-          <div className={authFormGroupClass}>
-            <AuthTextField
-              id="customer-email"
-              name="email"
-              label="Email"
-              type="email"
-              value={form.email}
-              placeholder="khachhang@gmail.com"
-              autoComplete="email"
-              error={errors.email}
-              icon="mail"
-              tone="blue"
-              onChange={(value) => updateField('email', value)}
-            />
-          </div>
-
-          <div className="mb-6">
-            <AuthTextField
-              id="customer-password"
-              name="matKhau"
-              label="Mật khẩu"
-              type="password"
-              value={form.matKhau}
-              placeholder="Nhập mật khẩu"
-              autoComplete="current-password"
-              error={errors.matKhau}
-              icon="lock"
-              tone="blue"
-              onChange={(value) => updateField('matKhau', value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`${authButtonBaseClass} bg-blue-600 shadow-lg shadow-blue-200 hover:bg-blue-700`}
-          >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-          </button>
-        </form>
-
-        <div className={authFooterClass}>
-          Chưa có tài khoản?{' '}
-          <Link to="/register" className="font-bold text-blue-600 hover:text-blue-800">
-            Đăng ký ngay
-          </Link>
+        <div className="mb-6">
+          <AuthTextField
+            id="customer-password"
+            name="matKhau"
+            label="Mật khẩu"
+            type="password"
+            value={form.matKhau}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            error={errors.matKhau}
+            icon="lock"
+            tone="blue"
+            labelAction={
+              <Link
+                to="/forgot-password"
+                state={{ email: form.email.trim() }}
+                className={authSmallLinkClass}
+              >
+                Quên mật khẩu?
+              </Link>
+            }
+            showPasswordToggle
+            onChange={(value) => updateField('matKhau', value)}
+          />
         </div>
 
-        <div className="flex justify-center gap-4 pt-6 mt-6 border-t border-gray-100">
-          <Link
-            to="/partner/login"
-            className={`${authSmallLinkClass} text-gray-400 hover:text-emerald-600`}
-          >
-            Dành cho đối tác
-          </Link>
-          <span className="text-gray-200">|</span>
-          <Link
-            to="/admin/login"
-            className={`${authSmallLinkClass} text-gray-400 hover:text-slate-800`}
-          >
-            Quản trị viên
-          </Link>
-        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className={`${authButtonBaseClass} cursor-pointer bg-blue-500 shadow-[0_12px_30px_rgba(0,59,27,0.16)] hover:bg-blue-600`}
+        >
+          {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        </button>
+
+        <GoogleAuthButton
+          disabled={loading}
+          isLoading={loading}
+          onCredential={handleGoogleLogin}
+          onError={setSubmitError}
+        />
+      </form>
+
+      <div className={authFooterClass}>
+        Chưa có tài khoản?{' '}
+        <Link to="/register" className="cursor-pointer font-bold text-blue-500 hover:text-blue-600">
+          Đăng ký ngay
+        </Link>
       </div>
-    </div>
-  )
+    </LoginTemplate>
+  );
 }

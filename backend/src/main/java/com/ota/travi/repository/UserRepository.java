@@ -9,9 +9,10 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmail(String email);
+
     Optional<User> findByUsername(String username);
 
-    // Dùng cho chức năng Đăng ký (kiểm tra trùng lặp)
     boolean existsByEmail(String email);
+
     boolean existsByUsername(String username);
 }

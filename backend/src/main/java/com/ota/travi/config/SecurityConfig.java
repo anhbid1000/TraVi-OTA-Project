@@ -65,8 +65,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of(frontendURL));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -79,11 +79,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF vì chúng ta dùng Token Stateless
-                .cors(cors -> cors.configure(http)) // Bật CORS để cho phép Frontend React gọi API
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Bật CORS để cho phép Frontend React gọi API
                 .authorizeHttpRequests(auth -> auth
                         // 1. CÁC API MỞ TỰ DO (Không cần đăng nhập)
                         .requestMatchers(AUTH_PREFIX + "/**").permitAll()
                         .requestMatchers(PUBLIC_PREFIX + "/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
 
                         // 2. CÁC API PHÂN QUYỀN (Roles theo Seed Data DB)
                         .requestMatchers(ADMIN_PREFIX +"/**").hasRole("QUAN_TRI_VIEN")

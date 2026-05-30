@@ -19,6 +19,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+import static com.ota.travi.constant.ApiEndpoints.AUTH_PREFIX;
+import static com.ota.travi.constant.ApiEndpoints.PUBLIC_PREFIX;
+
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -30,6 +33,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private CustomUserDetailsService userDetailsService; // lấy user từ Database
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
+        return requestUri != null && (requestUri.startsWith(AUTH_PREFIX) || requestUri.startsWith(PUBLIC_PREFIX));
+    }
 
     @Override
     protected void doFilterInternal(
@@ -65,22 +74,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (ExpiredJwtException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token đã hết hạn. Hãy đăng nhập lại");
+            response.setContentType("application/json; charset=UTF-8");
+            response.getWriter().write("{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"Token đã hết hạn. Hãy đăng nhập lại.\"}");
             return; // Dừng lại luôn, không cho đi tiếp
 
         } catch (SignatureException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Chữ ký token không hợp lje.");
+            response.setContentType("application/json; charset=UTF-8");
+            response.getWriter().write("{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"Chữ ký token không hợp lệ.\"}");
             return; // Dừng lại luôn
 
         } catch (MalformedJwtException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Malformed token format.");
+            response.setContentType("application/json; charset=UTF-8");
+            response.getWriter().write("{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"Định dạng token không hợp lệ.\"}");
             return; // Dừng lại luôn
 
         } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Unauthorized access.");
+            response.setContentType("application/json; charset=UTF-8");
+            response.getWriter().write("{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"Không thể xác thực phiên đăng nhập hiện tại.\"}");
             return; // Dừng lại luôn
         }
 

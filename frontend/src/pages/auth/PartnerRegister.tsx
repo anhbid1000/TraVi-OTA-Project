@@ -1,24 +1,22 @@
 import { useState, type FormEvent } from 'react'
-import { Building2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 import { authService } from '../../services/authService'
+import { tokenStorage } from '../../services/tokenStorage'
 import type { RegisterRequest } from '../../types/auth'
+import { normalizeRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
-import { AuthTextField } from './AuthTextField'
-import { isValidEmail, isValidPhoneNumber, validatePassword } from './authValidation'
+import { AuthTextField, GoogleAuthButton, LoginTemplate } from '../../features/auth/components'
 import {
   authAlertErrorClass,
   authButtonBaseClass,
-  authCardClass,
   authFooterClass,
   authFormGroupClass,
-  authIconBoxClass,
   authLastFormGroupClass,
-  authLayoutClass,
-  authSmallLinkClass,
-  authSubtitleClass,
-  authTitleClass,
-} from './authUi'
+  isValidEmail,
+  isValidPhoneNumber,
+  validatePassword,
+} from '../../features/auth/utils'
 
 type PartnerRegisterFormValues = {
   username: string
@@ -42,6 +40,7 @@ const initialForm: PartnerRegisterFormValues = {
 
 export function PartnerRegister() {
   const navigate = useNavigate()
+  const { loginWithGoogle, logout } = useAuth()
 
   const [form, setForm] = useState<PartnerRegisterFormValues>(initialForm)
   const [errors, setErrors] = useState<PartnerRegisterFormErrors>({})
@@ -150,20 +149,39 @@ export function PartnerRegister() {
     }
   }
 
+  const handleGoogleRegister = async (idToken: string) => {
+    setLoading(true)
+    setSubmitError('')
+
+    try {
+      await loginWithGoogle({
+        idToken,
+        loaiTaiKhoan: 'DOI_TAC',
+      })
+
+      const user = tokenStorage.getUserFromToken()
+      const role = normalizeRole(user?.role)
+
+      if (role !== 'DOI_TAC') {
+        await logout()
+        setSubmitError('Tài khoản này không có quyền truy cập khu vực đối tác.')
+        return
+      }
+
+      navigate('/partner', { replace: true })
+    } catch (error) {
+      setSubmitError(getApiErrorMessage(error, 'Đăng ký Google thất bại.'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className={`${authLayoutClass} bg-gradient-to-br from-emerald-50 via-white to-teal-50`}>
-      <div className={`${authCardClass} border-emerald-100`}>
-        <div className="mb-8 text-center">
-          <div className={`${authIconBoxClass} bg-emerald-50 border-emerald-100 text-emerald-600`}>
-            <Building2 size={30} strokeWidth={2.1} aria-hidden="true" />
-          </div>
-
-          <h2 className={authTitleClass}>Đăng ký đối tác</h2>
-          <p className={authSubtitleClass}>
-            Dành cho khách sạn, nhà hàng và đơn vị cung cấp dịch vụ du lịch
-          </p>
-        </div>
-
+    <LoginTemplate
+      activeRole="DOI_TAC"
+      title="Đăng ký đối tác"
+      subtitle="Dành cho khách sạn, nhà hàng và đơn vị cung cấp dịch vụ du lịch"
+    >
         {submitError && <div className={authAlertErrorClass}>{submitError}</div>}
 
         <form onSubmit={handleSubmit} noValidate>
@@ -241,6 +259,7 @@ export function PartnerRegister() {
               error={errors.matKhau}
               icon="lock"
               tone="emerald"
+              showPasswordToggle
               onChange={(value) => updateField('matKhau', value)}
             />
           </div>
@@ -257,6 +276,7 @@ export function PartnerRegister() {
               error={errors.confirmPassword}
               icon="lock"
               tone="emerald"
+              showPasswordToggle
               onChange={(value) => updateField('confirmPassword', value)}
             />
           </div>
@@ -268,6 +288,13 @@ export function PartnerRegister() {
           >
             {loading ? 'Đang đăng ký...' : 'Đăng ký đối tác'}
           </button>
+
+          <GoogleAuthButton
+            disabled={loading}
+            isLoading={loading}
+            onCredential={handleGoogleRegister}
+            onError={setSubmitError}
+          />
         </form>
 
         <div className={authFooterClass}>
@@ -279,16 +306,6 @@ export function PartnerRegister() {
             Đăng nhập
           </Link>
         </div>
-
-        <div className="mt-6 text-center">
-          <Link
-            to="/register"
-            className={`${authSmallLinkClass} text-gray-400 hover:text-blue-600`}
-          >
-            Đăng ký tài khoản khách hàng
-          </Link>
-        </div>
-      </div>
-    </div>
+    </LoginTemplate>
   )
 }

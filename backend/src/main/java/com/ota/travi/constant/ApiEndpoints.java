@@ -12,6 +12,17 @@ public final class ApiEndpoints {
 
     // 1. GUEST - Public routes (no auth required)
     public static final String PUBLIC_PREFIX = BASE_PREFIX + "/public";
+    public static final String PUBLIC_HOTELS_SEARCH = PUBLIC_PREFIX + "/hotels/search";
+    public static final String PUBLIC_HOTELS_FEATURED = PUBLIC_PREFIX + "/hotels/featured";
+    public static final String PUBLIC_HOTELS_FILTER_OPTIONS = PUBLIC_PREFIX + "/hotels/filter-options/data";
+    public static final String PUBLIC_HOTEL_DETAIL = PUBLIC_PREFIX + "/hotels/{id}";
+    public static final String PUBLIC_RESTAURANTS_SEARCH = PUBLIC_PREFIX + "/restaurants/search";
+    public static final String PUBLIC_RESTAURANTS_FEATURED = PUBLIC_PREFIX + "/restaurants/featured";
+    public static final String PUBLIC_RESTAURANTS_FILTER_OPTIONS = PUBLIC_PREFIX + "/restaurants/filter-options/data";
+    public static final String PUBLIC_RESTAURANT_DETAIL = PUBLIC_PREFIX + "/restaurants/{id}";
+    public static final String PUBLIC_WEATHER_FORECAST = PUBLIC_PREFIX + "/weather/forecast";
+    public static final String PUBLIC_WEATHER_FORECAST_RANGE = PUBLIC_PREFIX + "/weather/forecast/range";
+    public static final String PUBLIC_CITIES = PUBLIC_PREFIX + "/locations/cities";
     public static final String PUBLIC_ROOMS_SEARCH = PUBLIC_PREFIX + "/rooms/search"; // planned
     public static final String PUBLIC_CULTURE_SPOTS = PUBLIC_PREFIX + "/culture-spots"; // planned
 
@@ -21,8 +32,12 @@ public final class ApiEndpoints {
     public static final String AUTH_VERIFY_EMAIL = AUTH_PREFIX + "/verify-email";
     public static final String AUTH_RESEND_OTP = AUTH_PREFIX + "/resend-otp";
     public static final String AUTH_LOGIN = AUTH_PREFIX + "/login";
+    public static final String AUTH_GOOGLE = AUTH_PREFIX + "/google";
     public static final String AUTH_LOGOUT = AUTH_PREFIX + "/logout";
     public static final String AUTH_REFRESH = AUTH_PREFIX + "/refresh";
+    public static final String AUTH_FORGOT_PASSWORD_REQUEST_OTP = AUTH_PREFIX + "/forgot-password/request-otp";
+    public static final String AUTH_FORGOT_PASSWORD_VERIFY_OTP = AUTH_PREFIX + "/forgot-password/verify-otp";
+    public static final String AUTH_FORGOT_PASSWORD_RESET = AUTH_PREFIX + "/forgot-password/reset";
 
     // 2. USER - Authenticated user endpoints (ROLE: USER)
     public static final String USER_PREFIX = BASE_PREFIX + "/user";

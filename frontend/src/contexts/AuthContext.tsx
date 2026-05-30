@@ -7,8 +7,9 @@ import {
 } from 'react'
 import { authService } from '../services/authService'
 import { tokenStorage } from '../services/tokenStorage'
+import { userService } from '../services/userService'
 import { AuthContext, type AuthContextValue } from './authContext'
-import type { AuthUser, LoginRequest } from '../types/auth'
+import type { AuthUser, GoogleAuthRequest, LoginRequest } from '../types/auth'
 
 type AuthProviderProps = {
   children: ReactNode
@@ -39,6 +40,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       try {
         const auth = await authService.login(payload)
+        syncSessionFromStorage()
+        return auth
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [syncSessionFromStorage],
+  )
+
+  const loginWithGoogle = useCallback(
+    async (payload: GoogleAuthRequest) => {
+      setIsLoading(true)
+
+      try {
+        const auth = await authService.loginWithGoogle(payload)
         syncSessionFromStorage()
         return auth
       } finally {
@@ -91,18 +107,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
     void refreshSession().catch(clearSession)
   }, [accessToken, clearSession, refreshSession])
 
+  const isAuthenticated = Boolean(accessToken && !tokenStorage.isAccessTokenExpired())
+
+  // Fetch user profile when authenticated
+  useEffect(() => {
+    if (!isAuthenticated || user?.email) {
+      return
+    }
+
+    const fetchUserProfile = async () => {
+      try {
+        const profile = await userService.getProfile()
+        setUser({
+          ...user,
+          email: profile.email,
+          hoTen: profile.hoTen,
+          soDienThoai: profile.soDienThoai,
+        } as AuthUser)
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error)
+      }
+    }
+
+    void fetchUserProfile()
+  }, [isAuthenticated, user])
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       accessToken,
       refreshToken,
-      isAuthenticated: Boolean(accessToken && !tokenStorage.isAccessTokenExpired()),
+      isAuthenticated,
       isLoading,
       login,
+      loginWithGoogle,
       logout,
       refreshSession,
     }),
-    [accessToken, isLoading, login, logout, refreshSession, refreshToken, user],
+    [accessToken, isLoading, login, loginWithGoogle, logout, refreshSession, refreshToken, user],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
