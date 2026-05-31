@@ -81,6 +81,34 @@ export type RestaurantBookingResponse = {
   }>
 }
 
+export type BookingSearchResponse = {
+  id: string
+  maDon: string
+  tenTaiSan: string
+  anhTaiSan: string
+  ngayTao: string
+  tongTienThanhToan: number
+  trangThai: string
+  loaiTaiSan: 'HOTEL' | 'RESTAURANT'
+  ngayBatDau?: string
+  ngayKetThuc?: string
+  tenNguoiDat: string
+  sdtNguoiDat: string
+  emailNguoiDat: string
+  soKhach: number
+  rooms?: Array<{
+    tenPhong: string
+    soLuong: number
+    donGia: number
+    thanhTien: number
+  }>
+  tables?: Array<{
+    tenBan: string
+    soChoNgoi: number
+    viTri?: string
+  }>
+}
+
 export const userService = {
   async getProfile(): Promise<UserProfile> {
     const response = await api.get('v1/user/me');
@@ -109,6 +137,20 @@ export const userService = {
     const response = await api.post('v1/user/bookings/restaurant/mock-pay', {
       bookingId,
       paymentRef: `mock_${Date.now()}`,
+    })
+    return response.data
+  },
+
+  async getBookingHistory(type: 'all' | 'hotel' | 'restaurant' = 'all'): Promise<BookingSearchResponse[]> {
+    const response = await api.get('v1/user/bookings', {
+      params: { type }
+    })
+    return response.data
+  },
+
+  async lookupBookingPublicly(maDon: string, email?: string, phone?: string): Promise<BookingSearchResponse> {
+    const response = await api.get('v1/public/bookings/search', {
+      params: { maDon, email, phone }
     })
     return response.data
   },
