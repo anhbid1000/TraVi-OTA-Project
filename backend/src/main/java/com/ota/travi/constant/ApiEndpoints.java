@@ -37,6 +37,8 @@ public final class ApiEndpoints {
     public static final String CUSTOMER_LOYALTY = CUSTOMERS_PREFIX + "/me/loyalty";
     public static final String CUSTOMER_LOYALTY_EXCHANGEABLE_VOUCHERS = CUSTOMER_LOYALTY + "/exchangeable-vouchers";
     public static final String CUSTOMER_LOYALTY_EXCHANGE = CUSTOMER_LOYALTY + "/exchange";
+    public static final String CUSTOMER_PROMOTIONS = BASE_PREFIX + "/promotions";
+    public static final String CUSTOMER_PROMOTIONS_APPLY = CUSTOMER_PROMOTIONS + "/apply";
 
     // 3. PARTNER - Partner / Vendor endpoints (ROLE: PARTNER)
     public static final String PARTNER_LEGACY_PREFIX = API_PREFIX + "/partner";

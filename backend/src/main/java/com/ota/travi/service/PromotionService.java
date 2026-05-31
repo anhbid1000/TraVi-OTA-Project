@@ -1,29 +1,22 @@
 package com.ota.travi.service;
 
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ota.travi.dto.request.PromotionCreateRequest;
 import com.ota.travi.dto.request.VoucherCreateRequest;
 import com.ota.travi.dto.response.PromotionResponse;
-import com.ota.travi.entity.KhuyenMaiTrucTiep;
-import com.ota.travi.entity.UuDai;
-import com.ota.travi.entity.Voucher;
-import com.ota.travi.enums.CreatedByRole;
-import com.ota.travi.enums.TargetType;
-import com.ota.travi.enums.TrangThaiUuDai;
+import com.ota.travi.dto.response.VoucherApplyResponse;
+import com.ota.travi.entity.*;
+import com.ota.travi.enums.*;
 import com.ota.travi.exception.BusinessConflictException;
 import com.ota.travi.exception.BusinessException;
 import com.ota.travi.exception.ForbiddenOperationException;
 import com.ota.travi.exception.ResourceNotFoundException;
-import com.ota.travi.repository.HoSoKinhDoanhRepository;
-import com.ota.travi.repository.KhuyenMaiTrucTiepRepository;
-import com.ota.travi.repository.KhachSanRepository;
-import com.ota.travi.repository.MonAnRepository;
-import com.ota.travi.repository.NhaHangRepository;
-import com.ota.travi.repository.PhongRepository;
-import com.ota.travi.repository.UuDaiRepository;
-import com.ota.travi.repository.VoucherRepository;
+import com.ota.travi.repository.*; // Đảm bảo import đầy đủ các Repository mới
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j; // <-- 1. Thêm import Log
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +26,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j // <-- 1. Thêm annotation này để dùng được biến 'log'
 public class PromotionService {
     private final UuDaiRepository uuDaiRepository;
     private final KhuyenMaiTrucTiepRepository khuyenMaiTrucTiepRepository;
@@ -43,9 +37,28 @@ public class PromotionService {
     private final PhongRepository phongRepository;
     private final MonAnRepository monAnRepository;
 
+    private final KhachHangRepository khachHangRepository;
+    private final LichSuDiemRepository lichSuDiemRepository;
+    private final LoyaltyRuleService loyaltyRuleService;
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
+    private final CustomerVoucherRepository customerVoucherRepository;
+
     @Transactional
     public PromotionResponse createDirectPromotion(PromotionCreateRequest request, String createdByUserId, boolean createdByAdmin) {
         validateDateRange(request.ngayBatDau(), request.ngayKetThuc());
+        List<TrangThaiUuDai> activeStatuses = List.of(TrangThaiUuDai.DA_LEN_LICH, TrangThaiUuDai.DANG_CO_HIEU_LUC);
+        boolean isOverlapped = uuDaiRepository.existsOverlappingPromotion(
+                request.getTargetType(),
+                request.getTargetId(),
+                request.getNgayBatDau(),
+                request.getNgayKetThuc(),
+                activeStatuses
+        );
+
+        if (isOverlapped) {
+            throw new BusinessException("Tài s này đã có chương trình khuyến mãi trực tiếp được áp dụng trong khoảng thời gian đã chọn!");
+        }
         validatePartnerPromotionScope(request, createdByUserId, createdByAdmin);
 
         KhuyenMaiTrucTiep promotion = new KhuyenMaiTrucTiep();
@@ -264,6 +277,52 @@ public class PromotionService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public VoucherApplyResponse applyVoucher(String voucherCode, java.math.BigDecimal originalTotal) {
+        Voucher voucher = voucherRepository.findByMaVoucher(voucherCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Mã voucher không tồn tại"));
+
+        if (voucher.getTrangThaiUuDai() != TrangThaiUuDai.DANG_CO_HIEU_LUC) {
+            throw new BusinessException("Voucher này hiện không khả dụng", HttpStatus.BAD_REQUEST);
+        }
+        if (voucher.getNgayKetThuc().isBefore(LocalDateTime.now())) {
+            throw new BusinessException("Voucher này đã hết hạn sử dụng", HttpStatus.BAD_REQUEST);
+        }
+
+        if (voucher.getDonHangToiThieu() != null && originalTotal.compareTo(voucher.getDonHangToiThieu()) < 0) {
+            throw new BusinessException("Đơn hàng chưa đạt giá trị tối thiểu để áp dụng voucher này", HttpStatus.BAD_REQUEST);
+        }
+
+        int soLuongDaDung = voucher.getSoLuongDaDung() == null ? 0 : voucher.getSoLuongDaDung();
+        if (voucher.getSoLuongPhatHanh() != null && soLuongDaDung >= voucher.getSoLuongPhatHanh()) {
+            throw new BusinessException("Voucher này đã được sử dụng hết lượt", HttpStatus.BAD_REQUEST);
+        }
+
+        java.math.BigDecimal discountAmount = java.math.BigDecimal.ZERO;
+        if (voucher.getLoaiGiamGia() == com.ota.travi.enums.LoaiGiamGia.PHAN_TRAM) {
+            discountAmount = originalTotal.multiply(voucher.getMucGiam()).divide(java.math.BigDecimal.valueOf(100));
+            if (voucher.getGiaTriGiamToiDa() != null && discountAmount.compareTo(voucher.getGiaTriGiamToiDa()) > 0) {
+                discountAmount = voucher.getGiaTriGiamToiDa();
+            }
+        } else if (voucher.getLoaiGiamGia() == com.ota.travi.enums.LoaiGiamGia.SO_TIEN_CO_DINH) {
+            discountAmount = voucher.getMucGiam();
+        }
+
+        if (discountAmount.compareTo(originalTotal) > 0) {
+            discountAmount = originalTotal;
+        }
+
+        java.math.BigDecimal newTotal = originalTotal.subtract(discountAmount);
+
+        return new VoucherApplyResponse(
+                voucherCode,
+                discountAmount,
+                originalTotal,
+                newTotal,
+                "Áp dụng mã voucher thành công!"
+        );
+    }
+
     private void validateDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         if (!endDate.isAfter(startDate)) {
             throw new BusinessException("Ngày kết thúc phải sau ngày bắt đầu", HttpStatus.BAD_REQUEST);
@@ -297,5 +356,84 @@ public class PromotionService {
 
     private BigDecimal defaultBigDecimal(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?")
+    @Transactional
+    public void autoUpdateExpiredPromotions() {
+        log.info("Bắt đầu tiến trình tự động quét và cập nhật trạng thái ưu đãi hết hạn...");
+
+        LocalDateTime now = LocalDateTime.now();
+
+        int updatedCount = uuDaiRepository.updateStatusForExpiredPromotions(
+                TrangThaiUuDai.DA_HET_HAN,
+                now,
+                TrangThaiUuDai.DANG_CO_HIEU_LUC,
+                TrangThaiUuDai.DA_LEN_LICH
+        );
+
+        log.info("Tiến trình hoàn tất. Đã cập nhật trạng thái của {} ưu đãi sang DA_HET_HAN.", updatedCount);
+    }
+
+    @Transactional
+    public void accumulatePoints(String customerId, java.math.BigDecimal bookingAmount, Long bookingId) {
+        KhachHang khachHang = khachHangRepository.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng"));
+
+        LoyaltyRule rule = loyaltyRuleService.requireActiveRule();
+
+        if (rule.getMoneyPerPoint() == null || rule.getMoneyPerPoint().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        int pointsEarned = bookingAmount.divide(rule.getMoneyPerPoint(), 0, java.math.RoundingMode.FLOOR).intValue();
+        if (pointsEarned <= 0) return;
+
+        int currentPoints = defaultPoints(khachHang);
+        int newPoints = currentPoints + pointsEarned;
+
+        java.math.BigDecimal currentSpending = currentSpending(khachHang);
+        khachHang.setTongChiTieu(currentSpending.add(bookingAmount).doubleValue());
+        khachHang.setDiemThanhVien(newPoints);
+
+        khachHang.setHangThanhVien(resolveTier(khachHang.getTongChiTieu(), rule));
+        khachHangRepository.save(khachHang);
+
+        LichSuDiem history = new LichSuDiem();
+        history.setKhachHang(khachHang);
+        history.setSoDiemThayDoi(pointsEarned);
+        history.setLoaiGiaoDichDiem(LoaiGiaoDichDiem.TICH_DIEM);
+        history.setDiemTruocGiaoDich(currentPoints);
+        history.setDiemSauGiaoDich(newPoints);
+        history.setBookingId(bookingId);
+        history.setGhiChu("Tích điểm tự động từ đơn đặt phòng #" + bookingId);
+
+        lichSuDiemRepository.save(history);
+    }
+
+    // <-- 3. Định nghĩa thêm các hàm bổ trợ bị thiếu bên dưới để hết báo đỏ:
+
+    private int defaultPoints(KhachHang khachHang) {
+        return khachHang.getDiemThanhVien() == null ? 0 : khachHang.getDiemThanhVien();
+    }
+
+    private java.math.BigDecimal currentSpending(KhachHang khachHang) {
+        return khachHang.getTongChiTieu() == null ? java.math.BigDecimal.ZERO : java.math.BigDecimal.valueOf(khachHang.getTongChiTieu());
+    }
+
+    private HangThanhVien resolveTier(Double tongChiTieu, LoyaltyRule rule) {
+        if (tongChiTieu == null || rule == null) {
+            return HangThanhVien.DONG;
+        }
+
+        if (tongChiTieu >= rule.getNguongKimCuong()) {
+            return HangThanhVien.KIM_CUONG;
+        } else if (tongChiTieu >= rule.getNguongVang()) {
+            return HangThanhVien.VANG;
+        } else if (tongChiTieu >= rule.getNguongBac()) {
+            return HangThanhVien.BAC;
+        }
+
+        return HangThanhVien.DONG;
     }
 }
