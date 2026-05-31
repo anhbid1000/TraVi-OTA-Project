@@ -26,6 +26,7 @@ public final class ApiEndpoints {
     public static final String PUBLIC_CITIES = PUBLIC_PREFIX + "/locations/cities";
     public static final String PUBLIC_ROOMS_SEARCH = PUBLIC_PREFIX + "/rooms/search"; // planned
     public static final String PUBLIC_CULTURE_SPOTS = PUBLIC_PREFIX + "/culture-spots"; // planned
+    public static final String PUBLIC_BOOKING_SEARCH = PUBLIC_PREFIX + "/bookings/search";
 
     // 1.a Authentication (public) - keep under versioned auth prefix
     public static final String AUTH_PREFIX = BASE_PREFIX + "/auth";

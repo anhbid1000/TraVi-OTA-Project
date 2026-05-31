@@ -1,8 +1,22 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarDays, ChevronRight as ChevronRightIcon, Ticket, Phone as PhoneIcon, Mail as MailIcon, ShieldCheck, Zap, HeadphonesIcon } from 'lucide-react'
+import { 
+  CalendarDays, 
+  ChevronRight as ChevronRightIcon, 
+  Ticket, 
+  Phone as PhoneIcon, 
+  Mail as MailIcon, 
+  ShieldCheck, 
+  Zap, 
+  HeadphonesIcon, 
+  X, 
+  Loader2, 
+  AlertCircle 
+} from 'lucide-react'
 import { Navbar } from '../../components/layout/Navbar'
 import { useAuth } from '../../hooks/useAuth'
 import type { AuthUser } from '../../types/auth'
+import { userService, type BookingSearchResponse } from '../../services/userService'
 
 function getUserDisplayName(user: AuthUser | null) {
   if (!user) return 'bạn'
@@ -27,9 +41,128 @@ function getUserDisplayName(user: AuthUser | null) {
   return 'bạn'
 }
 
+function formatVND(amount: number) {
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'CHO_THANH_TOAN':
+      return <span className="rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 text-xs font-semibold">Chờ thanh toán</span>
+    case 'DA_THANH_TOAN':
+      return <span className="rounded-full bg-green-50 text-green-700 border border-green-200 px-3 py-1 text-xs font-semibold">Đã thanh toán</span>
+    case 'DA_XAC_NHAN':
+      return <span className="rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 text-xs font-semibold">Đã xác nhận</span>
+    case 'DANG_PHUC_VU':
+      return <span className="rounded-full bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1 text-xs font-semibold">Đang phục vụ</span>
+    case 'DA_HOAN_THANH':
+      return <span className="rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-3 py-1 text-xs font-semibold">Đã hoàn thành</span>
+    case 'DA_HUY':
+      return <span className="rounded-full bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1 text-xs font-semibold">Đã hủy</span>
+    case 'YEU_CAU_HOAN_TIEN':
+      return <span className="rounded-full bg-orange-50 text-orange-700 border border-orange-200 px-3 py-1 text-xs font-semibold">Yêu cầu hoàn tiền</span>
+    case 'DA_HOAN_TIEN':
+      return <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 text-xs font-semibold">Đã hoàn tiền</span>
+    case 'THANH_TOAN_THAT_BAI':
+      return <span className="rounded-full bg-red-50 text-red-700 border border-red-200 px-3 py-1 text-xs font-semibold">Thanh toán thất bại</span>
+    case 'KHACH_KHONG_DEN':
+      return <span className="rounded-full bg-zinc-50 text-zinc-700 border border-zinc-200 px-3 py-1 text-xs font-semibold">Khách không đến</span>
+    default:
+      return <span className="rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-3 py-1 text-xs font-semibold">{status}</span>
+  }
+}
+
 export function SearchPage() {
   const { isAuthenticated, user } = useAuth()
   const displayName = getUserDisplayName(user)
+
+  // State for Booking History (Authenticated)
+  const [bookings, setBookings] = useState<BookingSearchResponse[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'all' | 'hotel' | 'restaurant'>('all')
+
+  // Search Filters in Booking History (Authenticated)
+  const [quickMaDon, setQuickMaDon] = useState('')
+  const [quickPhone, setQuickPhone] = useState('')
+  const [filterMaDon, setFilterMaDon] = useState('')
+  const [filterPhone, setFilterPhone] = useState('')
+
+  // State for Unauthenticated Guest Search Form
+  const [guestMaDon, setGuestMaDon] = useState('')
+  const [guestEmail, setGuestEmail] = useState('')
+  const [guestPhone, setGuestPhone] = useState('')
+  const [guestLoading, setGuestLoading] = useState(false)
+  const [guestError, setGuestError] = useState<string | null>(null)
+
+  // Unified Details Modal State
+  const [selectedBooking, setSelectedBooking] = useState<BookingSearchResponse | null>(null)
+
+  // Fetch Booking History when Authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchHistory = async () => {
+        setLoading(true)
+        setError(null)
+        try {
+          const res = await userService.getBookingHistory(activeTab)
+          setBookings(res)
+        } catch (err: any) {
+          console.error(err)
+          setError(err.response?.data || 'Không thể tải lịch sử đặt chỗ. Vui lòng thử lại sau.')
+        } finally {
+          setLoading(false)
+        }
+      }
+      fetchHistory()
+    }
+  }, [isAuthenticated, activeTab])
+
+  // Filter history bookings in memory
+  const filteredBookings = bookings.filter(b => {
+    const matchCode = filterMaDon ? b.maDon.toLowerCase().includes(filterMaDon.toLowerCase()) : true
+    const matchPhone = filterPhone ? b.sdtNguoiDat.includes(filterPhone) : true
+    return matchCode && matchPhone
+  })
+
+  // Handle Quick Search filter trigger
+  const handleQuickSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setFilterMaDon(quickMaDon)
+    setFilterPhone(quickPhone)
+  }
+
+  // Handle Public Guest Lookup Submit
+  const handleGuestSearch = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!guestMaDon.trim()) {
+      setGuestError('Vui lòng nhập mã đặt chỗ.')
+      return
+    }
+    if (!guestEmail.trim() && !guestPhone.trim()) {
+      setGuestError('Vui lòng nhập ít nhất Email hoặc Số điện thoại xác nhận để tra cứu.')
+      return
+    }
+
+    setGuestLoading(true)
+    setGuestError(null)
+    try {
+      const result = await userService.lookupBookingPublicly(
+        guestMaDon.trim(),
+        guestEmail.trim() || undefined,
+        guestPhone.trim() || undefined
+      )
+      setSelectedBooking(result)
+    } catch (err: any) {
+      console.error(err)
+      setGuestError(
+        err.response?.data || 
+        'Tra cứu thất bại. Vui lòng kiểm tra lại mã đặt chỗ và thông tin xác thực.'
+      )
+    } finally {
+      setGuestLoading(false)
+    }
+  }
 
   // Giao diện khi khách ĐÃ đăng nhập
   if (isAuthenticated) {
@@ -52,200 +185,180 @@ export function SearchPage() {
           <section className="mb-12">
             <div className="max-w-3xl rounded-xl border border-surface-variant bg-white/60 p-6 shadow-sm backdrop-blur-md">
               <h2 className="mb-4 text-sm font-semibold text-primary">Tra cứu nhanh đơn đặt chỗ</h2>
-              <div className="flex flex-col gap-4 md:flex-row">
+              <form onSubmit={handleQuickSearchSubmit} className="flex flex-col gap-4 md:flex-row">
                 <div className="relative flex-1">
                   <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" size={20} />
                   <input 
                     className="w-full rounded-lg border border-outline-variant bg-white py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-secondary focus:ring-2 focus:ring-secondary" 
                     placeholder="Mã đặt chỗ (Booking ID)" 
                     type="text" 
+                    value={quickMaDon}
+                    onChange={(e) => setQuickMaDon(e.target.value)}
                   />
                 </div>
                 <div className="relative flex-1">
                   <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" size={20} />
                   <input 
                     className="w-full rounded-lg border border-outline-variant bg-white py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-secondary focus:ring-2 focus:ring-secondary" 
-                    placeholder="Số điện thoại" 
+                    placeholder="Số điện thoại người đặt" 
                     type="tel" 
+                    value={quickPhone}
+                    onChange={(e) => setQuickPhone(e.target.value)}
                   />
                 </div>
-                <button className="rounded-lg bg-primary px-8 py-3 text-sm font-semibold text-white transition-all hover:bg-primary-container active:scale-95">
-                  Tra cứu
-                </button>
-              </div>
+                <div className="flex gap-2">
+                  <button 
+                    type="submit" 
+                    className="rounded-lg bg-primary px-8 py-3 text-sm font-semibold text-white transition-all hover:bg-primary-container active:scale-95 whitespace-nowrap"
+                  >
+                    Tra cứu
+                  </button>
+                  {(filterMaDon || filterPhone) && (
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setQuickMaDon('')
+                        setQuickPhone('')
+                        setFilterMaDon('')
+                        setFilterPhone('')
+                      }}
+                      className="rounded-lg border border-outline px-4 py-3 text-sm font-semibold text-on-surface hover:bg-surface-container active:scale-95 whitespace-nowrap"
+                    >
+                      Xóa lọc
+                    </button>
+                  )}
+                </div>
+              </form>
             </div>
           </section>
 
           {/* Booking History Section */}
-          <section>
+          <section className="pb-20">
             <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <h2 className="font-display text-2xl font-bold text-on-surface">Lịch sử đặt chỗ</h2>
               
               {/* Filter Tabs */}
-              <div className="flex rounded-lg bg-surface-container p-1">
-                <button className="rounded-md bg-white px-6 py-2 text-sm font-semibold text-primary shadow-sm transition-all">Tất cả</button>
-                <button className="rounded-md px-6 py-2 text-sm font-semibold text-on-surface-variant transition-all hover:text-primary">Khách sạn</button>
-                <button className="rounded-md px-6 py-2 text-sm font-semibold text-on-surface-variant transition-all hover:text-primary">Nhà hàng</button>
+              <div className="flex rounded-lg bg-surface-container p-1 shrink-0 max-w-max">
+                <button 
+                  onClick={() => setActiveTab('all')}
+                  className={`rounded-md px-6 py-2 text-sm font-semibold transition-all ${
+                    activeTab === 'all' 
+                      ? 'bg-white text-primary shadow-sm' 
+                      : 'text-on-surface-variant hover:text-primary'
+                  }`}
+                >
+                  Tất cả
+                </button>
+                <button 
+                  onClick={() => setActiveTab('hotel')}
+                  className={`rounded-md px-6 py-2 text-sm font-semibold transition-all ${
+                    activeTab === 'hotel' 
+                      ? 'bg-white text-primary shadow-sm' 
+                      : 'text-on-surface-variant hover:text-primary'
+                  }`}
+                >
+                  Khách sạn
+                </button>
+                <button 
+                  onClick={() => setActiveTab('restaurant')}
+                  className={`rounded-md px-6 py-2 text-sm font-semibold transition-all ${
+                    activeTab === 'restaurant' 
+                      ? 'bg-white text-primary shadow-sm' 
+                      : 'text-on-surface-variant hover:text-primary'
+                  }`}
+                >
+                  Nhà hàng
+                </button>
               </div>
             </div>
 
             {/* Booking Cards Grid */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              
-              {/* Booking Card 1 */}
-              <div className="group flex flex-col overflow-hidden rounded-xl border border-surface-variant bg-white transition-all hover:shadow-lg sm:flex-row">
-                <div className="h-48 overflow-hidden sm:h-auto sm:w-48">
-                  <img 
-                    alt="Luxury Resort" 
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBf4CYuBlWk3p0sn7wnTcTYGSYRDGUQcNhtKnph_T7hINcc503n73PzZdCozRb2yodeDU6utHVJSGlCfMxtXF4FgpBROdgzETkiOLTr-wT2mOhxb_D1-c6G-YIJyP4AqLKPl5BDa-MTnBErKBoJxncm-Nsfa44bKHpFjHeljJNO5-SZjXdFjH2p1-BxyPVMMjdPkrwZ4MKLquZaVpNPzY8B28q39ajoykJRswFiJwQTqfue_LluoKsBHNrNX00ScAioLAd8uT1rimc"
-                  />
-                </div>
-                <div className="flex flex-1 flex-col justify-between p-6">
-                  <div>
-                    <div className="mb-2 flex items-start justify-between">
-                      <h3 className="font-display text-xl font-semibold text-primary">InterContinental Danang</h3>
-                      <span className="rounded-full bg-mint-green px-3 py-1 text-xs font-medium text-secondary">Confirmed</span>
-                    </div>
-                    <div className="mb-4 space-y-1">
-                      <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <CalendarDays size={16} /> 15/12/2024 - 20/12/2024
-                      </p>
-                      <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <Ticket size={16} /> ID: TV-882910
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-surface-variant pt-4">
-                    <div>
-                      <p className="text-xs text-outline">Tổng thanh toán</p>
-                      <p className="font-display text-xl font-semibold text-secondary">24.500.000đ</p>
-                    </div>
-                    <button className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                      Chi tiết <ChevronRightIcon size={16} />
-                    </button>
-                  </div>
-                </div>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant">
+                <Loader2 className="animate-spin text-primary mb-4" size={40} />
+                <p className="text-sm">Đang tải danh sách đơn hàng...</p>
               </div>
-
-              {/* Booking Card 2 */}
-              <div className="group flex flex-col overflow-hidden rounded-xl border border-surface-variant bg-white transition-all hover:shadow-lg sm:flex-row">
-                <div className="h-48 overflow-hidden sm:h-auto sm:w-48">
-                  <img 
-                    alt="Fine Dining" 
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7KmynuimtyJArw5zjWmXnOe4JWzbU6oUIR4fOwe2zV7AlpAvHU0WqWWXO1oC2O6bbd7w3Ca39H691N_zrFgCPGj3WLeTx_DpqtdS7v5Q6QRyOaTLlf5wJIUlMSE9U4RhSb-HEe97pDh7pIbcXV3mxVWVt0ahE8-ooQt86E3FZyXIa5vvjyyAABNuXnNORCHG1BrfU9BKGRjYqZRzUwyYKvoxmVSo70DEg_cTb02_R-Sb0O3fVEabrk_pUlH2qW3FKJgt_ndQFB24"
-                  />
-                </div>
-                <div className="flex flex-1 flex-col justify-between p-6">
-                  <div>
-                    <div className="mb-2 flex items-start justify-between">
-                      <h3 className="font-display text-xl font-semibold text-primary">Le Corto Dining</h3>
-                      <span className="rounded-full bg-surface-variant px-3 py-1 text-xs font-medium text-on-surface">Completed</span>
-                    </div>
-                    <div className="mb-4 space-y-1">
-                      <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <CalendarDays size={16} /> 10/11/2024 • 19:00
-                      </p>
-                      <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <Ticket size={16} /> ID: TV-442105
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-surface-variant pt-4">
-                    <div>
-                      <p className="text-xs text-outline">Tổng thanh toán</p>
-                      <p className="font-display text-xl font-semibold text-secondary">3.200.000đ</p>
-                    </div>
-                    <button className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                      Chi tiết <ChevronRightIcon size={16} />
-                    </button>
-                  </div>
-                </div>
+            ) : error ? (
+              <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-6 text-red-800">
+                <AlertCircle size={24} className="shrink-0" />
+                <p className="text-sm">{error}</p>
               </div>
-
-              {/* Booking Card 3 */}
-              <div className="group flex flex-col overflow-hidden rounded-xl border border-surface-variant bg-white transition-all hover:shadow-lg sm:flex-row">
-                <div className="h-48 overflow-hidden sm:h-auto sm:w-48">
-                  <img 
-                    alt="Boutique Hotel" 
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuByw0p4F0yUm5Aj-TXh4BZjNYgI93n7UeQX_NWJWrMXYqmTZjsHvOwhBDWe_F0SVfMp8djI7-4-VGsHL7lKepVs8zSVUP94YEuKdmEUM6VpYk9N1Jmxbt-jBvbgRnta_DPQz_d__IdoLl8ko-yK5Y8f1zKA4IjeQVJ3dGjXLAZeYxXkYj8W96cCMuMYRP8A2Okhp4O3lTyjZbo28DEPRz2UM-lFM4u_zPcVcHz7KwQcQOEoqfLhpy3duwTUUO92vOB0eqyrikltjYM"
-                  />
-                </div>
-                <div className="flex flex-1 flex-col justify-between p-6">
-                  <div>
-                    <div className="mb-2 flex items-start justify-between">
-                      <h3 className="font-display text-xl font-semibold text-primary">Silk Path Grand Resort</h3>
-                      <span className="rounded-full bg-error-container px-3 py-1 text-xs font-medium text-error">Cancelled</span>
-                    </div>
-                    <div className="mb-4 space-y-1">
-                      <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <CalendarDays size={16} /> 05/10/2024 - 08/10/2024
-                      </p>
-                      <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <Ticket size={16} /> ID: TV-119203
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-surface-variant pt-4">
-                    <div>
-                      <p className="text-xs text-outline">Tổng thanh toán</p>
-                      <p className="font-display text-xl font-semibold text-secondary">8.900.000đ</p>
-                    </div>
-                    <button className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                      Chi tiết <ChevronRightIcon size={16} />
-                    </button>
-                  </div>
-                </div>
+            ) : filteredBookings.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-outline-variant p-12 text-center text-on-surface-variant bg-white/40">
+                <Ticket className="mx-auto mb-4 text-outline" size={48} />
+                <p className="text-lg font-medium">Không tìm thấy đơn đặt chỗ nào</p>
+                <p className="text-sm mt-1 text-outline">Bạn chưa có chuyến đi nào trong mục này hoặc bộ lọc không khớp.</p>
               </div>
-
-              {/* Booking Card 4 */}
-              <div className="group flex flex-col overflow-hidden rounded-xl border border-surface-variant bg-white transition-all hover:shadow-lg sm:flex-row">
-                <div className="h-48 overflow-hidden sm:h-auto sm:w-48">
-                  <img 
-                    alt="Sea View Hotel" 
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtQN5zWJlkxExiHp3dCrV46EIwnnqPlH1RE1PmBxKXTXoDCgqOe_72Z5kNX__dNwro6DnGBSYmbR8McZrPT6hz-L1w7QIeSV5PjO_nWEDLZGWCoBDNzzrvEqdkJQ1cIqYKfA9mlOGWLNmRCyjHVO94-HqkI_QlslUA-QQe_jm1OPsmzt-EOsm6dGgjk29tGQ14FiTIYjbVORiNT2TUbAJhL7CrsMRCgP29L2DLjcB7tv1ediHnfz6h5NsUsPbpnqSDTz3RHgKEWyc"
-                  />
-                </div>
-                <div className="flex flex-1 flex-col justify-between p-6">
-                  <div>
-                    <div className="mb-2 flex items-start justify-between">
-                      <h3 className="font-display text-xl font-semibold text-primary">Amanoi Ninh Thuan</h3>
-                      <span className="rounded-full bg-surface-variant px-3 py-1 text-xs font-medium text-on-surface">Completed</span>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {filteredBookings.map((booking) => (
+                  <div 
+                    key={booking.id} 
+                    className="group flex flex-col overflow-hidden rounded-xl border border-surface-variant bg-white transition-all hover:shadow-lg sm:flex-row"
+                  >
+                    <div className="h-48 overflow-hidden sm:h-auto sm:w-48 shrink-0">
+                      <img 
+                        alt={booking.tenTaiSan} 
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                        src={booking.anhTaiSan || (
+                          booking.loaiTaiSan === 'HOTEL'
+                            ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=500&q=80'
+                            : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=80'
+                        )}
+                      />
                     </div>
-                    <div className="mb-4 space-y-1">
-                      <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <CalendarDays size={16} /> 12/09/2024 - 15/09/2024
-                      </p>
-                      <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-                        <Ticket size={16} /> ID: TV-772911
-                      </p>
+                    <div className="flex flex-grow flex-col justify-between p-6 min-w-0">
+                      <div>
+                        <div className="mb-2 flex items-start justify-between gap-2">
+                          <h3 className="font-display text-xl font-semibold text-primary line-clamp-1">
+                            {booking.tenTaiSan}
+                          </h3>
+                          <div className="shrink-0">
+                            {getStatusBadge(booking.trangThai)}
+                          </div>
+                        </div>
+                        <div className="mb-4 space-y-1">
+                          <p className="flex items-center gap-2 text-sm text-on-surface-variant">
+                            <CalendarDays size={16} /> 
+                            {booking.loaiTaiSan === 'HOTEL' ? (
+                              <>
+                                {new Date(booking.ngayBatDau!).toLocaleDateString('vi-VN')} - {new Date(booking.ngayKetThuc!).toLocaleDateString('vi-VN')}
+                              </>
+                            ) : (
+                              <>
+                                {new Date(booking.ngayBatDau!).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+                              </>
+                            )}
+                          </p>
+                          <p className="flex items-center gap-2 text-sm text-on-surface-variant">
+                            <Ticket size={16} /> ID: {booking.maDon}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between border-t border-surface-variant pt-4">
+                        <div>
+                          <p className="text-xs text-outline">Tổng thanh toán</p>
+                          <p className="font-display text-xl font-semibold text-secondary">
+                            {formatVND(booking.tongTienThanhToan)}
+                          </p>
+                        </div>
+                        <button 
+                          onClick={() => setSelectedBooking(booking)}
+                          className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline active:scale-95 transition-all"
+                        >
+                          Chi tiết <ChevronRightIcon size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between border-t border-surface-variant pt-4">
-                    <div>
-                      <p className="text-xs text-outline">Tổng thanh toán</p>
-                      <p className="font-display text-xl font-semibold text-secondary">45.000.000đ</p>
-                    </div>
-                    <button className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                      Chi tiết <ChevronRightIcon size={16} />
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
-
-            </div>
-            
-            <div className="mt-12 text-center pb-20">
-              <button className="rounded-lg border-2 border-primary px-8 py-3 text-sm font-semibold text-primary transition-all hover:bg-surface-container-low">
-                Xem thêm lịch sử
-              </button>
-            </div>
+            )}
           </section>
-
         </main>
+
+        {/* Details Modal */}
+        {selectedBooking && renderDetailsModal(selectedBooking, () => setSelectedBooking(null))}
       </div>
     )
   }
@@ -285,12 +398,15 @@ export function SearchPage() {
 
             {/* Search Card */}
             <div className="rounded-2xl border border-white bg-white/60 p-8 text-left shadow-xl backdrop-blur-md transition-all duration-300 hover:shadow-2xl md:p-12">
+              {guestError && (
+                <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                  <AlertCircle className="shrink-0" size={20} />
+                  <p>{guestError}</p>
+                </div>
+              )}
               <form 
                 className="space-y-6" 
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  // TODO: Implement unauthenticated search
-                }}
+                onSubmit={handleGuestSearch}
               >
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-primary" htmlFor="booking-id">Mã đặt chỗ</label>
@@ -299,15 +415,18 @@ export function SearchPage() {
                     <input 
                       className="w-full rounded-xl border border-outline-variant bg-white/80 py-4 pl-12 pr-4 text-base outline-none transition-all placeholder:text-outline-variant focus:border-primary focus:ring-2 focus:ring-primary" 
                       id="booking-id" 
-                      placeholder="VD: TRV123456789" 
+                      placeholder="VD: DKS123456 hoặc DNH123456" 
                       type="text"
+                      required
+                      value={guestMaDon}
+                      onChange={(e) => setGuestMaDon(e.target.value)}
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-primary" htmlFor="email">Email xác nhận (Tùy chọn)</label>
+                    <label className="mb-2 block text-sm font-semibold text-primary" htmlFor="email">Email xác nhận</label>
                     <div className="relative group">
                       <MailIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-outline" size={24} />
                       <input 
@@ -315,11 +434,13 @@ export function SearchPage() {
                         id="email" 
                         placeholder="example@travi.com" 
                         type="email"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-primary" htmlFor="phone">Số điện thoại (Tùy chọn)</label>
+                    <label className="mb-2 block text-sm font-semibold text-primary" htmlFor="phone">Số điện thoại xác nhận</label>
                     <div className="relative group">
                       <PhoneIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-outline" size={24} />
                       <input 
@@ -327,15 +448,19 @@ export function SearchPage() {
                         id="phone" 
                         placeholder="09xx xxx xxx" 
                         type="tel"
+                        value={guestPhone}
+                        onChange={(e) => setGuestPhone(e.target.value)}
                       />
                     </div>
                   </div>
                 </div>
 
                 <button 
-                  className="mt-8 w-full rounded-xl bg-primary py-4 text-xl font-semibold text-white shadow-md transition-all hover:bg-primary-container active:scale-[0.98]" 
+                  className="mt-8 w-full flex items-center justify-center gap-2 rounded-xl bg-primary py-4 text-xl font-semibold text-white shadow-md transition-all hover:bg-primary-container active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed" 
                   type="submit"
+                  disabled={guestLoading}
                 >
+                  {guestLoading && <Loader2 className="animate-spin" size={20} />}
                   Tra cứu ngay
                 </button>
               </form>
@@ -375,8 +500,152 @@ export function SearchPage() {
             alt="Heritage pattern"
           />
         </div>
-
       </main>
+
+      {/* Details Modal */}
+      {selectedBooking && renderDetailsModal(selectedBooking, () => setSelectedBooking(null))}
+    </div>
+  )
+}
+
+function renderDetailsModal(booking: BookingSearchResponse, onClose: () => void) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-white/20 bg-white shadow-2xl backdrop-blur-md flex flex-col max-h-[90vh] md:max-h-[85vh] animate-in zoom-in-95 duration-200 text-left">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-surface-variant p-6">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+              {booking.loaiTaiSan === 'HOTEL' ? 'Khách sạn' : 'Nhà hàng'}
+            </span>
+            <h3 className="font-display text-2xl font-bold text-primary flex items-center gap-2">
+              Mã đơn: {booking.maDon}
+            </h3>
+          </div>
+          <button 
+            onClick={onClose}
+            className="rounded-full p-2 text-outline hover:bg-surface-container active:scale-95 transition-all"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Cover & Property info */}
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <img 
+              src={booking.anhTaiSan || (
+                booking.loaiTaiSan === 'HOTEL'
+                  ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=500&q=80'
+                  : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=80'
+              )} 
+              alt={booking.tenTaiSan} 
+              className="h-32 w-full rounded-lg object-cover sm:w-48 border border-surface-variant shrink-0"
+            />
+            <div className="flex flex-col justify-between">
+              <div>
+                <h4 className="font-display text-xl font-bold text-on-surface">{booking.tenTaiSan}</h4>
+                <p className="mt-1 flex items-center gap-2 text-sm text-on-surface-variant">
+                  <CalendarDays size={16} />
+                  {booking.loaiTaiSan === 'HOTEL' ? (
+                    <>
+                      {new Date(booking.ngayBatDau!).toLocaleDateString('vi-VN')} - {new Date(booking.ngayKetThuc!).toLocaleDateString('vi-VN')}
+                    </>
+                  ) : (
+                    <>
+                      {new Date(booking.ngayBatDau!).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+                    </>
+                  )}
+                </p>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {getStatusBadge(booking.trangThai)}
+              </div>
+            </div>
+          </div>
+
+          {/* Guest Information */}
+          <div className="rounded-xl bg-surface-container-low p-4 space-y-3">
+            <h5 className="font-bold text-primary text-xs uppercase tracking-wider">Thông tin người đặt</h5>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <p className="text-on-surface-variant">Họ tên: <strong className="text-on-surface">{booking.tenNguoiDat}</strong></p>
+              <p className="text-on-surface-variant">Số điện thoại: <strong className="text-on-surface">{booking.sdtNguoiDat || 'N/A'}</strong></p>
+              <p className="text-on-surface-variant col-span-1 md:col-span-2">Email: <strong className="text-on-surface">{booking.emailNguoiDat || 'N/A'}</strong></p>
+              <p className="text-on-surface-variant col-span-1 md:col-span-2">Số khách đi cùng: <strong className="text-on-surface">{booking.soKhach} người</strong></p>
+            </div>
+          </div>
+
+          {/* Detailed Breakdown */}
+          {booking.loaiTaiSan === 'HOTEL' && booking.rooms && booking.rooms.length > 0 && (
+            <div className="space-y-3">
+              <h5 className="font-bold text-primary text-xs uppercase tracking-wider">Chi tiết phòng đặt</h5>
+              <div className="overflow-x-auto rounded-xl border border-surface-variant">
+                <table className="w-full text-left border-collapse text-sm min-w-[400px]">
+                  <thead>
+                    <tr className="bg-surface-container text-on-surface-variant font-semibold">
+                      <th className="p-3">Tên phòng</th>
+                      <th className="p-3 text-center">Số lượng</th>
+                      <th className="p-3 text-right">Đơn giá</th>
+                      <th className="p-3 text-right">Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-variant">
+                    {booking.rooms.map((room, idx) => (
+                      <tr key={idx} className="hover:bg-surface-container-lowest">
+                        <td className="p-3 font-semibold text-on-surface">{room.tenPhong}</td>
+                        <td className="p-3 text-center text-on-surface-variant">{room.soLuong}</td>
+                        <td className="p-3 text-right text-on-surface-variant">{formatVND(room.donGia)}</td>
+                        <td className="p-3 text-right font-semibold text-secondary">{formatVND(room.thanhTien)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {booking.loaiTaiSan === 'RESTAURANT' && booking.tables && booking.tables.length > 0 && (
+            <div className="space-y-3">
+              <h5 className="font-bold text-primary text-xs uppercase tracking-wider">Bàn được chỉ định</h5>
+              <div className="overflow-hidden rounded-xl border border-surface-variant">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-surface-container text-on-surface-variant font-semibold">
+                      <th className="p-3">Tên bàn</th>
+                      <th className="p-3 text-center">Số chỗ ngồi</th>
+                      <th className="p-3">Vị trí / Sảnh</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-variant">
+                    {booking.tables.map((table, idx) => (
+                      <tr key={idx} className="hover:bg-surface-container-lowest">
+                        <td className="p-3 font-semibold text-on-surface">{table.tenBan}</td>
+                        <td className="p-3 text-center text-on-surface-variant">{table.soChoNgoi}</td>
+                        <td className="p-3 text-on-surface-variant">{table.viTri || 'Chung'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between border-t border-surface-variant p-6 bg-surface-container-lowest">
+          <div>
+            <p className="text-xs text-outline">Tổng cộng thanh toán</p>
+            <p className="font-display text-2xl font-bold text-secondary">{formatVND(booking.tongTienThanhToan)}</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-container active:scale-95"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

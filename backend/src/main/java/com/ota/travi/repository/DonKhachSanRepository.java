@@ -19,6 +19,8 @@ public interface DonKhachSanRepository extends JpaRepository<DonKhachSan, String
 
     Optional<DonKhachSan> findByIdAndKhachHang_Username(String id, String username);
 
+    List<DonKhachSan> findByKhachHang_UsernameAndDeletedFalseOrderByNgayTaoDesc(String username);
+
     List<DonKhachSan> findByTrangThaiAndPaymentExpiredAtBeforeAndDeletedFalse(
             TrangThaiDon trangThai,
             LocalDateTime dateTime
