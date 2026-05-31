@@ -45,6 +45,7 @@ public final class ApiEndpoints {
     public static final String USER_PREFIX = BASE_PREFIX + "/user";
     public static final String USER_ME = USER_PREFIX + "/me";
     public static final String USER_BOOKINGS = USER_PREFIX + "/bookings";
+    public static final String USER_BOOKING_HISTORY = USER_BOOKINGS + "/history";
     public static final String USER_REVIEWS = USER_PREFIX + "/reviews";
     public static final String USER_RECOMMENDATIONS = USER_PREFIX + "/recommendations"; // AI hints
     // USER FEEDBACK

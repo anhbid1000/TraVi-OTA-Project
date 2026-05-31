@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.ota.travi.constant.ApiEndpoints.USER_PREFIX;
+import static com.ota.travi.constant.ApiEndpoints.USER_BOOKINGS;
 
 /**
  * Controller hỗ trợ trang MyBookingsV2
  * Endpoint: /api/v1/user/bookings
  */
 @RestController
-@RequestMapping(USER_PREFIX + "/bookings")
+@RequestMapping(USER_BOOKINGS)
 public class UserBookingController {
 
     private final BookingService bookingService;

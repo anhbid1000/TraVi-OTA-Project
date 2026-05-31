@@ -142,7 +142,7 @@ export const userService = {
   },
 
   async getBookingHistory(type: 'all' | 'hotel' | 'restaurant' = 'all'): Promise<BookingSearchResponse[]> {
-    const response = await api.get('v1/user/bookings', {
+    const response = await api.get('v1/user/bookings/history', {
       params: { type }
     })
     return response.data

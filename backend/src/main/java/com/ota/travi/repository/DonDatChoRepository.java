@@ -11,6 +11,7 @@ import java.util.Optional;
 public interface DonDatChoRepository extends JpaRepository<DonDatCho, String> {
     boolean existsByMaDon(String maDon);
     Optional<DonDatCho> findByMaDonAndDeletedFalse(String maDon);
+    List<DonDatCho> findByKhachHang_IdAndDeletedFalseOrderByNgayTaoDesc(String khachHangId);
     List<DonDatCho> findByKhachHang_UsernameAndDeletedFalseOrderByNgayTaoDesc(String username);
 }
 

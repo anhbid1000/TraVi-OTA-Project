@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { AuthActions } from './AuthActions'
 
 type NavbarProps = {
-  activeSection?: 'hotels' | 'restaurants'
+  activeSection?: 'hotels' | 'restaurants' | 'search'
 }
 
 export function Navbar({ activeSection }: NavbarProps) {

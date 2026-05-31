@@ -10,10 +10,10 @@ import type {
   ResolutionActionCreateRequest,
   ResolutionActionResponse,
 } from '../../../features/feedback-v2/types/complaint';
-import { PartnerSidebar } from '../../../features/feedback-v2/components/partner/PartnerSidebar';
 import { PartnerComplaintHeader } from '../../../features/feedback-v2/components/partner/PartnerComplaintHeader';
 import { PartnerMessageThread } from '../../../features/feedback-v2/components/partner/PartnerMessageThread';
 import { PartnerMessageInput } from '../../../features/feedback-v2/components/partner/PartnerMessageInput';
+import '../../dashboard.css';
 
 const ACTION_TYPE_OPTIONS: Array<{ value: ComplaintResolutionActionType; label: string }> = [
   { value: 'FULL_REFUND', label: 'Hoàn tiền toàn bộ' },
@@ -179,24 +179,23 @@ export default function PartnerComplaintDetailPage() {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-background p-10 text-center font-semibold">Đang tải chi tiết ticket...</div>;
+    return <div className="panel text-center font-semibold">Đang tải chi tiết ticket...</div>;
   }
 
   return (
-    <div className="flex min-h-screen bg-background text-on-surface">
-      <PartnerSidebar active="complaints" />
-
-      <div className="flex-1 md:ml-64">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/30 bg-surface/70 px-5 backdrop-blur-md md:px-6">
+    <div className="space-y-6">
+      <header className="partner-page-header">
+        <div className="flex items-center justify-between gap-3">
           <button type="button" onClick={() => navigate('/partner/complaints')} className="flex items-center gap-2 font-semibold text-primary">
             <span className="material-symbols-outlined">arrow_back</span>
             Quay lại danh sách
           </button>
-        </header>
+        </div>
+      </header>
 
-        <main className="mx-auto w-full max-w-7xl space-y-6 p-5 md:p-8">
+      <section className="space-y-6">
           {error && <div className="rounded-xl bg-error-container p-4 text-error">{error}</div>}
-          {!complaint && <div className="rounded-xl bg-white p-8 text-center">Không tìm thấy khiếu nại.</div>}
+          {!complaint && <div className="panel text-center">Không tìm thấy khiếu nại.</div>}
 
           {complaint && (
             <>
@@ -371,10 +370,9 @@ export default function PartnerComplaintDetailPage() {
               </div>
             </>
           )}
-        </main>
-      </div>
+      </section>
 
-      {completeTargetActionId && (
+    {completeTargetActionId && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-primary">Hoàn tất phương án xử lý</h3>
@@ -419,7 +417,7 @@ export default function PartnerComplaintDetailPage() {
             </div>
           </div>
         </div>
-      )}
+    )}
     </div>
   );
 }

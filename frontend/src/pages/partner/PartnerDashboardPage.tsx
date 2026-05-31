@@ -2240,12 +2240,12 @@ function BusinessProfileView({
   updateProfileField,
   saveProfile,
   saveDraft,
-  uploadFile,
+  uploadFile: _uploadFile,
   uploadBusinessLicense,
   isUploadingLicense,
-  toggleAmenity,
-  addCustomAmenity,
-  availableHotelAmenities,
+  toggleAmenity: _toggleAmenity,
+  addCustomAmenity: _addCustomAmenity,
+  availableHotelAmenities: _availableHotelAmenities,
 }: BusinessProfileViewProps) {
   // One-page form: keep existing validation + upload/map logic,
   // but render all sections in a single screen.
@@ -2255,70 +2255,6 @@ function BusinessProfileView({
   const currentStepError = getFirstError(currentStepErrors)
   const profileStatus = getBusinessProfileStatus(profile)
   const businessCoverImage = getBusinessCoverImage(profileForm)
-  const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false)
-
-  const setBusinessCoverImage = (selectedIndex: number) => {
-    updateProfileField(
-      'danhSachAnh',
-      profileForm.danhSachAnh.map((image, index) => ({
-        ...image,
-        laAnhDaiDien: index === selectedIndex,
-      })),
-    )
-  }
-
-  const removeBusinessImage = (selectedIndex: number) => {
-    const nextImages = profileForm.danhSachAnh.filter((_, index) => index !== selectedIndex)
-
-    if (nextImages.length > 0 && !nextImages.some((image) => image.laAnhDaiDien)) {
-      nextImages[0] = { ...nextImages[0], laAnhDaiDien: true }
-    }
-
-    updateProfileField('danhSachAnh', nextImages)
-  }
-
-  const addBusinessImage = (url: string) => {
-    const imageUrl = url.trim()
-    if (!imageUrl) return
-
-    updateProfileField('danhSachAnh', [
-      ...profileForm.danhSachAnh,
-      {
-        url: imageUrl,
-        moTa: '',
-        laAnhDaiDien: profileForm.danhSachAnh.length === 0,
-      },
-    ])
-  }
-
-  const handleBusinessImageUpload = async (file: File) => {
-    setIsUploadingProfileImage(true)
-
-    try {
-      const uploaded = await uploadFile(file, { allowPdf: false })
-
-      if (uploaded) {
-        addBusinessImage(uploaded.url)
-      }
-    } finally {
-      setIsUploadingProfileImage(false)
-    }
-  }
-
-  const groupedHotelAmenities = Object.entries(
-    availableHotelAmenities.reduce((groups, amenity) => {
-      const type = amenity.loaiTienIch || 'KHAC'
-      if (!groups[type]) groups[type] = []
-      groups[type].push(amenity)
-      return groups
-    }, {} as Record<string, typeof availableHotelAmenities>)
-  ).map(([type, amenities]) => ({
-    type,
-    label: amenities[0]?.loaiTienIch 
-      ? amenities[0].loaiTienIch.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()) 
-      : 'Khác',
-    amenities: amenities.map(a => a.tenTienIch)
-  }))
 
   return (
     <>

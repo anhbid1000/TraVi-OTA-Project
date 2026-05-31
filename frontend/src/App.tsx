@@ -10,7 +10,7 @@ import {
 import { ForbiddenPage } from './pages/ForbiddenPage';
 import { HomePage } from './pages/HomePage';
 import { CheckoutPage } from './pages/CheckoutPage';
-// import { PaymentPage } from './pages/PaymentPage'
+import { PaymentPage } from './pages/PaymentPage'
 import { ProtectedRoute, StaffRoute } from './routes';
 import {
   PartnerBusinessProfilePage,
@@ -23,7 +23,7 @@ import {
   PartnerTableLayoutPage,
 } from './pages/partner';
 import { SearchPage } from './pages/search';
-import { useAuth } from './hooks/useAuth';
+// import { useAuth } from './hooks/useAuth';
 import { HotelCatalogPage } from './features/hotels/pages/HotelCatalogPage';
 import { RestaurantCatalogPage } from './features/restaurants/pages/RestaurantCatalogPage';
 import { HotelDetailPage } from './features/hotels/pages/HotelDetailPage';
@@ -37,31 +37,6 @@ import MyBookingsV2 from './pages/user/dashboard/MyBookingsV2.tsx';
 import MyComplaintsPage from './pages/user/complaints/MyComplaintsPage.tsx';
 import MyComplaintDetailPage from './pages/user/complaints/MyComplaintDetailPage.tsx';
 
-function PaymentPage() {
-  const { isLoading, logout, user } = useAuth();
-
-  return (
-    <main style={{ padding: '32px', maxWidth: '960px', margin: '0 auto' }}>
-      <h1>Thanh toan</h1>
-      <p>Trang nay chi danh cho nguoi dung da dang nhap.</p>
-      <p>
-        <strong>Email:</strong> {String(user?.email ?? 'Khong xac dinh')}
-      </p>
-      <button
-        type="button"
-        onClick={() => {
-          void logout();
-        }}
-        disabled={isLoading}
-      >
-        {isLoading ? 'Dang dang xuat...' : 'Dang xuat'}
-      </button>
-      <p style={{ marginTop: '16px' }}>
-        <Link to="/">Quay ve trang chu</Link>
-      </p>
-    </main>
-  );
-}
 
 function NotFoundPage() {
   return (

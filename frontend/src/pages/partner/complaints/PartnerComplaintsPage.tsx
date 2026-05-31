@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { complaintServiceV2 } from '../../../features/feedback-v2/services/complaintServiceV2';
 import type { ComplaintCategory, ComplaintResponse, MucDoKhieuNai, TrangThaiKhieuNai } from '../../../features/feedback-v2/types/complaint';
-import { PartnerSidebar } from '../../../features/feedback-v2/components/partner/PartnerSidebar';
-import { PartnerTopbar } from '../../../features/feedback-v2/components/partner/PartnerTopbar';
 import { PartnerComplaintFilters } from '../../../features/feedback-v2/components/partner/PartnerComplaintFilters';
 import { PartnerComplaintTable } from '../../../features/feedback-v2/components/partner/PartnerComplaintTable';
 import { PartnerPagination } from '../../../features/feedback-v2/components/partner/PartnerPagination';
+import '../../dashboard.css';
 
 export default function PartnerComplaintsPage() {
   const [items, setItems] = useState<ComplaintResponse[]>([]);
@@ -50,35 +49,38 @@ export default function PartnerComplaintsPage() {
   }, [items, keyword]);
 
   return (
-    <div className="flex min-h-screen bg-background text-on-background">
-      <PartnerSidebar active="complaints" />
+    <div className="space-y-6">
+      <header className="partner-page-header split">
+        <div>
+          <h1>Trung tâm khiếu nại</h1>
+          <p>Quản lý ticket khiếu nại của cơ sở</p>
+        </div>
+        <div className="w-full max-w-md">
+          <input
+            className="w-full rounded-xl border border-outline-variant bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary"
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+            placeholder="Tìm theo mã, tiêu đề hoặc phân loại..."
+          />
+        </div>
+      </header>
 
-      <div className="flex-1 md:ml-64">
-        <PartnerTopbar
-          title="Trung tâm khiếu nại"
-          subtitle="Quản lý ticket khiếu nại của cơ sở"
-          searchValue={keyword}
-          onSearchChange={setKeyword}
-          searchPlaceholder="Tìm theo mã, tiêu đề hoặc phân loại..."
+      <section className="panel space-y-6">
+        <PartnerComplaintFilters
+          status={status}
+          severity={severity}
+          category={category}
+          onStatusChange={(s) => { setPage(0); setStatus(s); }}
+          onSeverityChange={(s) => { setPage(0); setSeverity(s); }}
+          onCategoryChange={(c) => { setPage(0); setCategory(c); }}
         />
 
-        <main className="mx-auto w-full max-w-7xl space-y-6 p-5 md:p-8">
-          <PartnerComplaintFilters
-            status={status}
-            severity={severity}
-            category={category}
-            onStatusChange={(s) => { setPage(0); setStatus(s); }}
-            onSeverityChange={(s) => { setPage(0); setSeverity(s); }}
-            onCategoryChange={(c) => { setPage(0); setCategory(c); }}
-          />
+        {error && <div className="rounded-xl bg-error-container p-4 text-error">{error}</div>}
 
-          {error && <div className="rounded-xl bg-error-container p-4 text-error">{error}</div>}
+        <PartnerComplaintTable items={filtered} loading={loading} />
 
-          <PartnerComplaintTable items={filtered} loading={loading} />
-
-          {!loading && totalPages > 0 && <PartnerPagination page={page} totalPages={totalPages} onPageChange={setPage} />}
-        </main>
-      </div>
+        {!loading && totalPages > 0 && <PartnerPagination page={page} totalPages={totalPages} onPageChange={setPage} />}
+      </section>
     </div>
   );
 }

@@ -1,13 +1,16 @@
 package com.ota.travi.service;
 
 import com.ota.travi.dto.response.BookingSearchResponse;
+import com.ota.travi.dto.response.UserBookingResponse;
 import com.ota.travi.entity.*;
+import com.ota.travi.enums.LoaiDichVu;
 import com.ota.travi.enums.TrangThaiDon;
 import com.ota.travi.repository.DonDatChoRepository;
 import com.ota.travi.repository.DonKhachSanRepository;
 import com.ota.travi.repository.DonNhaHangRepository;
 import com.ota.travi.repository.KhachSanRepository;
 import com.ota.travi.repository.NhaHangRepository;
+import com.ota.travi.repository.ReviewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +38,9 @@ public class BookingService {
 
     @Autowired
     private NhaHangRepository nhaHangRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     @Transactional(readOnly = true)
     public List<BookingSearchResponse> getBookingHistory(String username, String type) {
@@ -82,6 +88,12 @@ public class BookingService {
         }
 
         return mapToResponse(booking);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserBookingResponse> getCustomerBookings(String customerId) {
+        List<DonDatCho> orders = donDatChoRepository.findByKhachHang_IdAndDeletedFalseOrderByNgayTaoDesc(customerId);
+        return orders.stream().map(order -> mapToUserBookingResponse(order, customerId)).toList();
     }
 
     private BookingSearchResponse mapToResponse(DonDatCho booking) {
@@ -205,5 +217,77 @@ public class BookingService {
                 rooms,
                 tables
         );
+    }
+
+    private UserBookingResponse mapToUserBookingResponse(DonDatCho order, String customerId) {
+        LoaiDichVu type = order.getHoSoKinhDoanh().getLoaiDichVu();
+
+        String bookingId = null;
+        String reservationId = null;
+        if (type == LoaiDichVu.KHACH_SAN) {
+            bookingId = order.getId();
+        } else if (type == LoaiDichVu.NHA_HANG) {
+            reservationId = order.getId();
+        }
+
+        String dateLabel;
+        if (order instanceof DonKhachSan dks) {
+            dateLabel = dks.getNgayCheckIn() + " - " + dks.getNgayCheckOut();
+        } else if (order instanceof DonNhaHang dnh) {
+            dateLabel = String.valueOf(dnh.getNgayGioBatDau());
+        } else {
+            dateLabel = order.getNgayTao() != null ? order.getNgayTao().toLocalDate().toString() : "";
+        }
+
+        boolean reviewed = false;
+        if (type == LoaiDichVu.KHACH_SAN) {
+            reviewed = reviewRepository.existsByKhachHang_IdAndBookingId(customerId, order.getId());
+        } else if (type == LoaiDichVu.NHA_HANG) {
+            reviewed = reviewRepository.existsByKhachHang_IdAndReservationId(customerId, order.getId());
+        }
+
+        String thumbnailUrl = getThumbnailUrl(type, order.getHoSoKinhDoanh().getIdHoSo());
+
+        return new UserBookingResponse(
+                order.getMaDon(),
+                order.getHoSoKinhDoanh().getTenCoSo(),
+                type.name(),
+                bookingId,
+                reservationId,
+                dateLabel,
+                order.getTongTienThanhToan(),
+                order.getTrangThai().name(),
+                reviewed,
+                thumbnailUrl
+        );
+    }
+
+    private String getThumbnailUrl(LoaiDichVu type, String hoSoId) {
+        if (type == LoaiDichVu.KHACH_SAN) {
+            List<KhachSan> khachSans = khachSanRepository.findByHoSoKinhDoanh_IdHoSo(hoSoId);
+            if (!khachSans.isEmpty()) {
+                KhachSan ks = khachSans.get(0);
+                if (ks.getDanhSachAnh() != null && !ks.getDanhSachAnh().isEmpty()) {
+                    return ks.getDanhSachAnh().stream()
+                            .filter(a -> Boolean.TRUE.equals(a.getLaAnhDaiDien()))
+                            .map(AnhKhachSan::getDuongDanUrl)
+                            .findFirst()
+                            .orElseGet(() -> ks.getDanhSachAnh().get(0).getDuongDanUrl());
+                }
+            }
+        } else if (type == LoaiDichVu.NHA_HANG) {
+            List<NhaHang> nhaHangs = nhaHangRepository.findByHoSoKinhDoanh_IdHoSo(hoSoId);
+            if (!nhaHangs.isEmpty()) {
+                NhaHang nh = nhaHangs.get(0);
+                if (nh.getDanhSachAnh() != null && !nh.getDanhSachAnh().isEmpty()) {
+                    return nh.getDanhSachAnh().stream()
+                            .filter(a -> Boolean.TRUE.equals(a.getLaAnhDaiDien()))
+                            .map(AnhNhaHang::getDuongDanUrl)
+                            .findFirst()
+                            .orElseGet(() -> nh.getDanhSachAnh().get(0).getDuongDanUrl());
+                }
+            }
+        }
+        return "";
     }
 }

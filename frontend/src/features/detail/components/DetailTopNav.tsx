@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { AuthActions } from '../../../components/layout/AuthActions'
 
 type DetailTopNavProps = {
-  active: 'hotels' | 'restaurants'
+  active: 'hotels' | 'restaurants' | 'search'
 }
 
 export function DetailTopNav({ active }: DetailTopNavProps) {

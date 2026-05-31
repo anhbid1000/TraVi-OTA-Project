@@ -2,7 +2,6 @@ package com.ota.travi.dto.response;
 
 import com.ota.travi.enums.LoaiDichVu;
 import com.ota.travi.enums.TrangThaiHoatDong;
-import com.ota.travi.enums.TrangThaiKiemDuyet;
 
 import java.time.LocalDateTime;
 
@@ -15,7 +14,6 @@ public record BusinessProfileApprovalResponse(
         String sdtLienHe,
         String maSoThue,
         LoaiDichVu loaiDichVu,
-        TrangThaiKiemDuyet trangThaiKiemDuyet,
         TrangThaiHoatDong trangThaiHoatDong,
         String lyDoTuChoiGanNhat,
         LocalDateTime thoiGianDangKy,

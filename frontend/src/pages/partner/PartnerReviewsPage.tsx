@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { reviewServiceV2 } from '../../features/feedback-v2/services/reviewServiceV2';
 import type { ReviewResponse, TrangThaiDanhGia } from '../../features/feedback-v2/types/review';
-import { PartnerSidebar } from '../../features/feedback-v2/components/partner/PartnerSidebar';
-import { PartnerTopbar } from '../../features/feedback-v2/components/partner/PartnerTopbar';
 import { PartnerPagination } from '../../features/feedback-v2/components/partner/PartnerPagination';
 import { PartnerReviewFilters } from '../../features/feedback-v2/components/partner/PartnerReviewFilters';
 import { PartnerReviewCard } from '../../features/feedback-v2/components/partner/PartnerReviewCard';
+import '../dashboard.css';
 
 export default function PartnerReviewsPage() {
   const [items, setItems] = useState<ReviewResponse[]>([]);
@@ -69,19 +68,24 @@ export default function PartnerReviewsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background text-on-background">
-      <PartnerSidebar active="reviews" />
+    <>
+      <div className="space-y-6">
+        <header className="partner-page-header split">
+          <div>
+            <h1>Quản lý đánh giá</h1>
+            <p>Danh sách đánh giá thuộc cơ sở của đối tác</p>
+          </div>
+          <div className="w-full max-w-md">
+            <input
+              className="w-full rounded-xl border border-outline-variant bg-white px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-primary"
+              value={keyword}
+              onChange={(event) => setKeyword(event.target.value)}
+              placeholder="Tìm theo khách hoặc nội dung..."
+            />
+          </div>
+        </header>
 
-      <div className="flex-1 md:ml-64">
-        <PartnerTopbar
-          title="Quản lý đánh giá"
-          subtitle="Danh sách đánh giá thuộc cơ sở của đối tác"
-          searchValue={keyword}
-          onSearchChange={setKeyword}
-          searchPlaceholder="Tìm theo khách hoặc nội dung..."
-        />
-
-        <main className="mx-auto w-full max-w-7xl space-y-6 p-5 md:p-8">
+        <section className="panel space-y-6">
           <PartnerReviewFilters
             rating={ratingFilter}
             status={statusFilter}
@@ -102,9 +106,8 @@ export default function PartnerReviewsPage() {
           </div>
 
           {!loading && totalPages > 0 && <PartnerPagination page={page} totalPages={totalPages} onPageChange={setPage} />}
-        </main>
+        </section>
       </div>
-
       {activeReviewId && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl">
@@ -131,6 +134,6 @@ export default function PartnerReviewsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

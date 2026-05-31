@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-import static com.ota.travi.constant.ApiEndpoints.USER_BOOKINGS;
+import static com.ota.travi.constant.ApiEndpoints.USER_BOOKING_HISTORY;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_BOOKING_SEARCH;
 
 @RestController
@@ -22,7 +22,7 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
-    @GetMapping(USER_BOOKINGS)
+    @GetMapping(USER_BOOKING_HISTORY)
     public ResponseEntity<?> getBookingHistory(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(value = "type", required = false, defaultValue = "all") String type

@@ -1,14 +1,14 @@
 /* ==========================================================================
    1. SIDEBAR 
    ========================================================================== */
-.dashboard-layout {
+.my-bookings-layout {
   display: flex;
   min-height: 100vh;
   background-color: #f8f9fb;
   font-family: 'Inter', sans-serif;
 }
 
-.dashboard-sidebar {
+.my-bookings-sidebar {
   width: 260px;
   background-color: #ffffff;
   border-right: 1px solid #e1e2e4;
@@ -82,7 +82,7 @@
 /* ==========================================================================
    2. MAIN CONTAINER & TOPBAR
    ========================================================================== */
-.dashboard-main {
+.my-bookings-main {
   flex: 1;
   margin-left: 260px;
   display: flex;
@@ -90,7 +90,7 @@
   min-width: 0; 
 }
 
-.dashboard-topbar {
+.my-bookings-topbar {
   height: 70px;
   background-color: #ffffff;
   border-bottom: 1px solid #e1e2e4;

@@ -75,10 +75,10 @@ export default function MyBookings() {
   }
 
   return (
-    <div className="dashboard-layout">
+    <div className="my-bookings-layout">
       
       {/* 1. SIDEBAR BÊN TRÁI */}
-      <aside className="dashboard-sidebar">
+      <aside className="my-bookings-sidebar">
         <div className="sidebar-top-group">
           <div className="sidebar-logo">TraVi-OTA</div>
           <ul className="sidebar-menu">
@@ -122,10 +122,10 @@ export default function MyBookings() {
       </aside>
 
       {/* KHỐI NỘI DUNG BÊN PHẢI */}
-      <div className="dashboard-main">
+      <div className="my-bookings-main">
         
         {/* TOPBAR */}
-        <header className="dashboard-topbar">
+        <header className="my-bookings-topbar">
           <button className="btn-icon-notification">
             <span className="material-symbols-outlined">notifications</span>
           </button>

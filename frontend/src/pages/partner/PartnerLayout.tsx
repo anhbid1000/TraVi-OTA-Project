@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { BriefcaseBusiness, Bed, DoorOpen, Utensils, Grid2X2, BookOpen, CircleHelp, LogOut, LayoutGrid, ChevronDown, ChevronUp } from 'lucide-react'
+import { BriefcaseBusiness, Bed, DoorOpen, Utensils, Grid2X2, BookOpen, CircleHelp, LogOut, LayoutGrid, ChevronDown, ChevronUp, MessageSquare, ShieldAlert } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { partnerAssetService } from '../../services/partnerAssetService'
 import type { AuthUser } from '../../types/auth'
@@ -48,10 +48,12 @@ export function PartnerLayout() {
   const location = useLocation()
 
   const isDashboardRoute = location.pathname === '/partner' || location.pathname === '/partner/dashboard'
+  const isReviewRoute = location.pathname.startsWith('/partner/reviews')
+  const isComplaintRoute = location.pathname.startsWith('/partner/complaints')
   const isAssetManagementRoute = location.pathname.startsWith('/partner/asset-management') ||
     location.pathname.startsWith('/partner/business-profile') ||
     location.pathname.startsWith('/partner/hotels') ||
-    location.pathname.startsWith('/partner/rooms') ||
+    location.pathname.startsWith('/partner/room') ||
     location.pathname.startsWith('/partner/restaurant') ||
     location.pathname.startsWith('/partner/tables') ||
     location.pathname.startsWith('/partner/menus')
@@ -158,18 +160,32 @@ export function PartnerLayout() {
               Tổng quan
             </button>
 
-            {hasBusinessProfile && (
-              <>
-                <button>
-                  <CalendarIcon />
-                  Đặt dịch vụ
-                </button>
-                <button>
-                  <AnalyticsIcon />
-                  Phân tích
-                </button>
-              </>
-            )}
+              {hasBusinessProfile && (
+                <>
+                  <button>
+                    <CalendarIcon />
+                    Đặt dịch vụ
+                  </button>
+                  <button>
+                    <AnalyticsIcon />
+                    Phân tích
+                  </button>
+                  <button
+                    className={isReviewRoute ? 'active' : ''}
+                    onClick={() => navigate('/partner/reviews')}
+                  >
+                    <MessageSquare size={20} />
+                    Đánh giá
+                  </button>
+                  <button
+                    className={isComplaintRoute ? 'active' : ''}
+                    onClick={() => navigate('/partner/complaints')}
+                  >
+                    <ShieldAlert size={20} />
+                    Khiếu nại
+                  </button>
+                </>
+              )}
 
             <button 
               className={isAssetManagementRoute ? 'active' : ''} 
