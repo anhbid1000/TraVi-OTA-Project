@@ -1,11 +1,11 @@
-package com.traviota.booking.service;
+package com.ota.travi.booking.service;
 
-import com.traviota.booking.domain.dto.request.BookingRequest;
-import com.traviota.booking.domain.entities.DonDatCho;
-import com.traviota.booking.domain.entities.DonKhachSan;
-import com.traviota.booking.domain.entities.DonNhaHang;
-import com.traviota.booking.domain.enums.TrangThaiDon;
-import com.traviota.booking.repository.DonDatChoRepository;
+import com.ota.travi.booking.domain.dto.request.BookingRequest;
+import com.ota.travi.booking.domain.entities.DonDatCho;
+import com.ota.travi.booking.domain.entities.DonKhachSan;
+import com.ota.travi.booking.domain.entities.DonNhaHang;
+import com.ota.travi.booking.domain.enums.TrangThaiDon;
+import com.ota.travi.booking.repository.BookingDonDatChoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BookingService {
 
-    private final DonDatChoRepository donDatChoRepository;
+    private final BookingDonDatChoRepository donDatChoRepository;
 
     // Task 2.1 & Task 6.3 (ACID): Khởi tạo đơn hàng an toàn
     @Transactional(rollbackFor = Exception.class)

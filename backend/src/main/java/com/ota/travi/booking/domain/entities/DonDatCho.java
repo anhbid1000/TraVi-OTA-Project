@@ -1,6 +1,6 @@
-package com.traviota.booking.domain.entities;
+package com.ota.travi.booking.domain.entities;
 
-import com.traviota.booking.domain.enums.TrangThaiDon;
+import com.ota.travi.booking.domain.enums.TrangThaiDon;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,8 +8,8 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "don_dat_cho")
+@Entity(name = "BookingDonDatCho")
+@Table(name = "booking_don_dat_cho")
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter

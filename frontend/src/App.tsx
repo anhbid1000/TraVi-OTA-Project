@@ -10,6 +10,7 @@ import {
 } from './pages/auth'
 import { ForbiddenPage } from './pages/ForbiddenPage'
 import { HomePage } from './pages/HomePage'
+import { AiTravelPlannerPage } from './pages/AiTravelPlannerPage'
 import { CheckoutPage } from './pages/CheckoutPage'
 import { PaymentPage } from './pages/PaymentPage'
 import { AdminRoute, ProtectedRoute, StaffRoute } from './routes'
@@ -36,7 +37,6 @@ function PartnerDashboardPage() {
     </main>
   )
 }
-
 function NotFoundPage() {
   return (
     <main>
@@ -73,6 +73,9 @@ function App() {
         <Route path="/restaurants" element={<RestaurantCatalogPage />} />
         <Route path="/restaurants/:id" element={<RestaurantDetailPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/ai/travel-planner" element={<AiTravelPlannerPage />} />
+        </Route>
 
         <Route path="/login" element={<CustomerLogin />} />
         <Route path="/register" element={<CustomerRegister />} />

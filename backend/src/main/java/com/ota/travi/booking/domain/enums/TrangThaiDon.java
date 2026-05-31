@@ -1,4 +1,4 @@
-package com.traviota.booking.domain.enums;
+package com.ota.travi.booking.domain.enums;
 
 public enum TrangThaiDon {
     CHO_THANH_TOAN,

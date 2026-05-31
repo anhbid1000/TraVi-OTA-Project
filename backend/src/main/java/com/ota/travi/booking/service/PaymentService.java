@@ -1,10 +1,10 @@
-package com.traviota.booking.service;
+package com.ota.travi.booking.service;
 
-import com.traviota.booking.domain.entities.DonDatCho;
-import com.traviota.booking.domain.entities.GiaoDichThanhToan;
-import com.traviota.booking.domain.enums.TrangThaiDon;
-import com.traviota.booking.repository.DonDatChoRepository;
-import com.traviota.booking.repository.GiaoDichThanhToanRepository;
+import com.ota.travi.booking.domain.entities.DonDatCho;
+import com.ota.travi.booking.domain.entities.GiaoDichThanhToan;
+import com.ota.travi.booking.domain.enums.TrangThaiDon;
+import com.ota.travi.booking.repository.BookingDonDatChoRepository;
+import com.ota.travi.booking.repository.GiaoDichThanhToanRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 @Slf4j
 public class PaymentService {
 
-    private final DonDatChoRepository donDatChoRepository;
+    private final BookingDonDatChoRepository donDatChoRepository;
     private final GiaoDichThanhToanRepository giaoDichThanhToanRepository;
 
     // Task 2.3a: Tạo URL giả lập để Frontend chuyển hướng khách đi trả tiền

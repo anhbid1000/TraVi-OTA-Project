@@ -25,6 +25,8 @@ public final class ApiEndpoints {
     public static final String PUBLIC_CITIES = PUBLIC_PREFIX + "/locations/cities";
     public static final String PUBLIC_ROOMS_SEARCH = PUBLIC_PREFIX + "/rooms/search"; // planned
     public static final String PUBLIC_CULTURE_SPOTS = PUBLIC_PREFIX + "/culture-spots"; // planned
+    public static final String PUBLIC_ASSET_REVIEWS = PUBLIC_PREFIX + "/assets/{assetId}/reviews";
+    public static final String PUBLIC_PROMOTIONS_ACTIVE = PUBLIC_PREFIX + "/promotions/active";
 
     // 1.a Authentication (public) - keep under versioned auth prefix
     public static final String AUTH_PREFIX = BASE_PREFIX + "/auth";
@@ -45,6 +47,13 @@ public final class ApiEndpoints {
     public static final String USER_BOOKINGS = USER_PREFIX + "/bookings";
     public static final String USER_REVIEWS = USER_PREFIX + "/reviews";
     public static final String USER_RECOMMENDATIONS = USER_PREFIX + "/recommendations"; // AI hints
+    public static final String USER_RECOMMENDATION_FEEDBACK = USER_RECOMMENDATIONS + "/feedback";
+    public static final String USER_AI_EVENTS = USER_PREFIX + "/ai-events";
+    public static final String USER_PREFERENCES_CATEGORIES = USER_PREFIX + "/preferences/categories";
+    public static final String USER_PREFERENCES = USER_PREFIX + "/preferences";
+    public static final String USER_ITINERARY_PLANNER = USER_PREFIX + "/itinerary-planner";
+    public static final String USER_NOTIFICATIONS = USER_PREFIX + "/notifications/smart";
+    public static final String USER_PROMOTIONS_RECOMMENDED = USER_PREFIX + "/promotions/recommended";
 
     // 3. PARTNER - Partner / Vendor endpoints (ROLE: PARTNER)
     public static final String PARTNER_PREFIX = BASE_PREFIX + "/partner";

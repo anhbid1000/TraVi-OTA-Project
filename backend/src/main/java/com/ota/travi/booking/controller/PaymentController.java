@@ -1,6 +1,6 @@
-package com.traviota.booking.controller;
+package com.ota.travi.booking.controller;
 
-import com.traviota.booking.service.PaymentService;
+import com.ota.travi.booking.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

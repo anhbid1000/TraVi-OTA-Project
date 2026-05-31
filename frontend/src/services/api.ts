@@ -16,7 +16,7 @@ const rawBaseUrl =
   'http://localhost:8080/api'
 
 const normalizedBaseUrl = rawBaseUrl.replace(/\/$/, '')
-export const API_BASE_URL = normalizedBaseUrl.endsWith('/api/')
+export const API_BASE_URL = normalizedBaseUrl.endsWith('/api')
   ? normalizedBaseUrl
   : `${normalizedBaseUrl}/api`
 

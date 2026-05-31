@@ -17,6 +17,9 @@ export function getApiErrorMessage(error: unknown, fallbackMessage: string) {
 
     if (data && typeof data === 'object') {
       const payload = data as ApiErrorPayload
+      if (payload.status === 403 || payload.error === 'Forbidden') {
+        return 'Không có quyền truy cập.'
+      }
       return payload.message || payload.error || payload.details || fallbackMessage
     }
 

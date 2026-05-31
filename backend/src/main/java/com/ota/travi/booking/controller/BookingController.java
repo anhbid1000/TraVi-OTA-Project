@@ -1,8 +1,8 @@
-package com.traviota.booking.controller;
+package com.ota.travi.booking.controller;
 
-import com.traviota.booking.domain.dto.request.BookingRequest;
-import com.traviota.booking.domain.entities.DonDatCho;
-import com.traviota.booking.service.BookingService;
+import com.ota.travi.booking.domain.dto.request.BookingRequest;
+import com.ota.travi.booking.domain.entities.DonDatCho;
+import com.ota.travi.booking.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, LogIn, LogOut, UserRound } from 'lucide-react'
+import { Bell, LogIn, LogOut, UserRound, Bot } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
 export function AuthActions() {
@@ -69,16 +69,26 @@ export function AuthActions() {
                 <p className="truncate text-sm font-semibold text-on-surface">{user.email}</p>
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  void handleLogout()
-                }}
-                disabled={isLoading || isLoggingOut}
-                className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <LogOut size={16} /> {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
-              </button>
+              <div className="p-1">
+                <Link
+                  to="/ai/travel-planner"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
+                >
+                  <Bot size={16} /> Lập lịch trình AI
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleLogout()
+                  }}
+                  disabled={isLoading || isLoggingOut}
+                  className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-error transition-colors hover:bg-surface-container-low hover:text-error disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <LogOut size={16} /> {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+                </button>
+              </div>
             </div>
           )}
         </div>

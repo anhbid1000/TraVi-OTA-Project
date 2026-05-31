@@ -2,7 +2,7 @@ package com.ota.travi.booking.service;
 
 import com.ota.travi.booking.domain.entities.DonDatCho;
 import com.ota.travi.booking.domain.enums.TrangThaiDon;
-import com.ota.travi.booking.repository.DonDatChoRepository;
+import com.ota.travi.booking.repository.BookingDonDatChoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,7 +17,7 @@ import java.util.List;
 @Slf4j
 public class BookingCronJob {
 
-    private final DonDatChoRepository donDatChoRepository;
+    private final BookingDonDatChoRepository donDatChoRepository;
 
     // Task 6.2: Cứ mỗi 60000ms (1 phút) con Robot này sẽ tự kích hoạt chạy ngầm
     @Scheduled(fixedRate = 60000)

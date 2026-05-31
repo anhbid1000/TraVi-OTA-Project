@@ -1,4 +1,4 @@
-package com.traviota.booking.domain.dto.request;
+package com.ota.travi.booking.domain.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

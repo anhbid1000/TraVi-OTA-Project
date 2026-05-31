@@ -92,8 +92,9 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // 2. CÁC API PHÂN QUYỀN (Roles theo Seed Data DB)
-                        .requestMatchers(ADMIN_PREFIX +"/**").hasRole("QUAN_TRI_VIEN")
-                        .requestMatchers(PARTNER_PREFIX + "/**").hasRole("DOI_TAC")
+                        .requestMatchers(USER_PREFIX + "/**").hasAuthority("ROLE_KHACH_HANG")
+                        .requestMatchers(ADMIN_PREFIX +"/**").hasAuthority("ROLE_QUAN_TRI_VIEN")
+                        .requestMatchers(PARTNER_PREFIX + "/**").hasAuthority("ROLE_DOI_TAC")
 
                         // 3. TẤT CẢ CÁC API KHÁC ĐỀU PHẢI QUẸT THẺ (Có JWT hợp lệ mới được vào)
                         .anyRequest().authenticated()

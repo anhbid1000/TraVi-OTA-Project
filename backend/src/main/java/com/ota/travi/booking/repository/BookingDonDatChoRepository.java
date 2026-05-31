@@ -11,10 +11,8 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface DonDatChoRepository extends JpaRepository<DonDatCho, Long> {
-
-    // Đây chính là Best Practice 1 (Task 6.1): Khóa dòng dữ liệu (Pessimistic Locking) chống Overbooking
+public interface BookingDonDatChoRepository extends JpaRepository<DonDatCho, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT d FROM DonDatCho d WHERE d.id = :id")
+    @Query("SELECT d FROM BookingDonDatCho d WHERE d.id = :id")
     Optional<DonDatCho> findByIdWithLock(@Param("id") Long id);
 }

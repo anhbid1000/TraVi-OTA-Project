@@ -1,6 +1,6 @@
-package com.traviota.booking.repository;
+package com.ota.travi.booking.repository;
 
-import com.traviota.booking.domain.entities.GiaoDichThanhToan;
+import com.ota.travi.booking.domain.entities.GiaoDichThanhToan;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
