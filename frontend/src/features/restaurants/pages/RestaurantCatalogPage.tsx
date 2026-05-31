@@ -411,7 +411,7 @@ export function RestaurantCatalogPage() {
                               <p className="mt-1.5 text-sm font-medium text-on-surface-variant">{rst.cuisine}</p>
                             </div>
                             <div className="min-w-17 shrink-0 rounded-xl bg-surface-container-low px-3 py-2 text-center">
-                              <p className="font-display text-2xl font-bold text-primary">{rst.rating}</p>
+                              <p className="font-display text-2xl font-bold text-primary">{rst.rating.toFixed(1)}</p>
                               <p className="text-xs text-on-surface-variant">{rst.reviewCount} đánh giá</p>
                             </div>
                           </div>

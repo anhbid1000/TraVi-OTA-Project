@@ -4,7 +4,6 @@ import com.ota.travi.enums.LoaiDichVu;
 import com.ota.travi.enums.TrangThaiHoatDong;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record BusinessProfileResponse(
         String idHoSo,

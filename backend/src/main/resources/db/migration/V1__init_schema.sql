@@ -102,9 +102,9 @@ CREATE TABLE lich_su_thao_tac (
 
 -- Seed dữ liệu quản trị viên mặc định
 INSERT INTO users (id, email, username, mat_khau, ho_ten, trang_thai, vai_tro_id) VALUES
-                                                                                      ('ADMIN-001', 'admin1@travi.vn', 'admin.root', '$2a$10$iUQU306yNwtv.nA0.4DYKOpzTyFid302Jsllw0y1N3mmX3I3IxkqK', 'Nguyen Quan Tri 1', 'HOAT_DONG', 'd1be1d92-87a5-4763-bf48-f0ba30917b58'),
-                                                                                      ('ADMIN-002', 'admin2@travi.vn', 'admin.ops', '$2a$10$iUQU306yNwtv.nA0.4DYKOpzTyFid302Jsllw0y1N3mmX3I3IxkqK', 'Tran Quan Tri 2', 'HOAT_DONG', 'd1be1d92-87a5-4763-bf48-f0ba30917b58'),
-                                                                                      ('ADMIN-003', 'admin3@travi.vn', 'admin.audit', '$2a$10$iUQU306yNwtv.nA0.4DYKOpzTyFid302Jsllw0y1N3mmX3I3IxkqK', 'Le Quan Tri 3', 'HOAT_DONG', 'd1be1d92-87a5-4763-bf48-f0ba30917b58');
+                                                                                      ('ADMIN-001', 'admin1@travi.vn', 'admin.root', '$2a$10$iUQU306yNwtv.nA0.4DYKOpzTyFid302Jsllw0y1N3mmX3I3IxkqK', 'Nguyen Quan Tri 1', 'HOAT_DONG', 'ROLE-ADMIN'),
+                                                                                      ('ADMIN-002', 'admin2@travi.vn', 'admin.ops', '$2a$10$iUQU306yNwtv.nA0.4DYKOpzTyFid302Jsllw0y1N3mmX3I3IxkqK', 'Tran Quan Tri 2', 'HOAT_DONG', 'ROLE-ADMIN'),
+                                                                                      ('ADMIN-003', 'admin3@travi.vn', 'admin.audit', '$2a$10$iUQU306yNwtv.nA0.4DYKOpzTyFid302Jsllw0y1N3mmX3I3IxkqK', 'Le Quan Tri 3', 'HOAT_DONG', 'ROLE-ADMIN');
 
 INSERT INTO quan_tri_vien (id, cap_do_quyen) VALUES
                                                  ('ADMIN-001', 3),

@@ -83,6 +83,7 @@ public class SecurityConfig {
                         .requestMatchers(AUTH_PREFIX + "/**").permitAll()
                         .requestMatchers(PUBLIC_PREFIX + "/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers(BASE_PREFIX + "/attachments/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
@@ -93,6 +94,8 @@ public class SecurityConfig {
                         // 2. CÁC API PHÂN QUYỀN (Roles theo Seed Data DB)
                         .requestMatchers(ADMIN_PREFIX +"/**").hasRole("QUAN_TRI_VIEN")
                         .requestMatchers(PARTNER_PREFIX + "/**", PARTNER_LEGACY_PREFIX + "/**").hasRole("DOI_TAC")
+                        .requestMatchers(PARTNER_PREFIX + "/**").hasRole("DOI_TAC")
+                        .requestMatchers(USER_FEEDBACK_PREFIX + "/**").hasRole("USER")
 
                         // 3. TẤT CẢ CÁC API KHÁC ĐỀU PHẢI QUẸT THẺ (Có JWT hợp lệ mới được vào)
                         .anyRequest().authenticated()

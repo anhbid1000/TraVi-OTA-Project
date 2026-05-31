@@ -4,7 +4,6 @@ import com.ota.travi.enums.LoaiDichVu;
 import com.ota.travi.enums.TrangThaiKiemDuyet;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record AdminApprovalResponse(
         String idHoSo,
@@ -21,7 +20,7 @@ public record AdminApprovalResponse(
         LocalDateTime thoiGianDangKy,
         LocalDateTime thoiGianDuyet,
         ChinhSachResponse chinhSach,
-        List<TaiSanResponse> danhSachTaiSan,
+        TaiSanResponse taiSan,
         ApprovalComparisonResponse comparison
 ) {
 }

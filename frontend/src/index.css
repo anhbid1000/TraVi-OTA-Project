@@ -1,9 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
 @import 'tailwindcss';
 
 @theme {
   /* === TraVi Brand Colors === */
   --color-primary:            #003b1b;
-  --color-primary-container:  #14532d;
+
   --color-primary-fixed:      #b1f2be;
   --color-primary-fixed-dim:  #96d5a3;
   --color-on-primary:         #ffffff;

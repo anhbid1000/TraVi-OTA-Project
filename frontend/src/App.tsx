@@ -1,4 +1,4 @@
-import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
 import {
   CustomerLogin,
   CustomerRegister,
@@ -6,12 +6,12 @@ import {
   PartnerLogin,
   PartnerRegister,
   VerifyEmailPage,
-} from './pages/auth'
-import { ForbiddenPage } from './pages/ForbiddenPage'
-import { HomePage } from './pages/HomePage'
-import { CheckoutPage } from './pages/CheckoutPage'
-import { PaymentPage } from './pages/PaymentPage'
-import { ProtectedRoute, StaffRoute } from './routes'
+} from './pages/auth';
+import { ForbiddenPage } from './pages/ForbiddenPage';
+import { HomePage } from './pages/HomePage';
+import { CheckoutPage } from './pages/CheckoutPage';
+// import { PaymentPage } from './pages/PaymentPage'
+import { ProtectedRoute, StaffRoute } from './routes';
 import {
   PartnerBusinessProfilePage,
   PartnerDashboardOverviewPage,
@@ -21,15 +21,47 @@ import {
   PartnerRestaurantProfilePage,
   PartnerRoomManagementPage,
   PartnerTableLayoutPage,
-} from './pages/partner'
-import { HotelCatalogPage } from './features/hotels/pages/HotelCatalogPage'
-import { RestaurantCatalogPage } from './features/restaurants/pages/RestaurantCatalogPage'
-import { HotelDetailPage } from './features/hotels/pages/HotelDetailPage'
-import { RestaurantDetailPage } from './features/restaurants/pages/RestaurantDetailPage'
-import { SearchPage } from './pages/search'
-import './App.css'
+} from './pages/partner';
+import { SearchPage } from './pages/search';
+import { useAuth } from './hooks/useAuth';
+import { HotelCatalogPage } from './features/hotels/pages/HotelCatalogPage';
+import { RestaurantCatalogPage } from './features/restaurants/pages/RestaurantCatalogPage';
+import { HotelDetailPage } from './features/hotels/pages/HotelDetailPage';
+import { RestaurantDetailPage } from './features/restaurants/pages/RestaurantDetailPage';
+import MyBookings from './pages/user/dashboard/MyBookings';
+import PartnerReviewsPage from './pages/partner/PartnerReviewsPage';
+import PartnerComplaintsPage from './pages/partner/complaints/PartnerComplaintsPage.tsx';
+import PartnerComplaintDetailPage from './pages/partner/complaints/PartnerComplaintDetailPage.tsx';
+import './App.css';
+import MyBookingsV2 from './pages/user/dashboard/MyBookingsV2.tsx';
+import MyComplaintsPage from './pages/user/complaints/MyComplaintsPage.tsx';
+import MyComplaintDetailPage from './pages/user/complaints/MyComplaintDetailPage.tsx';
 
+function PaymentPage() {
+  const { isLoading, logout, user } = useAuth();
 
+  return (
+    <main style={{ padding: '32px', maxWidth: '960px', margin: '0 auto' }}>
+      <h1>Thanh toan</h1>
+      <p>Trang nay chi danh cho nguoi dung da dang nhap.</p>
+      <p>
+        <strong>Email:</strong> {String(user?.email ?? 'Khong xac dinh')}
+      </p>
+      <button
+        type="button"
+        onClick={() => {
+          void logout();
+        }}
+        disabled={isLoading}
+      >
+        {isLoading ? 'Dang dang xuat...' : 'Dang xuat'}
+      </button>
+      <p style={{ marginTop: '16px' }}>
+        <Link to="/">Quay ve trang chu</Link>
+      </p>
+    </main>
+  );
+}
 
 function NotFoundPage() {
   return (
@@ -37,7 +69,7 @@ function NotFoundPage() {
       <h1>404 - Không tìm thấy trang</h1>
       <Link to="/">Quay về trang chủ</Link>
     </main>
-  )
+  );
 }
 
 /**
@@ -102,6 +134,9 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/user/bookings-v2" element={<MyBookingsV2 />} />
+          <Route path="/user/complaints" element={<MyComplaintsPage />} />
+          <Route path="/user/complaints/:complaintId" element={<MyComplaintDetailPage />} />
         </Route>
         <Route element={<StaffRoute redirectTo="/partner/login" />}>
           <Route path="/partner" element={<PartnerLayout />}>
@@ -114,13 +149,18 @@ function App() {
             <Route path="room" element={<PartnerRoomManagementPage />} />
             <Route path="tables" element={<PartnerTableLayoutPage />} />
             <Route path="menus" element={<PartnerMenuManagementPage />} />
+            <Route path="reviews" element={<PartnerReviewsPage />} />
+            <Route path="complaints" element={<PartnerComplaintsPage />} />
+            <Route path="complaints/:complaintId" element={<PartnerComplaintDetailPage />} />
           </Route>
         </Route>
+
+        <Route path="/user/bookings" element={<MyBookings />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

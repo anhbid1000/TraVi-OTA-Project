@@ -36,36 +36,24 @@ CREATE TABLE IF NOT EXISTS ho_so_kinh_doanh (
     deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_ho_so_kinh_doanh_doi_tac'
-    ) THEN
-        ALTER TABLE ho_so_kinh_doanh
-            ADD CONSTRAINT fk_ho_so_kinh_doanh_doi_tac
-            FOREIGN KEY (doi_tac_id) REFERENCES doi_tac(id) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE ho_so_kinh_doanh DROP CONSTRAINT IF EXISTS fk_ho_so_kinh_doanh_doi_tac;
+ALTER TABLE ho_so_kinh_doanh ADD CONSTRAINT fk_ho_so_kinh_doanh_doi_tac FOREIGN KEY (doi_tac_id) REFERENCES doi_tac(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS tai_san (
     id_tai_san VARCHAR(36) PRIMARY KEY,
-    ho_so_kinh_doanh_id VARCHAR(36) NOT NULL,
+    ho_so_kinh_doanh_id VARCHAR(36) NOT NULL UNIQUE,
     mo_ta TEXT,
     trang_thai VARCHAR(50) DEFAULT 'SAN_SANG',
     gia_co_ban DOUBLE PRECISION,
     is_dynamic_pricing BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_tai_san_ho_so_kinh_doanh'
-    ) THEN
-        ALTER TABLE tai_san
-            ADD CONSTRAINT fk_tai_san_ho_so_kinh_doanh
-            FOREIGN KEY (ho_so_kinh_doanh_id) REFERENCES ho_so_kinh_doanh(id_ho_so) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE tai_san DROP CONSTRAINT IF EXISTS fk_tai_san_ho_so_kinh_doanh;
+ALTER TABLE tai_san ADD CONSTRAINT fk_tai_san_ho_so_kinh_doanh FOREIGN KEY (ho_so_kinh_doanh_id) REFERENCES ho_so_kinh_doanh(id_ho_so) ON DELETE CASCADE;
+
+-- Enforce 1-1 relationship: mỗi hồ sơ kinh doanh chỉ có 1 tài sản
+ALTER TABLE tai_san DROP CONSTRAINT IF EXISTS uk_tai_san_ho_so_kinh_doanh;
+ALTER TABLE tai_san ADD CONSTRAINT uk_tai_san_ho_so_kinh_doanh UNIQUE (ho_so_kinh_doanh_id);
 
 -- 2) Hotel/restaurant catalog tables
 CREATE TABLE IF NOT EXISTS khach_san (
@@ -83,16 +71,8 @@ CREATE TABLE IF NOT EXISTS khach_san (
     so_luong_danh_gia INTEGER DEFAULT 0
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_khach_san_tai_san'
-    ) THEN
-        ALTER TABLE khach_san
-            ADD CONSTRAINT fk_khach_san_tai_san
-            FOREIGN KEY (id_tai_san) REFERENCES tai_san(id_tai_san) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE khach_san DROP CONSTRAINT IF EXISTS fk_khach_san_tai_san;
+ALTER TABLE khach_san ADD CONSTRAINT fk_khach_san_tai_san FOREIGN KEY (id_tai_san) REFERENCES tai_san(id_tai_san) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS nha_hang (
     id_tai_san VARCHAR(36) PRIMARY KEY,
@@ -107,16 +87,8 @@ CREATE TABLE IF NOT EXISTS nha_hang (
     so_luong_danh_gia INTEGER DEFAULT 0
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_nha_hang_tai_san'
-    ) THEN
-        ALTER TABLE nha_hang
-            ADD CONSTRAINT fk_nha_hang_tai_san
-            FOREIGN KEY (id_tai_san) REFERENCES tai_san(id_tai_san) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE nha_hang DROP CONSTRAINT IF EXISTS fk_nha_hang_tai_san;
+ALTER TABLE nha_hang ADD CONSTRAINT fk_nha_hang_tai_san FOREIGN KEY (id_tai_san) REFERENCES tai_san(id_tai_san) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS tien_ich_khach_san (
     id VARCHAR(36) PRIMARY KEY,
@@ -131,24 +103,10 @@ CREATE TABLE IF NOT EXISTS khach_san_tien_ich (
     PRIMARY KEY (khach_san_id, tien_ich_id)
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_khach_san_tien_ich_khach_san'
-    ) THEN
-        ALTER TABLE khach_san_tien_ich
-            ADD CONSTRAINT fk_khach_san_tien_ich_khach_san
-            FOREIGN KEY (khach_san_id) REFERENCES khach_san(id_tai_san) ON DELETE CASCADE;
-    END IF;
-
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_khach_san_tien_ich_tien_ich'
-    ) THEN
-        ALTER TABLE khach_san_tien_ich
-            ADD CONSTRAINT fk_khach_san_tien_ich_tien_ich
-            FOREIGN KEY (tien_ich_id) REFERENCES tien_ich_khach_san(id) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE khach_san_tien_ich DROP CONSTRAINT IF EXISTS fk_khach_san_tien_ich_khach_san;
+ALTER TABLE khach_san_tien_ich ADD CONSTRAINT fk_khach_san_tien_ich_khach_san FOREIGN KEY (khach_san_id) REFERENCES khach_san(id_tai_san) ON DELETE CASCADE;
+ALTER TABLE khach_san_tien_ich DROP CONSTRAINT IF EXISTS fk_khach_san_tien_ich_tien_ich;
+ALTER TABLE khach_san_tien_ich ADD CONSTRAINT fk_khach_san_tien_ich_tien_ich FOREIGN KEY (tien_ich_id) REFERENCES tien_ich_khach_san(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS tien_ich_nha_hang (
     id VARCHAR(36) PRIMARY KEY,
@@ -160,16 +118,8 @@ CREATE TABLE IF NOT EXISTS tien_ich_nha_hang (
     phi_su_dung REAL DEFAULT 0.0
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_tien_ich_nha_hang_nha_hang'
-    ) THEN
-        ALTER TABLE tien_ich_nha_hang
-            ADD CONSTRAINT fk_tien_ich_nha_hang_nha_hang
-            FOREIGN KEY (nha_hang_id) REFERENCES nha_hang(id_tai_san) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE tien_ich_nha_hang DROP CONSTRAINT IF EXISTS fk_tien_ich_nha_hang_nha_hang;
+ALTER TABLE tien_ich_nha_hang ADD CONSTRAINT fk_tien_ich_nha_hang_nha_hang FOREIGN KEY (nha_hang_id) REFERENCES nha_hang(id_tai_san) ON DELETE CASCADE;
 
 -- 3) Room, table, menu and dish tables
 CREATE TABLE IF NOT EXISTS phong (
@@ -191,32 +141,16 @@ CREATE TABLE IF NOT EXISTS phong (
     updated_at TIMESTAMP
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_phong_khach_san'
-    ) THEN
-        ALTER TABLE phong
-            ADD CONSTRAINT fk_phong_khach_san
-            FOREIGN KEY (khach_san_id) REFERENCES khach_san(id_tai_san) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE phong DROP CONSTRAINT IF EXISTS fk_phong_khach_san;
+ALTER TABLE phong ADD CONSTRAINT fk_phong_khach_san FOREIGN KEY (khach_san_id) REFERENCES khach_san(id_tai_san) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS phong_tien_ich (
     phong_id VARCHAR(36) NOT NULL,
     tien_ich VARCHAR(100)
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_phong_tien_ich_phong'
-    ) THEN
-        ALTER TABLE phong_tien_ich
-            ADD CONSTRAINT fk_phong_tien_ich_phong
-            FOREIGN KEY (phong_id) REFERENCES phong(id) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE phong_tien_ich DROP CONSTRAINT IF EXISTS fk_phong_tien_ich_phong;
+ALTER TABLE phong_tien_ich ADD CONSTRAINT fk_phong_tien_ich_phong FOREIGN KEY (phong_id) REFERENCES phong(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS ban (
     id VARCHAR(36) PRIMARY KEY,
@@ -231,16 +165,8 @@ CREATE TABLE IF NOT EXISTS ban (
     updated_at TIMESTAMP
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_ban_nha_hang'
-    ) THEN
-        ALTER TABLE ban
-            ADD CONSTRAINT fk_ban_nha_hang
-            FOREIGN KEY (nha_hang_id) REFERENCES nha_hang(id_tai_san) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE ban DROP CONSTRAINT IF EXISTS fk_ban_nha_hang;
+ALTER TABLE ban ADD CONSTRAINT fk_ban_nha_hang FOREIGN KEY (nha_hang_id) REFERENCES nha_hang(id_tai_san) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS thuc_don (
     id VARCHAR(36) PRIMARY KEY,
@@ -252,16 +178,8 @@ CREATE TABLE IF NOT EXISTS thuc_don (
     updated_at TIMESTAMP
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_thuc_don_nha_hang'
-    ) THEN
-        ALTER TABLE thuc_don
-            ADD CONSTRAINT fk_thuc_don_nha_hang
-            FOREIGN KEY (nha_hang_id) REFERENCES nha_hang(id_tai_san) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE thuc_don DROP CONSTRAINT IF EXISTS fk_thuc_don_nha_hang;
+ALTER TABLE thuc_don ADD CONSTRAINT fk_thuc_don_nha_hang FOREIGN KEY (nha_hang_id) REFERENCES nha_hang(id_tai_san) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS mon_an (
     id VARCHAR(36) PRIMARY KEY,
@@ -277,32 +195,16 @@ CREATE TABLE IF NOT EXISTS mon_an (
     updated_at TIMESTAMP
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_mon_an_thuc_don'
-    ) THEN
-        ALTER TABLE mon_an
-            ADD CONSTRAINT fk_mon_an_thuc_don
-            FOREIGN KEY (thuc_don_id) REFERENCES thuc_don(id) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE mon_an DROP CONSTRAINT IF EXISTS fk_mon_an_thuc_don;
+ALTER TABLE mon_an ADD CONSTRAINT fk_mon_an_thuc_don FOREIGN KEY (thuc_don_id) REFERENCES thuc_don(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS mon_an_the_ngu_canh (
     mon_an_id VARCHAR(36) NOT NULL,
     the_ngu_canh VARCHAR(255)
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'fk_mon_an_the_ngu_canh_mon_an'
-    ) THEN
-        ALTER TABLE mon_an_the_ngu_canh
-            ADD CONSTRAINT fk_mon_an_the_ngu_canh_mon_an
-            FOREIGN KEY (mon_an_id) REFERENCES mon_an(id) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE mon_an_the_ngu_canh DROP CONSTRAINT IF EXISTS fk_mon_an_the_ngu_canh_mon_an;
+ALTER TABLE mon_an_the_ngu_canh ADD CONSTRAINT fk_mon_an_the_ngu_canh_mon_an FOREIGN KEY (mon_an_id) REFERENCES mon_an(id) ON DELETE CASCADE;
 
 -- 4) Images and policy tables
 CREATE TABLE IF NOT EXISTS anh_khach_san (
@@ -332,26 +234,12 @@ CREATE TABLE IF NOT EXISTS anh_phong (
     ngay_tai_len DATE
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_anh_khach_san_khach_san') THEN
-        ALTER TABLE anh_khach_san
-            ADD CONSTRAINT fk_anh_khach_san_khach_san
-            FOREIGN KEY (khach_san_id) REFERENCES khach_san(id_tai_san) ON DELETE CASCADE;
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_anh_nha_hang_nha_hang') THEN
-        ALTER TABLE anh_nha_hang
-            ADD CONSTRAINT fk_anh_nha_hang_nha_hang
-            FOREIGN KEY (nha_hang_id) REFERENCES nha_hang(id_tai_san) ON DELETE CASCADE;
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_anh_phong_phong') THEN
-        ALTER TABLE anh_phong
-            ADD CONSTRAINT fk_anh_phong_phong
-            FOREIGN KEY (phong_id) REFERENCES phong(id) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE anh_khach_san DROP CONSTRAINT IF EXISTS fk_anh_khach_san_khach_san;
+ALTER TABLE anh_khach_san ADD CONSTRAINT fk_anh_khach_san_khach_san FOREIGN KEY (khach_san_id) REFERENCES khach_san(id_tai_san) ON DELETE CASCADE;
+ALTER TABLE anh_nha_hang DROP CONSTRAINT IF EXISTS fk_anh_nha_hang_nha_hang;
+ALTER TABLE anh_nha_hang ADD CONSTRAINT fk_anh_nha_hang_nha_hang FOREIGN KEY (nha_hang_id) REFERENCES nha_hang(id_tai_san) ON DELETE CASCADE;
+ALTER TABLE anh_phong DROP CONSTRAINT IF EXISTS fk_anh_phong_phong;
+ALTER TABLE anh_phong ADD CONSTRAINT fk_anh_phong_phong FOREIGN KEY (phong_id) REFERENCES phong(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS chinh_sach (
     id VARCHAR(36) PRIMARY KEY,
@@ -372,14 +260,8 @@ CREATE TABLE IF NOT EXISTS chinh_sach (
     ho_so_kinh_doanh_id VARCHAR(36) NOT NULL UNIQUE
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_chinh_sach_ho_so_kinh_doanh') THEN
-        ALTER TABLE chinh_sach
-            ADD CONSTRAINT fk_chinh_sach_ho_so_kinh_doanh
-            FOREIGN KEY (ho_so_kinh_doanh_id) REFERENCES ho_so_kinh_doanh(id_ho_so) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE chinh_sach DROP CONSTRAINT IF EXISTS fk_chinh_sach_ho_so_kinh_doanh;
+ALTER TABLE chinh_sach ADD CONSTRAINT fk_chinh_sach_ho_so_kinh_doanh FOREIGN KEY (ho_so_kinh_doanh_id) REFERENCES ho_so_kinh_doanh(id_ho_so) ON DELETE CASCADE;
 
 -- 5) Booking / reservation tables used by availability queries
 CREATE TABLE IF NOT EXISTS don_dat_cho (
@@ -405,20 +287,10 @@ CREATE TABLE IF NOT EXISTS don_dat_cho (
     updated_at TIMESTAMP
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_don_dat_cho_khach_hang') THEN
-        ALTER TABLE don_dat_cho
-            ADD CONSTRAINT fk_don_dat_cho_khach_hang
-            FOREIGN KEY (khach_hang_id) REFERENCES khach_hang(id) ON DELETE CASCADE;
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_don_dat_cho_ho_so_kinh_doanh') THEN
-        ALTER TABLE don_dat_cho
-            ADD CONSTRAINT fk_don_dat_cho_ho_so_kinh_doanh
-            FOREIGN KEY (ho_so_kinh_doanh_id) REFERENCES ho_so_kinh_doanh(id_ho_so) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE don_dat_cho DROP CONSTRAINT IF EXISTS fk_don_dat_cho_khach_hang;
+ALTER TABLE don_dat_cho ADD CONSTRAINT fk_don_dat_cho_khach_hang FOREIGN KEY (khach_hang_id) REFERENCES khach_hang(id) ON DELETE CASCADE;
+ALTER TABLE don_dat_cho DROP CONSTRAINT IF EXISTS fk_don_dat_cho_ho_so_kinh_doanh;
+ALTER TABLE don_dat_cho ADD CONSTRAINT fk_don_dat_cho_ho_so_kinh_doanh FOREIGN KEY (ho_so_kinh_doanh_id) REFERENCES ho_so_kinh_doanh(id_ho_so) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS don_khach_san (
     id VARCHAR(36) PRIMARY KEY,
@@ -429,14 +301,8 @@ CREATE TABLE IF NOT EXISTS don_khach_san (
     gio_nhan_phong_du_kien TIME
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_don_khach_san_don_dat_cho') THEN
-        ALTER TABLE don_khach_san
-            ADD CONSTRAINT fk_don_khach_san_don_dat_cho
-            FOREIGN KEY (id) REFERENCES don_dat_cho(id) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE don_khach_san DROP CONSTRAINT IF EXISTS fk_don_khach_san_don_dat_cho;
+ALTER TABLE don_khach_san ADD CONSTRAINT fk_don_khach_san_don_dat_cho FOREIGN KEY (id) REFERENCES don_dat_cho(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS don_khach_san_chi_tiet (
     id VARCHAR(36) PRIMARY KEY,
@@ -449,20 +315,10 @@ CREATE TABLE IF NOT EXISTS don_khach_san_chi_tiet (
     thanh_tien DOUBLE PRECISION
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_don_khach_san_chi_tiet_don') THEN
-        ALTER TABLE don_khach_san_chi_tiet
-            ADD CONSTRAINT fk_don_khach_san_chi_tiet_don
-            FOREIGN KEY (don_khach_san_id) REFERENCES don_khach_san(id) ON DELETE CASCADE;
-    END IF;
-
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_don_khach_san_chi_tiet_phong') THEN
-        ALTER TABLE don_khach_san_chi_tiet
-            ADD CONSTRAINT fk_don_khach_san_chi_tiet_phong
-            FOREIGN KEY (phong_id) REFERENCES phong(id) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE don_khach_san_chi_tiet DROP CONSTRAINT IF EXISTS fk_don_khach_san_chi_tiet_don;
+ALTER TABLE don_khach_san_chi_tiet ADD CONSTRAINT fk_don_khach_san_chi_tiet_don FOREIGN KEY (don_khach_san_id) REFERENCES don_khach_san(id) ON DELETE CASCADE;
+ALTER TABLE don_khach_san_chi_tiet DROP CONSTRAINT IF EXISTS fk_don_khach_san_chi_tiet_phong;
+ALTER TABLE don_khach_san_chi_tiet ADD CONSTRAINT fk_don_khach_san_chi_tiet_phong FOREIGN KEY (phong_id) REFERENCES phong(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS don_nha_hang (
     id VARCHAR(36) PRIMARY KEY,
@@ -473,14 +329,8 @@ CREATE TABLE IF NOT EXISTS don_nha_hang (
     co_dat_mon_truoc BOOLEAN
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_don_nha_hang_don_dat_cho') THEN
-        ALTER TABLE don_nha_hang
-            ADD CONSTRAINT fk_don_nha_hang_don_dat_cho
-            FOREIGN KEY (id) REFERENCES don_dat_cho(id) ON DELETE CASCADE;
-    END IF;
-END $$;
+ALTER TABLE don_nha_hang DROP CONSTRAINT IF EXISTS fk_don_nha_hang_don_dat_cho;
+ALTER TABLE don_nha_hang ADD CONSTRAINT fk_don_nha_hang_don_dat_cho FOREIGN KEY (id) REFERENCES don_dat_cho(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS don_nha_hang_ban (
     id VARCHAR(36) PRIMARY KEY,
@@ -488,41 +338,41 @@ CREATE TABLE IF NOT EXISTS don_nha_hang_ban (
     ban_id VARCHAR(36) NOT NULL
 );
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_don_nha_hang_ban_don') THEN
-        ALTER TABLE don_nha_hang_ban
-            ADD CONSTRAINT fk_don_nha_hang_ban_don
-            FOREIGN KEY (don_nha_hang_id) REFERENCES don_nha_hang(id) ON DELETE CASCADE;
-    END IF;
+ALTER TABLE don_nha_hang_ban DROP CONSTRAINT IF EXISTS fk_don_nha_hang_ban_don;
+ALTER TABLE don_nha_hang_ban ADD CONSTRAINT fk_don_nha_hang_ban_don FOREIGN KEY (don_nha_hang_id) REFERENCES don_nha_hang(id) ON DELETE CASCADE;
+ALTER TABLE don_nha_hang_ban DROP CONSTRAINT IF EXISTS fk_don_nha_hang_ban_ban;
+ALTER TABLE don_nha_hang_ban ADD CONSTRAINT fk_don_nha_hang_ban_ban FOREIGN KEY (ban_id) REFERENCES ban(id) ON DELETE CASCADE;
 
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_don_nha_hang_ban_ban') THEN
-        ALTER TABLE don_nha_hang_ban
-            ADD CONSTRAINT fk_don_nha_hang_ban_ban
-            FOREIGN KEY (ban_id) REFERENCES ban(id) ON DELETE CASCADE;
-    END IF;
-END $$;
-
--- 6) Seed filter options for hotel amenities (safe insert)
+-- 6) Seed filter options for hotel amenities (safe insert, compatible H2/PostgreSQL)
 INSERT INTO tien_ich_khach_san (id, ten_tien_ich, loai_tien_ich, mo_ta)
-VALUES ('AMENITY-KS-001', 'Ho boi', 'Giai tri', 'Ho boi ngoai troi hoac trong nha')
-ON CONFLICT (ten_tien_ich) DO NOTHING;
+SELECT 'AMENITY-KS-001', 'Ho boi', 'Giai tri', 'Ho boi ngoai troi hoac trong nha'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tien_ich_khach_san WHERE ten_tien_ich = 'Ho boi'
+);
 
 INSERT INTO tien_ich_khach_san (id, ten_tien_ich, loai_tien_ich, mo_ta)
-VALUES ('AMENITY-KS-002', 'WiFi mien phi', 'Ket noi', 'Ket noi internet khong day mien phi')
-ON CONFLICT (ten_tien_ich) DO NOTHING;
+SELECT 'AMENITY-KS-002', 'WiFi mien phi', 'Ket noi', 'Ket noi internet khong day mien phi'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tien_ich_khach_san WHERE ten_tien_ich = 'WiFi mien phi'
+);
 
 INSERT INTO tien_ich_khach_san (id, ten_tien_ich, loai_tien_ich, mo_ta)
-VALUES ('AMENITY-KS-003', 'Spa & Massage', 'Suc khoe', 'Dich vu spa va massage tai khach san')
-ON CONFLICT (ten_tien_ich) DO NOTHING;
+SELECT 'AMENITY-KS-003', 'Spa & Massage', 'Suc khoe', 'Dich vu spa va massage tai khach san'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tien_ich_khach_san WHERE ten_tien_ich = 'Spa & Massage'
+);
 
 INSERT INTO tien_ich_khach_san (id, ten_tien_ich, loai_tien_ich, mo_ta)
-VALUES ('AMENITY-KS-004', 'Nha hang', 'An uong', 'Nha hang tai khach san')
-ON CONFLICT (ten_tien_ich) DO NOTHING;
+SELECT 'AMENITY-KS-004', 'Nha hang', 'An uong', 'Nha hang tai khach san'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tien_ich_khach_san WHERE ten_tien_ich = 'Nha hang'
+);
 
 INSERT INTO tien_ich_khach_san (id, ten_tien_ich, loai_tien_ich, mo_ta)
-VALUES ('AMENITY-KS-005', 'Gym', 'Suc khoe', 'Phong tap the duc')
-ON CONFLICT (ten_tien_ich) DO NOTHING;
+SELECT 'AMENITY-KS-005', 'Gym', 'Suc khoe', 'Phong tap the duc'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tien_ich_khach_san WHERE ten_tien_ich = 'Gym'
+);
 
 -- 7) Search/filter indexes
 CREATE INDEX IF NOT EXISTS idx_ho_so_kinh_doanh_city ON ho_so_kinh_doanh(thanh_pho);

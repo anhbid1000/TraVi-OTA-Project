@@ -82,6 +82,7 @@ export type HotelPolicy = {
 
 export type HotelDetail = {
   id: string
+  businessProfileId: string
   name: string
   location: string
   subtitle: string
