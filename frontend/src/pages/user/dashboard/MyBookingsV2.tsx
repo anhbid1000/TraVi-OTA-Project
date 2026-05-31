@@ -249,11 +249,28 @@ export default function MyBookingsV2() {
       </div>
 
       {selectedBooking && (
-        <ReviewCreateModal open={reviewOpen} onClose={() => setReviewOpen(false)} serviceName={selectedBooking.serviceName} serviceType={selectedBooking.serviceType} bookingId={selectedBooking.bookingId} reservationId={selectedBooking.reservationId} onSuccess={loadBookings} />
+        <ReviewCreateModal
+          open={reviewOpen}
+          onClose={() => setReviewOpen(false)}
+          serviceName={selectedBooking.serviceName}
+          serviceType={selectedBooking.serviceType}
+          bookingId={selectedBooking.bookingId}
+          reservationId={selectedBooking.reservationId}
+          onSuccess={loadBookings}
+        />
       )}
       {selectedBooking && (
-        <ComplaintCreateModal open={complaintOpen} onClose={() => setComplaintOpen(false)} serviceName={selectedBooking.serviceName} serviceType={selectedBooking.serviceType} bookingId={selectedBooking.bookingId} reservationId={selectedBooking.reservationId} />
+        <ComplaintCreateModal
+          open={complaintOpen}
+          onClose={() => setComplaintOpen(false)}
+          serviceName={selectedBooking.serviceName}
+          serviceType={selectedBooking.serviceType}
+          bookingId={selectedBooking.bookingId}
+          reservationId={selectedBooking.reservationId}
+          onSuccess={loadBookings}
+        />
       )}
+
     </CustomerFeedbackLayout>
   );
 }

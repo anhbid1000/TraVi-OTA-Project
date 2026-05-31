@@ -1,0 +1,380 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Dispute Manager - Dashboard</title>
+    <!-- Material Symbols Outlined -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Montserrat:wght@600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Configuration -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#87c695",
+                        "on-primary-fixed-variant": "#12512c",
+                        "on-primary-fixed": "#00210d",
+                        "primary-fixed": "#b1f2be",
+                        "mint-green": "#D1FAE5",
+                        "primary": "#003b1b",
+                        "on-secondary-container": "#00714d",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#4edea3",
+                        "outline": "#717970",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d9dadc",
+                        "pure-white": "#FFFFFF",
+                        "secondary": "#006c49",
+                        "on-secondary-fixed": "#002113",
+                        "surface": "#f8f9fb",
+                        "primary-container": "#14532d",
+                        "primary-fixed-dim": "#96d5a3",
+                        "secondary-fixed": "#6ffbbe",
+                        "deep-slate": "#1F2937",
+                        "background": "#f8f9fb",
+                        "tertiary-container": "#5e4400",
+                        "on-tertiary-fixed": "#261a00",
+                        "tertiary": "#422f00",
+                        "on-surface": "#191c1e",
+                        "inverse-surface": "#2e3132",
+                        "tertiary-fixed-dim": "#f9bd22",
+                        "surface-container-highest": "#e1e2e4",
+                        "surface-container-low": "#f3f4f6",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e1e2e4",
+                        "on-tertiary-fixed-variant": "#5c4300",
+                        "secondary-container": "#6cf8bb",
+                        "inverse-primary": "#96d5a3",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f8f9fb",
+                        "surface-container-high": "#e7e8ea",
+                        "on-background": "#191c1e",
+                        "surface-container": "#edeef0",
+                        "outline-variant": "#c0c9be",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#404941",
+                        "inverse-on-surface": "#f0f1f3",
+                        "tertiary-fixed": "#ffdf9f",
+                        "surface-tint": "#2e6a41",
+                        "on-tertiary-container": "#e8ae06"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "margin-desktop": "48px",
+                        "gutter-desktop": "24px",
+                        "gutter-mobile": "16px",
+                        "container-max": "1280px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Montserrat"],
+                        "headline-md": ["Montserrat"],
+                        "headline-lg-mobile": ["Montserrat"],
+                        "headline-sm": ["Montserrat"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Montserrat"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- App Container -->
+<div class="flex min-h-screen w-full relative">
+    <!-- SideNavBar Component -->
+    <nav class="hidden md:flex bg-primary dark:bg-primary-container shadow-md shadow-primary/10 h-screen w-64 fixed left-0 top-0 flex flex-col h-full py-6 z-50">
+        <!-- Header/Logo -->
+        <div class="px-6 mb-8 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-surface-container-lowest flex items-center justify-center overflow-hidden shrink-0">
+                <img alt="Admin Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a person wearing a dark green blazer against a clean white background, embodying a polished, modern corporate aesthetic suitable for an administrative profile avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpYQcog9u_xllXwnajtXOW5l71ETKc5dSZ359v9Yse1iWzuLmO6xO3D9OBt60rCJlNWTKUQVD5n52VsX7GgzS1XKNpQI8yI7YUAViDD0PzQ46WEHr3bK8DItUkVGGwSkBtDsx43Wr0pFSVS-GnsnYQq12L64u9sDyJg_Gbqr5ebxYYdMflZ2wglYuyO80HMQmUd34It_tDq1vOzEYox3McDCyPxcQ9F4fw8BEk8XiCCTKvWyx9jz_YIH2dgpMRiF8GyVjAyClR3Xw">
+            </div>
+            <div>
+                <h1 class="font-headline-md text-headline-md font-bold text-pure-white">LushResolve</h1>
+                <p class="font-label-sm text-label-sm text-secondary-fixed dark:text-secondary-fixed-dim">OTA Dispute Center</p>
+            </div>
+        </div>
+        <!-- CTA -->
+        <div class="px-4 mb-6">
+            <button class="w-full bg-secondary text-on-secondary font-label-lg text-label-lg py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors duration-200 ease-in-out active:scale-95">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+                New Case
+            </button>
+        </div>
+        <!-- Main Navigation Tabs -->
+        <div class="flex-1 px-2 space-y-1 overflow-y-auto">
+            <!-- Active Tab: Dashboard -->
+            <a class="flex items-center gap-3 px-4 py-3 bg-on-primary-fixed-variant text-secondary-fixed rounded-lg mx-2 transition-all duration-200 ease-in-out active:scale-95 group" href="#">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+                <span class="font-label-lg text-label-lg">Dashboard</span>
+            </a>
+            <!-- Inactive Tabs -->
+            <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors hover:bg-on-primary-fixed-variant hover:text-secondary-fixed rounded-lg mx-2 transition-all duration-200 ease-in-out active:scale-95 group" href="#">
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">gavel</span>
+                <span class="font-label-lg text-label-lg">Dispute Cases</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors hover:bg-on-primary-fixed-variant hover:text-secondary-fixed rounded-lg mx-2 transition-all duration-200 ease-in-out active:scale-95 group" href="#">
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">priority_high</span>
+                <span class="font-label-lg text-label-lg">Escalations</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors hover:bg-on-primary-fixed-variant hover:text-secondary-fixed rounded-lg mx-2 transition-all duration-200 ease-in-out active:scale-95 group" href="#">
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">monitoring</span>
+                <span class="font-label-lg text-label-lg">Analytics</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors hover:bg-on-primary-fixed-variant hover:text-secondary-fixed rounded-lg mx-2 transition-all duration-200 ease-in-out active:scale-95 group" href="#">
+                <span class="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
+                <span class="font-label-lg text-label-lg">Settings</span>
+            </a>
+        </div>
+        <!-- Footer Tabs -->
+        <div class="px-2 mt-auto border-t border-on-primary-fixed-variant pt-4 space-y-1">
+            <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors hover:bg-on-primary-fixed-variant hover:text-secondary-fixed rounded-lg mx-2 transition-all duration-200 ease-in-out active:scale-95" href="#">
+                <span class="material-symbols-outlined">help</span>
+                <span class="font-label-lg text-label-lg">Help Center</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors hover:bg-on-primary-fixed-variant hover:text-secondary-fixed rounded-lg mx-2 transition-all duration-200 ease-in-out active:scale-95" href="#">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="font-label-lg text-label-lg">Logout</span>
+            </a>
+        </div>
+    </nav>
+    <!-- Main Content Area -->
+    <div class="flex-1 md:ml-64 flex flex-col min-h-screen">
+        <!-- TopNavBar Component -->
+        <header class="bg-surface/60 dark:bg-background/60 backdrop-blur-md sticky top-0 z-40 w-full border-b border-outline-variant/30 shadow-sm flex justify-between items-center h-16 px-gutter-desktop">
+            <!-- Left: Product Name -->
+            <div class="flex items-center gap-6">
+                <span class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">Dispute Manager</span>
+                <!-- Top Navigation Links -->
+                <nav class="hidden lg:flex items-center gap-6 mt-1">
+                    <a class="font-label-lg text-label-lg text-primary font-bold border-b-2 border-primary pb-1" href="#">Queue</a>
+                    <a class="font-label-lg text-label-lg text-on-surface-variant hover:text-primary transition-colors" href="#">Reports</a>
+                    <a class="font-label-lg text-label-lg text-on-surface-variant hover:text-primary transition-colors" href="#">History</a>
+                </nav>
+            </div>
+            <!-- Right: Actions & Search -->
+            <div class="flex items-center gap-4">
+                <!-- Search Input Wrapper (Visual representation of "on_left" logic mapped to layout) -->
+                <div class="hidden sm:flex items-center bg-surface-container-low rounded-full px-4 py-2 border border-outline-variant/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                    <span class="material-symbols-outlined text-outline mr-2 text-sm">search</span>
+                    <input class="bg-transparent border-none focus:ring-0 text-body-sm font-body-sm text-on-surface w-48 placeholder:text-outline p-0" placeholder="Search ID or Customer..." type="text">
+                </div>
+                <!-- Trailing Icons -->
+                <button class="text-on-surface-variant hover:text-primary hover:bg-surface-container-low dark:hover:bg-surface-container-highest rounded-full p-2 transition-colors relative">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+                </button>
+                <button class="text-on-surface-variant hover:text-primary hover:bg-surface-container-low dark:hover:bg-surface-container-highest rounded-full p-2 transition-colors">
+                    <span class="material-symbols-outlined">account_circle</span>
+                </button>
+            </div>
+        </header>
+        <!-- Dashboard Canvas -->
+        <main class="flex-1 p-gutter-desktop max-w-container-max mx-auto w-full space-y-8">
+            <!-- Page Header -->
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                    <h2 class="font-headline-lg text-headline-lg text-on-background mb-1">Today's Overview</h2>
+                    <p class="font-body-md text-body-md text-on-surface-variant">Manage and resolve guest disputes efficiently.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="flex items-center gap-2 px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-label-lg text-label-lg text-on-surface hover:bg-surface-container-low transition-colors shadow-sm">
+                        <span class="material-symbols-outlined text-sm">calendar_today</span>
+                        Last 24 Hours
+                    </button>
+                </div>
+            </div>
+            <!-- Bento Grid Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1: Open Cases -->
+                <div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/50 shadow-sm relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-primary-fixed/20 rounded-full blur-2xl group-hover:bg-primary-fixed/40 transition-all duration-500"></div>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <p class="font-label-lg text-label-lg text-on-surface-variant">Active Disputes</p>
+                        <span class="material-symbols-outlined text-primary bg-primary-fixed/30 p-2 rounded-lg">folder_open</span>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="font-display-lg text-display-lg text-on-surface">142</h3>
+                        <p class="font-body-sm text-body-sm text-error flex items-center gap-1 mt-2">
+                            <span class="material-symbols-outlined text-sm">trending_up</span>
+                            +12% vs yesterday
+                        </p>
+                    </div>
+                </div>
+                <!-- Card 2: Resolution Time -->
+                <div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/50 shadow-sm relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-secondary-container/20 rounded-full blur-2xl group-hover:bg-secondary-container/40 transition-all duration-500"></div>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <p class="font-label-lg text-label-lg text-on-surface-variant">Avg. Resolution Time</p>
+                        <span class="material-symbols-outlined text-secondary bg-secondary-container/30 p-2 rounded-lg">timer</span>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="font-display-lg text-display-lg text-on-surface">4.2h</h3>
+                        <p class="font-body-sm text-body-sm text-secondary flex items-center gap-1 mt-2">
+                            <span class="material-symbols-outlined text-sm">trending_down</span>
+                            -45m vs yesterday
+                        </p>
+                    </div>
+                </div>
+                <!-- Card 3: Escalations -->
+                <div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/50 shadow-sm relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-error-container/20 rounded-full blur-2xl group-hover:bg-error-container/40 transition-all duration-500"></div>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <p class="font-label-lg text-label-lg text-on-surface-variant">Pending Escalations</p>
+                        <span class="material-symbols-outlined text-error bg-error-container/30 p-2 rounded-lg">warning</span>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="font-display-lg text-display-lg text-on-surface">18</h3>
+                        <p class="font-body-sm text-body-sm text-outline flex items-center gap-1 mt-2">
+                            Requires immediate attention
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <!-- Active Dispute Cases List -->
+            <div class="bg-surface-container-lowest rounded-xl border border-outline-variant/50 shadow-sm overflow-hidden flex flex-col">
+                <!-- Table Header Actions -->
+                <div class="p-6 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-lowest">
+                    <h3 class="font-headline-sm text-headline-sm text-on-surface">Priority Queue</h3>
+                    <button class="text-primary font-label-lg text-label-lg hover:underline decoration-primary underline-offset-4 flex items-center gap-1">
+                        View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </button>
+                </div>
+                <!-- Table Structure (using flex for bento-style rows) -->
+                <div class="w-full overflow-x-auto">
+                    <div class="min-w-[800px] w-full">
+                        <!-- Header Row -->
+                        <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-surface-container-low border-b border-outline-variant/30">
+                            <div class="col-span-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Case ID</div>
+                            <div class="col-span-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Customer</div>
+                            <div class="col-span-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Issue Category</div>
+                            <div class="col-span-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Priority</div>
+                            <div class="col-span-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Status</div>
+                            <div class="col-span-1 text-right font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Action</div>
+                        </div>
+                        <!-- Row 1 (Escalated) -->
+                        <div class="grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-outline-variant/20 hover:bg-surface-container-low/50 transition-colors bg-error-container/5">
+                            <div class="col-span-2 font-body-sm text-body-sm text-on-surface font-medium">#DS-4921</div>
+                            <div class="col-span-3 flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center font-label-sm text-label-sm text-on-surface-variant">
+                                    JD
+                                </div>
+                                <span class="font-body-md text-body-md text-on-surface">Jane Doe</span>
+                            </div>
+                            <div class="col-span-2 font-body-sm text-body-sm text-on-surface-variant">Refund Request</div>
+                            <div class="col-span-2">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-error-container text-on-error-container">
+<span class="w-1.5 h-1.5 rounded-full bg-on-error-container"></span>
+                                        High
+                                    </span>
+                            </div>
+                            <div class="col-span-2">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border border-error text-error bg-surface-container-lowest">
+                                        Escalated
+                                    </span>
+                            </div>
+                            <div class="col-span-1 text-right">
+                                <button class="p-2 rounded-full hover:bg-surface-variant text-primary transition-colors">
+                                    <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Row 2 (New) -->
+                        <div class="grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-outline-variant/20 hover:bg-surface-container-low/50 transition-colors">
+                            <div class="col-span-2 font-body-sm text-body-sm text-on-surface font-medium">#DS-4922</div>
+                            <div class="col-span-3 flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center font-label-sm text-label-sm text-on-surface-variant">
+                                    RC
+                                </div>
+                                <span class="font-body-md text-body-md text-on-surface">Robert Chen</span>
+                            </div>
+                            <div class="col-span-2 font-body-sm text-body-sm text-on-surface-variant">Service Quality</div>
+                            <div class="col-span-2">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-tertiary-container/30 text-on-tertiary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+                                        Medium
+                                    </span>
+                            </div>
+                            <div class="col-span-2">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-primary-container text-on-primary border border-primary-container">
+                                        New
+                                    </span>
+                            </div>
+                            <div class="col-span-1 text-right">
+                                <button class="p-2 rounded-full hover:bg-surface-variant text-primary transition-colors">
+                                    <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Row 3 (Under Review) -->
+                        <div class="grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-outline-variant/20 hover:bg-surface-container-low/50 transition-colors">
+                            <div class="col-span-2 font-body-sm text-body-sm text-on-surface font-medium">#DS-4918</div>
+                            <div class="col-span-3 flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center font-label-sm text-label-sm text-on-surface-variant">
+                                    SL
+                                </div>
+                                <span class="font-body-md text-body-md text-on-surface">Sarah Lewis</span>
+                            </div>
+                            <div class="col-span-2 font-body-sm text-body-sm text-on-surface-variant">Booking Error</div>
+                            <div class="col-span-2">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-tertiary-container/30 text-on-tertiary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+                                        Medium
+                                    </span>
+                            </div>
+                            <div class="col-span-2">
+<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-tertiary-fixed text-on-tertiary-fixed border border-tertiary-fixed">
+                                        Under Review
+                                    </span>
+                            </div>
+                            <div class="col-span-1 text-right">
+                                <button class="p-2 rounded-full hover:bg-surface-variant text-primary transition-colors">
+                                    <span class="material-symbols-outlined text-[20px]">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+</body></html>

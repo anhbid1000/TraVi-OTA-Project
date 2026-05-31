@@ -15,6 +15,7 @@ import {
 } from '../../detail/components'
 import { useHotelDetail } from '../hooks/useHotelDetail'
 import { formatVnd } from '../../../utils/display'
+import { PublicReviewBlock } from '../../feedback-v2/components/public/PublicReviewBlock'
 
 function toPositiveNumber(value: string | null, fallback: number) {
   const parsed = Number(value)
@@ -179,7 +180,6 @@ export function HotelDetailPage() {
             </article>
 
             <DetailAmenities title="Tiện ích nổi bật" amenities={hotel.amenities} />
-
             <article className="space-y-4 rounded-2xl border border-outline-variant/30 bg-white p-6 shadow-sm">
               <h3 className="font-display text-2xl font-semibold text-primary">Chính sách khách sạn</h3>
               <div className="space-y-3">
@@ -240,7 +240,7 @@ export function HotelDetailPage() {
 
           <aside className="space-y-6 lg:col-span-4">
             <div className="lg:sticky lg:top-28 lg:space-y-6">
-               <DetailMapCard address={hotel.address} latitude={hotel.latitude} longitude={hotel.longitude} />
+              <DetailMapCard address={hotel.address} latitude={hotel.latitude} longitude={hotel.longitude} />
 
               <article className="rounded-2xl border border-outline-variant/30 bg-white p-6 shadow-sm">
                 <h3 className="mb-4 font-display text-2xl font-semibold text-primary">Thông tin đặt phòng</h3>
@@ -252,6 +252,10 @@ export function HotelDetailPage() {
               </article>
             </div>
           </aside>
+        </div>
+
+        <div className="mt-10">
+          <PublicReviewBlock businessProfileId={hotel.businessProfileId} />
         </div>
       </main>
 

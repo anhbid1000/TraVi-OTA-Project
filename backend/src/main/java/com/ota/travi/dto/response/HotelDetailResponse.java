@@ -6,6 +6,7 @@ import java.util.Set;
 
 public record HotelDetailResponse(
         String id,
+        String businessProfileId,
         String tenKhachSan,
         String moTa,
         String diaChi,

@@ -24,7 +24,10 @@ public record ReviewCreateRequest(
 
         @NotBlank(message = "Nội dung đánh giá không được để trống")
         @Size(max = 1000, message = "Nội dung tối đa 1000 ký tự")
-        String noiDung
+        String noiDung,
+
+        @Size(max = 20, message = "Tối đa 20 điểm chi tiết")
+        java.util.List<ReviewAspectScoreRequest> aspectScores
 ) {
 }
 

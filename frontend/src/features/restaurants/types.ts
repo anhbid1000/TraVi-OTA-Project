@@ -55,6 +55,7 @@ export type RestaurantPracticalInfo = {
 
 export type RestaurantDetail = {
   id: string
+  businessProfileId: string
   name: string
   location: string
   city: string

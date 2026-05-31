@@ -17,9 +17,9 @@ import { RestaurantCatalogPage } from './features/restaurants/pages/RestaurantCa
 import { HotelDetailPage } from './features/hotels/pages/HotelDetailPage';
 import { RestaurantDetailPage } from './features/restaurants/pages/RestaurantDetailPage';
 import MyBookings from './pages/user/dashboard/MyBookings';
-import ManageReview from './pages/partner/manageReview/ManageReview';
-import DisputeCenter from './pages/partner/DisputeCenter/DisputeCenter';
-import TribunalView from './pages/admin/tribunalView/TribunalView';
+import PartnerReviewsPage from './pages/partner/PartnerReviewsPage';
+import PartnerComplaintsPage from './pages/partner/complaints/PartnerComplaintsPage.tsx';
+import PartnerComplaintDetailPage from './pages/partner/complaints/PartnerComplaintDetailPage.tsx';
 import './App.css';
 import MyBookingsV2 from './pages/user/dashboard/MyBookingsV2.tsx';
 import MyComplaintsPage from './pages/user/complaints/MyComplaintsPage.tsx';
@@ -151,12 +151,12 @@ function App() {
 
         <Route element={<StaffRoute />}>
           <Route path="/partner" element={<PartnerDashboardPage />} />
+          <Route path="/partner/reviews" element={<PartnerReviewsPage />} />
+          <Route path="/partner/complaints" element={<PartnerComplaintsPage />} />
+          <Route path="/partner/complaints/:complaintId" element={<PartnerComplaintDetailPage />} />
         </Route>
 
         <Route path="/user/bookings" element={<MyBookings />} />
-        <Route path="/partner/reviews" element={<ManageReview />} />
-        <Route path="/partner/dispute" element={<DisputeCenter />} />
-        <Route path="/admin/tribunal/:caseId" element={<TribunalView />} />
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

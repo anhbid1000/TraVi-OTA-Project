@@ -33,6 +33,7 @@ type BackendHotelCatalogItem = {
 
 type BackendHotelDetail = {
   id: string
+  businessProfileId?: string
   tenKhachSan: string
   moTa?: string
   diaChi?: string
@@ -232,6 +233,7 @@ function mapHotelDetail(payload: BackendHotelDetail): HotelDetail {
 
   return {
     id: payload.id,
+    businessProfileId: payload.businessProfileId || payload.id,
     name: normalizeVietnameseText(payload.tenKhachSan, { titleCase: true }),
     location,
     subtitle: description,

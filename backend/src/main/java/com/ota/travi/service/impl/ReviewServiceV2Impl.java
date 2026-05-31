@@ -16,6 +16,7 @@ import com.ota.travi.entity.DonNhaHang;
 import com.ota.travi.entity.HoSoKinhDoanh;
 import com.ota.travi.entity.KhachHang;
 import com.ota.travi.entity.Review;
+import com.ota.travi.entity.ReviewAspectScore;
 import com.ota.travi.entity.ReviewReply;
 import com.ota.travi.entity.TaiSan;
 import com.ota.travi.enums.LoaiDichVu;
@@ -27,6 +28,7 @@ import com.ota.travi.repository.DonNhaHangRepository;
 import com.ota.travi.repository.HoSoKinhDoanhRepository;
 import com.ota.travi.repository.KhachHangRepository;
 import com.ota.travi.repository.ReviewReplyRepository;
+import com.ota.travi.repository.ReviewAspectScoreRepository;
 import com.ota.travi.repository.ReviewRepository;
 import com.ota.travi.service.ProfanityFilterService;
 import com.ota.travi.service.ReviewServiceV2;
@@ -42,6 +44,7 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
 
     private final ReviewRepository reviewRepository;
     private final ReviewReplyRepository replyRepository;
+    private final ReviewAspectScoreRepository aspectScoreRepository;
     private final DonKhachSanRepository donKhachSanRepository;
     private final DonNhaHangRepository donNhaHangRepository;
     private final KhachHangRepository khachHangRepository;
@@ -53,6 +56,7 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
     public ReviewServiceV2Impl(
             ReviewRepository reviewRepository,
             ReviewReplyRepository replyRepository,
+            ReviewAspectScoreRepository aspectScoreRepository,
             DonKhachSanRepository donKhachSanRepository,
             DonNhaHangRepository donNhaHangRepository,
             KhachHangRepository khachHangRepository,
@@ -63,6 +67,7 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
     ) {
         this.reviewRepository = reviewRepository;
         this.replyRepository = replyRepository;
+        this.aspectScoreRepository = aspectScoreRepository;
         this.donKhachSanRepository = donKhachSanRepository;
         this.donNhaHangRepository = donNhaHangRepository;
         this.khachHangRepository = khachHangRepository;
@@ -107,13 +112,16 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
 
         Review saved = reviewRepository.save(review);
 
-        // 5. Lưu danh sách file đính kèm nếu có (tối đa 5 file ảnh)
+        // 5. Lưu điểm đánh giá chi tiết theo từng khía cạnh nếu khách có nhập
+        saveAspectScores(saved, request);
+
+        // 6. Lưu danh sách file đính kèm nếu có (tối đa 5 file ảnh)
         if (files != null && !files.isEmpty()) {
             attachmentService.saveReviewAttachments(saved.getId(), customerId, "KHACH_HANG", files);
         }
 
 
-        // 6. Nếu review hiển thị công khai thì cập nhật rating/reviewCount
+        // 7. Nếu review hiển thị công khai thì cập nhật rating/reviewCount
         if (finalStatus == TrangThaiDanhGia.DA_HIEN_THI) {
             recalculateBusinessProfileRating(hoSoKinhDoanh.getIdHoSo());
         }
@@ -171,6 +179,14 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getCustomerReviews(String customerId, Pageable pageable) {
         return reviewRepository.findByKhachHang_Id(customerId, pageable)
+                .map(this::mapToReviewResponse);
+    }
+
+    // --- 5. Service LẤY REVIEW CỦA PARTNER (tất cả cơ sở của partner) ---
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getPartnerReviews(String partnerId, Pageable pageable) {
+        return reviewRepository.findByHoSoKinhDoanh_DoiTac_Id(partnerId, pageable)
                 .map(this::mapToReviewResponse);
     }
 
@@ -272,6 +288,20 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
         }
     }
 
+    private void saveAspectScores(Review review, ReviewCreateRequest request) {
+        if (request.aspectScores() == null || request.aspectScores().isEmpty()) {
+            return;
+        }
+
+        request.aspectScores().forEach(item -> {
+            ReviewAspectScore aspectScore = new ReviewAspectScore();
+            aspectScore.setReview(review);
+            aspectScore.setAspect(item.aspect());
+            aspectScore.setScore(item.score());
+            aspectScoreRepository.save(aspectScore);
+        });
+    }
+
     private ReviewResponse mapToReviewResponse(Review review) {
         ReviewReplyResponse replyResponse = null;
         if (review.getReply() != null) {
@@ -295,6 +325,14 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
                 ))
                 .collect(Collectors.toList());
 
+        List<com.ota.travi.dto.response.ReviewAspectScoreResponse> aspectScoreResponses = aspectScoreRepository.findByReview_Id(review.getId())
+                .stream()
+                .map(score -> new com.ota.travi.dto.response.ReviewAspectScoreResponse(
+                        score.getAspect(),
+                        score.getScore()
+                ))
+                .collect(Collectors.toList());
+
         return new ReviewResponse(
                 review.getId(),
                 review.getKhachHang().getHoTen(),
@@ -305,6 +343,7 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
                 review.getTrangThai(),
                 review.getCreatedAt(),
                 attachmentResponses,
+                aspectScoreResponses,
                 replyResponse
         );
     }

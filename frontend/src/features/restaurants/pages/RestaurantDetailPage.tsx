@@ -14,6 +14,7 @@ import {
 } from '../../detail/components'
 import { useRestaurantDetail } from '../hooks/useRestaurantDetail'
 import { formatVnd } from '../../../utils/display'
+import { PublicReviewBlock } from '../../feedback-v2/components/public/PublicReviewBlock'
 
 type MenuTag = 'Tất cả' | string
 
@@ -323,6 +324,8 @@ export function RestaurantDetailPage() {
                 </div>
               )}
             </section>
+
+            <PublicReviewBlock businessProfileId={restaurant.businessProfileId} />
           </section>
 
           <aside className="space-y-6 lg:col-span-4">

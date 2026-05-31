@@ -5,6 +5,7 @@ import java.util.List;
 
 public record RestaurantDetailResponse(
         String id,
+        String businessProfileId,
         String tenNhaHang,
         String moTa,
         String diaChi,

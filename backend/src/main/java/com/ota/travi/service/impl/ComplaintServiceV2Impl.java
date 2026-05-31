@@ -10,6 +10,7 @@ import com.ota.travi.repository.*;
 import com.ota.travi.service.ComplaintServiceV2;
 import com.ota.travi.service.ProfanityFilterService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -403,53 +404,67 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
 
     // --- 6. Service LẤY DANH SÁCH COMPLAINT CỦA KHÁCH ---
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public Page<ComplaintResponse> getCustomerComplaints(String customerId, String status, String mucDo, String category, Pageable pageable) {
         TrangThaiKhieuNai trangThai = (status != null) ? TrangThaiKhieuNai.valueOf(status) : null;
         MucDoKhieuNai doUuTien = (mucDo != null) ? MucDoKhieuNai.valueOf(mucDo) : null;
         ComplaintCategory cat = (category != null) ? ComplaintCategory.valueOf(category) : null;
 
+        complaintRepository.findByKhachHang_Id(customerId)
+                .forEach(this::reconcileComplaintStatus);
+
+        Page<Complaint> page;
         if (trangThai != null && doUuTien != null && cat != null) {
-            return complaintRepository.findByKhachHang_IdAndTrangThaiAndMucDoAndCategory(customerId, trangThai, doUuTien, cat, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByKhachHang_IdAndTrangThaiAndMucDoAndCategory(customerId, trangThai, doUuTien, cat, pageable);
         } else if (trangThai != null && cat != null) {
-            return complaintRepository.findByKhachHang_IdAndTrangThaiAndCategory(customerId, trangThai, cat, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByKhachHang_IdAndTrangThaiAndCategory(customerId, trangThai, cat, pageable);
         } else if (doUuTien != null && cat != null) {
-            return complaintRepository.findByKhachHang_IdAndMucDoAndCategory(customerId, doUuTien, cat, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByKhachHang_IdAndMucDoAndCategory(customerId, doUuTien, cat, pageable);
         } else if (trangThai != null && doUuTien != null) {
-            return complaintRepository.findByKhachHang_IdAndTrangThaiAndMucDo(customerId, trangThai, doUuTien, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByKhachHang_IdAndTrangThaiAndMucDo(customerId, trangThai, doUuTien, pageable);
         } else if (trangThai != null) {
-            return complaintRepository.findByKhachHang_IdAndTrangThai(customerId, trangThai, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByKhachHang_IdAndTrangThai(customerId, trangThai, pageable);
         } else if (doUuTien != null) {
-            return complaintRepository.findByKhachHang_IdAndMucDo(customerId, doUuTien, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByKhachHang_IdAndMucDo(customerId, doUuTien, pageable);
         } else if (cat != null) {
-            return complaintRepository.findByKhachHang_IdAndCategory(customerId, cat, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByKhachHang_IdAndCategory(customerId, cat, pageable);
+        } else {
+            page = complaintRepository.findByKhachHang_Id(customerId, pageable);
         }
-        return complaintRepository.findByKhachHang_Id(customerId, pageable).map(this::mapToComplaintResponse);
+
+        return page.map(this::mapToComplaintResponse);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public Page<ComplaintResponse> getPartnerComplaints(String partnerId, String status, String mucDo, String category, Pageable pageable) {
         TrangThaiKhieuNai trangThai = (status != null) ? TrangThaiKhieuNai.valueOf(status) : null;
         MucDoKhieuNai doUuTien = (mucDo != null) ? MucDoKhieuNai.valueOf(mucDo) : null;
         ComplaintCategory cat = (category != null) ? ComplaintCategory.valueOf(category) : null;
 
+        complaintRepository.findByHoSoKinhDoanh_DoiTac_Id(partnerId)
+                .forEach(this::reconcileComplaintStatus);
+
+        Page<Complaint> page;
         if (trangThai != null && doUuTien != null && cat != null) {
-            return complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndTrangThaiAndMucDoAndCategory(partnerId, trangThai, doUuTien, cat, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndTrangThaiAndMucDoAndCategory(partnerId, trangThai, doUuTien, cat, pageable);
         } else if (trangThai != null && cat != null) {
-            return complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndTrangThaiAndCategory(partnerId, trangThai, cat, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndTrangThaiAndCategory(partnerId, trangThai, cat, pageable);
         } else if (doUuTien != null && cat != null) {
-            return complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndMucDoAndCategory(partnerId, doUuTien, cat, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndMucDoAndCategory(partnerId, doUuTien, cat, pageable);
         } else if (trangThai != null && doUuTien != null) {
-            return complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndTrangThaiAndMucDo(partnerId, trangThai, doUuTien, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndTrangThaiAndMucDo(partnerId, trangThai, doUuTien, pageable);
         } else if (trangThai != null) {
-            return complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndTrangThai(partnerId, trangThai, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndTrangThai(partnerId, trangThai, pageable);
         } else if (doUuTien != null) {
-            return complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndMucDo(partnerId, doUuTien, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndMucDo(partnerId, doUuTien, pageable);
         } else if (cat != null) {
-            return complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndCategory(partnerId, cat, pageable).map(this::mapToComplaintResponse);
+            page = complaintRepository.findByHoSoKinhDoanh_DoiTac_IdAndCategory(partnerId, cat, pageable);
+        } else {
+            page = complaintRepository.findByHoSoKinhDoanh_DoiTac_Id(partnerId, pageable);
         }
-        return complaintRepository.findByHoSoKinhDoanh_DoiTac_Id(partnerId, pageable).map(this::mapToComplaintResponse);
+
+        return page.map(this::mapToComplaintResponse);
     }
 
     // --- 7. Service LẤY CHI TIẾT COMPLAINT ---
@@ -510,11 +525,58 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
         return false;
     }
 
-    private ComplaintResponse mapToComplaintResponse(Complaint complaint) {
+    // Tính toán lại trạng thái dựa trên context thực tế trước khi trả về
+    private Complaint reconcileComplaintStatus(Complaint complaint) {
+        if (complaint.getTrangThai() == TrangThaiKhieuNai.DA_DONG) {
+            return complaint; // Trạng thái cứng, không đổi
+        }
+
+        TrangThaiKhieuNai resolvedStatus = complaint.getTrangThai();
+        List<ComplaintResolutionAction> resolutionActions =
+                resolutionActionRepository.findByComplaint_IdOrderByCreatedAtAsc(complaint.getId());
+
+        // 1. Nếu có action -> quyết định theo action cuối cùng
+        if (!resolutionActions.isEmpty()) {
+            boolean hasCompleted = resolutionActions.stream()
+                    .anyMatch(a -> a.getStatus() == ComplaintResolutionActionStatus.COMPLETED);
+            boolean hasInProgress = resolutionActions.stream()
+                    .anyMatch(a -> a.getStatus() == ComplaintResolutionActionStatus.IN_PROGRESS
+                            || a.getStatus() == ComplaintResolutionActionStatus.CUSTOMER_ACCEPTED);
+            boolean hasProposed = resolutionActions.stream()
+                    .anyMatch(a -> a.getStatus() == ComplaintResolutionActionStatus.PROPOSED);
+
+            if (hasCompleted) {
+                resolvedStatus = TrangThaiKhieuNai.DA_GIAI_QUYET;
+            } else if (hasInProgress) {
+                resolvedStatus = TrangThaiKhieuNai.DANG_THUC_HIEN_PHUONG_AN;
+            } else if (hasProposed) {
+                resolvedStatus = TrangThaiKhieuNai.CHO_XAC_NHAN_KHACH;
+            } else {
+                resolvedStatus = TrangThaiKhieuNai.DANG_XU_LY;
+            }
+        }
+        // 2. Nếu chưa có action nhưng có message từ partner -> DANG_XU_LY
+        else if (complaint.getMessages().stream().anyMatch(m -> m.getVaiTroNguoiGui() == VaiTroTinNhan.DOI_TAC)) {
+            resolvedStatus = TrangThaiKhieuNai.DANG_XU_LY;
+        }
+
+        if (resolvedStatus != complaint.getTrangThai()) {
+            complaint.setTrangThai(resolvedStatus);
+            return complaintRepository.save(complaint);
+        }
+
+        return complaint;
+    }
+
+    private ComplaintResponse mapToComplaintResponse(Complaint complaintRaw) {
+        Complaint complaint = reconcileComplaintStatus(complaintRaw);
+
         List<ComplaintMessageResponse> msgResponses = complaint.getMessages().stream().map(msg -> {
             List<AttachmentResponse> msgAttachments = attachmentService.getAttachmentsByOwner(AttachmentOwnerType.COMPLAINT_MESSAGE, msg.getId()).stream()
                     .map(att -> new AttachmentResponse(att.getId(), com.ota.travi.constant.ApiEndpoints.BASE_PREFIX + "/attachments/" + att.getId(), att.getFileName(), att.getFileType().name(), att.getMimeType(), att.getFileSize())).collect(Collectors.toList());
-            return new ComplaintMessageResponse(msg.getId(), msg.getVaiTroNguoiGui(), msg.getNoiDung(), msg.getCreatedAt(), msgAttachments);
+            String senderName = msg.getVaiTroNguoiGui() == VaiTroTinNhan.KHACH_HANG ? complaint.getKhachHang().getHoTen() :
+                    (msg.getVaiTroNguoiGui() == VaiTroTinNhan.DOI_TAC ? complaint.getHoSoKinhDoanh().getTenCoSo() : "Hệ thống");
+            return new ComplaintMessageResponse(msg.getId(), msg.getVaiTroNguoiGui(), senderName, msg.getNoiDung(), msg.getCreatedAt(), msgAttachments);
         }).toList();
 
         List<AttachmentResponse> complaintAttachments = attachmentService.getAttachmentsByOwner(AttachmentOwnerType.COMPLAINT, complaint.getId()).stream()

@@ -16,7 +16,7 @@ export function RatingDisplay({ rating, reviewLabel, size = 'md' }: RatingDispla
 
   return (
     <div className={`${sizeClass} shrink-0 bg-surface-container-low text-center`}>
-      <p className={`font-display ${textSizeClass} font-bold text-primary`}>{rating}</p>
+      <p className={`font-display ${textSizeClass} font-bold text-primary`}>{rating.toFixed(1)}</p>
       {reviewLabel && <p className="text-xs text-on-surface-variant">{reviewLabel}</p>}
     </div>
   )

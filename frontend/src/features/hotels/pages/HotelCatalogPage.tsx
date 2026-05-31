@@ -353,7 +353,7 @@ export function HotelCatalogPage() {
                               </p>
                             </div>
                             <div className="min-w-17 shrink-0 rounded-xl bg-surface-container-low px-3 py-2 text-center">
-                              <p className="font-display text-2xl font-bold text-primary">{hotel.rating}</p>
+                              <p className="font-display text-2xl font-bold text-primary">{hotel.rating.toFixed(1)}</p>
                               <p className="text-xs text-on-surface-variant">{hotel.reviewCount} đánh giá</p>
                             </div>
                           </div>

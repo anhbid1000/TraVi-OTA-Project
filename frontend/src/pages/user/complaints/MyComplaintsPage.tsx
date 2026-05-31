@@ -4,18 +4,46 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomerFeedbackLayout } from '../../../features/feedback-v2/components/CustomerFeedbackLayout';
 import { complaintServiceV2 } from '../../../features/feedback-v2/services/complaintServiceV2';
 import type { ComplaintResponse, TrangThaiKhieuNai } from '../../../features/feedback-v2/types/complaint';
+import { shouldShowOverdueBadge } from '../../../utils/sla';
 
 const STATUS_OPTIONS: Array<{ label: string; value: '' | TrangThaiKhieuNai }> = [
   { label: 'Tất cả', value: '' },
   { label: 'Chờ phản hồi', value: 'CHO_PHAN_HOI' },
   { label: 'Đang xử lý', value: 'DANG_XU_LY' },
+  { label: 'Chờ xác nhận khách', value: 'CHO_XAC_NHAN_KHACH' },
+  { label: 'Đang thực hiện phương án', value: 'DANG_THUC_HIEN_PHUONG_AN' },
   { label: 'Đã giải quyết', value: 'DA_GIAI_QUYET' },
   { label: 'Đã đóng', value: 'DA_DONG' },
 ];
 
 function statusLabel(status: TrangThaiKhieuNai) {
-  return ({ CHO_PHAN_HOI: 'Chờ phản hồi', DANG_XU_LY: 'Đang xử lý', DA_GIAI_QUYET: 'Đã giải quyết', DA_DONG: 'Đã đóng' } as const)[status];
+  return ({
+    CHO_PHAN_HOI: 'Chờ phản hồi',
+    DANG_XU_LY: 'Đang xử lý',
+    CHO_XAC_NHAN_KHACH: 'Chờ xác nhận khách',
+    DANG_THUC_HIEN_PHUONG_AN: 'Đang thực hiện phương án',
+    DA_GIAI_QUYET: 'Đã giải quyết',
+    DA_DONG: 'Đã đóng',
+  } as const)[status];
 }
+
+function severityLabel(severity: ComplaintResponse['severity']) {
+  return severity === 'NGHIEM_TRONG' ? 'Nghiêm trọng' : 'Bình thường';
+}
+
+function categoryLabel(category: ComplaintResponse['category']) {
+  return ({
+    ROOM_QUALITY: 'Chất lượng phòng',
+    CLEANLINESS: 'Vệ sinh',
+    SERVICE_ATTITUDE: 'Thái độ phục vụ',
+    BILLING: 'Thanh toán / Hóa đơn',
+    FOOD_QUALITY: 'Chất lượng ẩm thực',
+    BOOKING_PROBLEM: 'Vấn đề đặt chỗ',
+    FACILITY_PROBLEM: 'Vấn đề cơ sở vật chất',
+    OTHER: 'Khác',
+  } as const)[category];
+}
+
 
 export default function MyComplaintsPage() {
   const [items, setItems] = useState<ComplaintResponse[]>([]);
@@ -30,7 +58,7 @@ export default function MyComplaintsPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await complaintServiceV2.getCustomerComplaints(page, 10, status || undefined, undefined, 'updated_desc');
+      const data = await complaintServiceV2.getCustomerComplaints(page, 10, status || undefined, undefined, undefined, 'updated_desc');
       setItems(data.content ?? []);
       setTotalPages(data.totalPages ?? 1);
     } catch (loadError) {
@@ -47,7 +75,7 @@ export default function MyComplaintsPage() {
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();
     if (!q) return items;
-    return items.filter((item) => `${item.id} ${item.title}`.toLowerCase().includes(q));
+    return items.filter((item) => `${item.id} ${item.title} ${item.category}`.toLowerCase().includes(q));
   }, [items, keyword]);
 
   return (
@@ -56,7 +84,7 @@ export default function MyComplaintsPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-center">
           <div className="relative lg:col-span-6">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
-            <input className="w-full rounded-xl border border-outline-variant bg-white py-3.5 pl-12 pr-4 text-sm outline-none transition focus:ring-2 focus:ring-primary" placeholder="Tìm theo mã hoặc tiêu đề..." value={keyword} onChange={(event) => setKeyword(event.target.value)} />
+            <input className="w-full rounded-xl border border-outline-variant bg-white py-3.5 pl-12 pr-4 text-sm outline-none transition focus:ring-2 focus:ring-primary" placeholder="Tìm theo mã, tiêu đề hoặc phân loại..." value={keyword} onChange={(event) => setKeyword(event.target.value)} />
           </div>
           <div className="flex flex-wrap justify-start gap-2 lg:col-span-6 lg:justify-end">
             {STATUS_OPTIONS.map((option) => (
@@ -73,14 +101,28 @@ export default function MyComplaintsPage() {
         {!loading && filtered.length === 0 && <div className="rounded-3xl border-2 border-dashed border-outline-variant bg-white py-20 text-center"><h3 className="font-display text-2xl font-bold text-primary">Không có khiếu nại phù hợp</h3><p className="mt-2 text-on-surface-variant">Thử đổi bộ lọc hoặc tạo khiếu nại từ trang chuyến đi.</p></div>}
         {filtered.map((item) => (
           <div key={item.id} className={`relative overflow-hidden rounded-xl border border-outline-variant bg-white p-6 shadow-sm transition hover:shadow-md ${item.status === 'DA_DONG' ? 'opacity-80' : ''}`}>
-            {item.overdue && <div className="absolute right-0 top-0 rounded-bl-xl bg-error px-4 py-1 text-xs font-semibold text-white">Quá hạn</div>}
+            {shouldShowOverdueBadge(item) && <div className="absolute right-0 top-0 rounded-bl-xl bg-error px-4 py-1 text-xs font-semibold text-white">Quá hạn</div>}
             <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
               <div className="flex-1 space-y-3">
-                <div className="flex items-center gap-3"><span className="text-xs uppercase tracking-wider text-outline">#{item.id}</span><span className={`rounded px-2 py-0.5 text-xs font-bold uppercase ${item.severity === 'NGHIEM_TRONG' ? 'bg-error-container text-error' : 'bg-surface-container-high text-on-surface-variant'}`}>{item.severity === 'NGHIEM_TRONG' ? 'Nghiêm trọng' : 'Bình thường'}</span></div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-xs uppercase tracking-wider text-outline">#{item.id}</span>
+                  <span className={`rounded px-2 py-0.5 text-xs font-bold uppercase ${item.severity === 'NGHIEM_TRONG' ? 'bg-error-container text-error' : 'bg-surface-container-high text-on-surface-variant'}`}>{severityLabel(item.severity)}</span>
+                  <span className="rounded px-2 py-0.5 text-xs font-bold uppercase bg-surface-container-high text-on-surface-variant">{categoryLabel(item.category)}</span>
+                </div>
                 <h3 className="font-display text-xl font-semibold text-on-surface hover:text-primary">{item.title}</h3>
-                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-on-surface-variant"><span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-outline">{item.serviceType === 'KHACH_SAN' ? 'hotel' : 'restaurant'}</span>{item.serviceType === 'KHACH_SAN' ? 'Khách sạn' : 'Nhà hàng'}</span><span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-outline">schedule</span>Cập nhật: {new Date(item.updatedAt).toLocaleString('vi-VN')}</span></div>
+                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-on-surface-variant">
+                  <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-outline">{item.serviceType === 'KHACH_SAN' ? 'hotel' : 'restaurant'}</span>{item.serviceType === 'KHACH_SAN' ? 'Khách sạn' : 'Nhà hàng'}</span>
+                  <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-outline">schedule</span>Cập nhật: {new Date(item.updatedAt).toLocaleString('vi-VN')}</span>
+                  <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-outline">info</span>{item.category ? categoryLabel(item.category) : '—'}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-8"><div className="hidden text-right lg:block"><p className="mb-1 text-xs text-outline">Trạng thái</p><span className="rounded-full bg-mint-green px-4 py-1.5 text-sm font-semibold text-on-secondary-container">{statusLabel(item.status)}</span></div><Link className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-secondary" to={`/user/complaints/${item.id}`}>Xem chi tiết</Link></div>
+              <div className="flex items-center gap-8">
+                <div className="hidden text-right lg:block">
+                  <p className="mb-1 text-xs text-outline">Trạng thái</p>
+                  <span className="rounded-full bg-mint-green px-4 py-1.5 text-sm font-semibold text-on-secondary-container">{statusLabel(item.status)}</span>
+                </div>
+                <Link className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-secondary" to={`/user/complaints/${item.id}`}>Xem chi tiết</Link>
+              </div>
             </div>
           </div>
         ))}

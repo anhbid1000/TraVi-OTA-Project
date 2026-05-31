@@ -18,7 +18,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(() => tokenStorage.getUserFromToken())
   const [accessToken, setAccessToken] = useState<string | null>(() => tokenStorage.getAccessToken())
   const [refreshToken, setRefreshToken] = useState<string | null>(() => tokenStorage.getRefreshToken())
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const syncSessionFromStorage = useCallback(() => {
     setUser(tokenStorage.getUserFromToken())
@@ -83,10 +83,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const handleForcedLogout = () => {
       clearSession()
+      setIsLoading(false)
     }
 
     const handleSessionRefresh = () => {
       syncSessionFromStorage()
+      setIsLoading(false)
     }
 
     window.addEventListener('auth:logout', handleForcedLogout)
@@ -98,13 +100,55 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [clearSession, syncSessionFromStorage])
 
+  // Bootstrap phiên đăng nhập khi app mount:
+  // - Nếu có access token còn hạn -> dùng luôn
+  // - Nếu access token hết hạn nhưng còn refresh token -> refresh trước khi render protected routes
+  // - Nếu không có token -> clear session
   useEffect(() => {
-    if (!accessToken || !tokenStorage.isAccessTokenExpired()) {
+    const bootstrapAuth = async () => {
+      const currentAccessToken = tokenStorage.getAccessToken()
+      const currentRefreshToken = tokenStorage.getRefreshToken()
+
+      if (!currentAccessToken) {
+        clearSession()
+        setIsLoading(false)
+        return
+      }
+
+      if (!tokenStorage.isAccessTokenExpired()) {
+        syncSessionFromStorage()
+        setIsLoading(false)
+        return
+      }
+
+      if (!currentRefreshToken) {
+        clearSession()
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        await refreshSession()
+      } catch {
+        clearSession()
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    void bootstrapAuth()
+  }, [clearSession, refreshSession, syncSessionFromStorage])
+
+  // Runtime refresh nếu access token bị hết hạn trong khi đang sử dụng app
+  useEffect(() => {
+    if (!accessToken || !tokenStorage.isAccessTokenExpired() || !refreshToken) {
       return
     }
 
-    void refreshSession().catch(clearSession)
-  }, [accessToken, clearSession, refreshSession])
+    void refreshSession().catch(() => {
+      clearSession()
+    })
+  }, [accessToken, clearSession, refreshSession, refreshToken])
 
   const value = useMemo<AuthContextValue>(
     () => ({

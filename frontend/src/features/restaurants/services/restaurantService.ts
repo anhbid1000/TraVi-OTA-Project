@@ -33,6 +33,7 @@ type BackendRestaurantCatalogItem = {
 
 type BackendRestaurantDetail = {
   id: string
+  businessProfileId?: string
   tenNhaHang: string
   moTa?: string
   diaChi?: string
@@ -182,6 +183,7 @@ function mapRestaurantDetail(payload: BackendRestaurantDetail): RestaurantDetail
 
   return {
     id: payload.id,
+    businessProfileId: payload.businessProfileId || payload.id,
     name: normalizeVietnameseText(payload.tenNhaHang, { titleCase: true }),
     location,
     city: normalizeVietnameseText(payload.thanhPho, { titleCase: true }) || 'Việt Nam',

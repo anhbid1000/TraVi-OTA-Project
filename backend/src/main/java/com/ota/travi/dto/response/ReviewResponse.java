@@ -19,6 +19,7 @@ public record ReviewResponse(
         TrangThaiDanhGia status,
         LocalDateTime createdAt,
         List<AttachmentResponse> attachments,
+        List<ReviewAspectScoreResponse> aspectScores,
         ReviewReplyResponse partnerReply
 ) {
 }

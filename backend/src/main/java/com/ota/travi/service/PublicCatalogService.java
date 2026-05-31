@@ -194,6 +194,7 @@ public class PublicCatalogService {
 
         return new HotelDetailResponse(
                 hotel.getIdTaiSan(),
+                hotel.getHoSoKinhDoanh().getIdHoSo(),
                 hotel.getTen(),
                 hotel.getMoTa(),
                 hotel.getHoSoKinhDoanh().getDiaChi(),
@@ -356,16 +357,18 @@ public class PublicCatalogService {
         }
 
         // 3. Lấy danh sách bàn còn trống theo thời gian và số khách
-        List<TableAvailabilityResponse> tables = mapTableAvailability(
+        List<TableAvailabilityResponse> availableTables = mapTableAvailability(
                 restaurantId,
                 date,
                 time,
                 guests
         );
+        List<MenuResponse> menus = mapMenus(restaurantId);
 
         // 4. Xây dựng và trả về phản hồi chi tiết nhà hàng đầy đủ
         return new RestaurantDetailResponse(
                 restaurant.getIdTaiSan(),
+                restaurant.getHoSoKinhDoanh().getIdHoSo(),
                 restaurant.getTen(),
                 restaurant.getMoTa(),
                 restaurant.getHoSoKinhDoanh().getDiaChi(),
@@ -379,12 +382,12 @@ public class PublicCatalogService {
                 restaurant.getGioDongCua(),
                 restaurant.getCoDatBanTruoc(),
                 restaurant.getCoDatMonTruoc(),
-                0.0,
-                0,
+                restaurant.getRatingAverage(),
+                restaurant.getReviewCount(),
                 mapRestaurantImages(restaurantId),
                 mapRestaurantAmenities(restaurant.getTienIch()),
-                tables,
-                mapMenus(restaurantId)
+                availableTables,
+                menus
         );
     }
 

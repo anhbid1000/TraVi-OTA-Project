@@ -11,6 +11,7 @@ import java.util.List;
 public record ComplaintMessageResponse(
         String id,
         VaiTroTinNhan senderRole,
+        String senderName,
         String content,
         LocalDateTime createdAt,
         List<AttachmentResponse> attachments

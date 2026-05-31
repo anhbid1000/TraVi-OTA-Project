@@ -18,4 +18,6 @@ public interface ReviewServiceV2 {
     Page<ReviewResponse> getPublicReviews(String businessProfileId, Pageable pageable);
 
     Page<ReviewResponse> getCustomerReviews(String customerId, Pageable pageable);
+
+    Page<ReviewResponse> getPartnerReviews(String partnerId, Pageable pageable);
 }

@@ -9,7 +9,7 @@ public record ComplaintActivityResponse(
         String id,
         String complaintId,
         ComplaintActivityType activityType,
-        String actorId,
+        String actorName,
         ComplaintActorRole actorRole,
         String summary,
         String metadata,

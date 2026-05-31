@@ -12,6 +12,7 @@ public interface ReviewRepository extends JpaRepository<Review, String> {
 
     Page<Review> findByHoSoKinhDoanh_IdHoSoAndTrangThai(String hoSoId, TrangThaiDanhGia trangThai, Pageable pageable);
     Page<Review> findByKhachHang_Id(String khachHangId, Pageable pageable);
+    Page<Review> findByHoSoKinhDoanh_DoiTac_Id(String partnerId, Pageable pageable);
 
     long countByHoSoKinhDoanh_IdHoSoAndTrangThai(String hoSoId, TrangThaiDanhGia trangThai);
 }

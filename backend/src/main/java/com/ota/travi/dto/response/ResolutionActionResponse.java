@@ -18,7 +18,7 @@ public record ResolutionActionResponse(
         String voucherCode,
         Integer discountPercent,
         ComplaintResolutionActionStatus status,
-        String proposedByPartnerId,
+        String proposedByPartnerName,
         String customerResponseNote,
         String partnerCompletionNote,
         LocalDateTime proposedAt,
