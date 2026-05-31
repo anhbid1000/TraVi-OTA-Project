@@ -30,4 +30,5 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
     @Lock(LockModeType.OPTIMISTIC)
     @Query("select v from Voucher v where v.id = :id")
     Optional<Voucher> findByIdForExchange(@Param("id") Long id);
+    Optional<Voucher> findByMaVoucher(String maVoucher);
 }
