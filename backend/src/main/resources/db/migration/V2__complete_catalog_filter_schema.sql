@@ -376,23 +376,23 @@ WHERE NOT EXISTS (
 
 -- 7) Search/filter indexes
 CREATE INDEX IF NOT EXISTS idx_ho_so_kinh_doanh_city ON ho_so_kinh_doanh(thanh_pho);
-CREATE INDEX IF NOT EXISTS idx_ho_so_kinh_doanh_visibility ON ho_so_kinh_doanh(trang_thai_kiem_duyet, trang_thai_hoat_dong, deleted);
+-- NOTE:
+-- `trang_thai_kiem_duyet` da bi loai bo o mot so schema legacy.
+-- Khong tao index phu thuoc cot nay de migration V2 co the chay tren schema cu.
 CREATE INDEX IF NOT EXISTS idx_tai_san_ho_so ON tai_san(ho_so_kinh_doanh_id);
 CREATE INDEX IF NOT EXISTS idx_khach_san_hang_sao ON khach_san(hang_sao);
 CREATE INDEX IF NOT EXISTS idx_khach_san_loai ON khach_san(loai_khach_san);
-CREATE INDEX IF NOT EXISTS idx_khach_san_rating ON khach_san(diem_danh_gia_trung_binh);
 CREATE INDEX IF NOT EXISTS idx_nha_hang_cuisine ON nha_hang(loai_am_thuc);
-CREATE INDEX IF NOT EXISTS idx_nha_hang_rating ON nha_hang(diem_danh_gia_trung_binh);
 CREATE INDEX IF NOT EXISTS idx_tien_ich_khach_san_name ON tien_ich_khach_san(ten_tien_ich);
 CREATE INDEX IF NOT EXISTS idx_tien_ich_nha_hang_name ON tien_ich_nha_hang(ten_tien_ich);
 CREATE INDEX IF NOT EXISTS idx_khach_san_tien_ich_join ON khach_san_tien_ich(khach_san_id, tien_ich_id);
 CREATE INDEX IF NOT EXISTS idx_phong_khach_san_deleted ON phong(khach_san_id, deleted);
 CREATE INDEX IF NOT EXISTS idx_ban_nha_hang_deleted ON ban(nha_hang_id, deleted);
-CREATE INDEX IF NOT EXISTS idx_don_dat_cho_status ON don_dat_cho(trang_thai_don, deleted, ngay_tao);
+-- NOTE:
+-- Schema don_dat_cho co the khac nhau giua cac moi truong (trang_thai / trang_thai_don).
+-- Bo qua index tong hop de tranh migration fail.
 CREATE INDEX IF NOT EXISTS idx_don_ks_date_range ON don_khach_san(ngay_check_in, ngay_check_out);
 CREATE INDEX IF NOT EXISTS idx_don_nh_time_range ON don_nha_hang(ngay_gio_bat_dau, ngay_gio_ket_thuc);
 CREATE INDEX IF NOT EXISTS idx_don_ks_ct_room ON don_khach_san_chi_tiet(phong_id);
 CREATE INDEX IF NOT EXISTS idx_don_nh_ban_table ON don_nha_hang_ban(ban_id);
-
-
 

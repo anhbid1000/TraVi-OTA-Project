@@ -86,4 +86,6 @@ public class ComplaintResolutionAction {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    public Complaint getComplaint() { return complaint; }
 }

@@ -89,4 +89,8 @@ public class Review {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
     public void setReply(ReviewReply reply) { this.reply = reply; }
+
+    public TrangThaiDanhGia getTrangThai() { return trangThai; }
+    public KhachHang getKhachHang() { return khachHang; }
+    public HoSoKinhDoanh getHoSoKinhDoanh() { return hoSoKinhDoanh; }
 }

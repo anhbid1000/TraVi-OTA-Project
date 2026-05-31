@@ -81,7 +81,7 @@ public class BookingServiceImpl implements BookingService {
                 reservationId,
                 dateLabel,
                 order.getTongTienThanhToan(),
-                order.getTrangThaiDon().name(),
+                order.getTrangThai().name(),
                 reviewed,
                 thumbnailUrl
         );

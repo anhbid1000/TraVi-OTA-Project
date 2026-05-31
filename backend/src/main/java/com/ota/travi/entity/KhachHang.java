@@ -37,4 +37,11 @@ public class KhachHang extends User{
             inverseJoinColumns = @JoinColumn(name = "so_thich_id")
     )
     private Set<SoThich> danhSachSoThich;
+
+    public Integer getDiemThanhVien() { return diemThanhVien; }
+    public void setDiemThanhVien(Integer diemThanhVien) { this.diemThanhVien = diemThanhVien; }
+    public HangThanhVien getHangThanhVien() { return hangThanhVien; }
+    public void setHangThanhVien(HangThanhVien hangThanhVien) { this.hangThanhVien = hangThanhVien; }
+    public Double getTongChiTieu() { return tongChiTieu; }
+    public void setTongChiTieu(Double tongChiTieu) { this.tongChiTieu = tongChiTieu; }
 }

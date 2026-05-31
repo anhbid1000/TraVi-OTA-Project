@@ -41,4 +41,5 @@ public class ComplaintMessage {
         createdAt = LocalDateTime.now();
     }
 
+    public Complaint getComplaint() { return complaint; }
 }

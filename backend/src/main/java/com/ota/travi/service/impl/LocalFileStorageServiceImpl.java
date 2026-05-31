@@ -1,7 +1,7 @@
 package com.ota.travi.service.impl;
 
 import com.ota.travi.exception.StorageException;
-import com.ota.travi.service.FileStorageService;
+import com.ota.travi.service.FileStorageInterfaceService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -21,7 +21,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Service
-public class LocalFileStorageServiceImpl implements FileStorageService {
+public class LocalFileStorageServiceImpl implements FileStorageInterfaceService {
 
     private final Path rootLocation;
 

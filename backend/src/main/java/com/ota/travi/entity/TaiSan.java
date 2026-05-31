@@ -16,20 +16,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class TaiSan {
-    public String getIdTaiSan() { return this.idTaiSan; }
-    public void setIdTaiSan(String idTaiSan) { this.idTaiSan = idTaiSan; }
 
-    public HoSoKinhDoanh getHoSoKinhDoanh() { return this.hoSoKinhDoanh; }
-    public void setHoSoKinhDoanh(HoSoKinhDoanh hoSoKinhDoanh) { this.hoSoKinhDoanh = hoSoKinhDoanh; }
-
-    public String getMoTa() { return this.moTa; }
-    public void setMoTa(String moTa) { this.moTa = moTa; }
-
-    public Double getRatingAverage() { return this.ratingAverage; }
-    public void setRatingAverage(Double ratingAverage) { this.ratingAverage = ratingAverage; }
-
-    public Integer getReviewCount() { return this.reviewCount; }
-    public void setReviewCount(Integer reviewCount) { this.reviewCount = reviewCount; }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

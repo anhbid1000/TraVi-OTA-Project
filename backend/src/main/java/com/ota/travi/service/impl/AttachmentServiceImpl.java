@@ -6,7 +6,7 @@ import com.ota.travi.enums.AttachmentOwnerType;
 import com.ota.travi.exception.FileValidationException;
 import com.ota.travi.repository.FeedbackAttachmentRepository;
 import com.ota.travi.service.AttachmentService;
-import com.ota.travi.service.FileStorageService;
+import com.ota.travi.service.FileStorageInterfaceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +24,7 @@ import java.util.Set;
 @Slf4j
 public class AttachmentServiceImpl implements AttachmentService {
 
-    private final FileStorageService fileStorageService;
+    private final FileStorageInterfaceService fileStorageService;
     private final FeedbackAttachmentRepository attachmentRepository;
 
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB

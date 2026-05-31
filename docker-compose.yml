@@ -46,6 +46,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev # hoặc prod tùy lúc muốn test
       DB_URL: jdbc:postgresql://postgres:5432/travi_db
+      SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      SPRING_FLYWAY_VALIDATE_MIGRATION_NAMING: "false"
       DB_USERNAME: postgres
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       REDIS_HOST: redis

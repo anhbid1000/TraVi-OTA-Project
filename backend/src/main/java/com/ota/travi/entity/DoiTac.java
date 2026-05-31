@@ -14,5 +14,7 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = true)
 public class DoiTac extends User {
     private Float tiLeChietKhau = 0.0f;
-}
 
+    public Float getTiLeChietKhau() { return tiLeChietKhau; }
+    public void setTiLeChietKhau(Float tiLeChietKhau) { this.tiLeChietKhau = tiLeChietKhau; }
+}

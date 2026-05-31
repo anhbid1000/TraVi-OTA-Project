@@ -73,4 +73,10 @@ public class FeedbackAttachment {
         if (id == null) id = UUID.randomUUID().toString();
         createdAt = LocalDateTime.now();
     }
+
+    public AttachmentOwnerType getOwnerType() { return ownerType; }
+    public String getOwnerId() { return ownerId; }
+    public String getFileUrl() { return fileUrl; }
+    public String getFileName() { return fileName; }
+    public String getMimeType() { return mimeType; }
 }

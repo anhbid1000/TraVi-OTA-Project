@@ -229,7 +229,7 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
             }
 
             // 4. Kiểm tra đơn đã hoàn tất
-            if (donKhachSan.getTrangThaiDon() != TrangThaiDon.DA_HOAN_THANH) {
+            if (donKhachSan.getTrangThai() != TrangThaiDon.DA_HOAN_THANH) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ được đánh giá khi đơn đặt phòng đã hoàn tất");
             }
 
@@ -252,7 +252,7 @@ public class ReviewServiceV2Impl implements ReviewServiceV2 {
         }
 
         // 4. Kiểm tra đơn đã hoàn tất
-        if (donNhaHang.getTrangThaiDon() != TrangThaiDon.DA_HOAN_THANH) {
+        if (donNhaHang.getTrangThai() != TrangThaiDon.DA_HOAN_THANH) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ được đánh giá khi đơn đặt bàn đã hoàn tất");
         }
 

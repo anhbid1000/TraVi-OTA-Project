@@ -86,4 +86,6 @@ public class Complaint {
         updatedAt = LocalDateTime.now();
     }
 
+    public KhachHang getKhachHang() { return khachHang; }
+    public HoSoKinhDoanh getHoSoKinhDoanh() { return hoSoKinhDoanh; }
 }

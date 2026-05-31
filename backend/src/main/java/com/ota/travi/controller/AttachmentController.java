@@ -11,7 +11,7 @@ import com.ota.travi.repository.ComplaintRepository;
 import com.ota.travi.repository.FeedbackAttachmentRepository;
 import com.ota.travi.repository.ReviewRepository;
 import com.ota.travi.security.CustomUserDetails;
-import com.ota.travi.service.FileStorageService;
+import com.ota.travi.service.FileStorageInterfaceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -46,7 +46,7 @@ public class AttachmentController {
     private final ComplaintRepository complaintRepository;
     private final ComplaintMessageRepository complaintMessageRepository;
     private final com.ota.travi.repository.ComplaintResolutionActionRepository resolutionActionRepository;
-    private final FileStorageService fileStorageService;
+    private final FileStorageInterfaceService fileStorageService;
 
     @GetMapping("/{attachmentId}")
     public ResponseEntity<Resource> getAttachment(@PathVariable String attachmentId) {

@@ -64,5 +64,22 @@ public abstract class User {
     @JoinColumn(name = "vai_tro_id")
     protected VaiTro vaiTro;
 
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getMatKhau() { return matKhau; }
+    public void setMatKhau(String matKhau) { this.matKhau = matKhau; }
+    public String getHoTen() { return hoTen; }
+    public void setHoTen(String hoTen) { this.hoTen = hoTen; }
+    public String getSoDienThoai() { return soDienThoai; }
+    public void setSoDienThoai(String soDienThoai) { this.soDienThoai = soDienThoai; }
+    public TrangThaiUser getTrangThai() { return trangThai; }
+    public void setTrangThai(TrangThaiUser trangThai) { this.trangThai = trangThai; }
+    public VaiTro getVaiTro() { return vaiTro; }
+    public void setVaiTro(VaiTro vaiTro) { this.vaiTro = vaiTro; }
+
 
 }
