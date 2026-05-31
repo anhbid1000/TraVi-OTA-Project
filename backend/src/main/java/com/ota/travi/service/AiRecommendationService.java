@@ -50,6 +50,7 @@ public class AiRecommendationService {
     private final JdbcTemplate jdbcTemplate;
     private final CollaborativeFilteringService collaborativeFilteringService;
     private final AiScoreCalculator aiScoreCalculator;
+    private final TwoTowerRecommendationModel twoTowerRecommendationModel;
 
     public AiRecommendationService(
             KhachHangRepository khachHangRepository,
@@ -58,7 +59,8 @@ public class AiRecommendationService {
             SoThichRepository soThichRepository,
             JdbcTemplate jdbcTemplate,
             CollaborativeFilteringService collaborativeFilteringService,
-            AiScoreCalculator aiScoreCalculator
+            AiScoreCalculator aiScoreCalculator,
+            TwoTowerRecommendationModel twoTowerRecommendationModel
     ) {
         this.khachHangRepository = khachHangRepository;
         this.khachSanRepository = khachSanRepository;
@@ -67,12 +69,13 @@ public class AiRecommendationService {
         this.jdbcTemplate = jdbcTemplate;
         this.collaborativeFilteringService = collaborativeFilteringService;
         this.aiScoreCalculator = aiScoreCalculator;
+        this.twoTowerRecommendationModel = twoTowerRecommendationModel;
     }
 
     @Transactional
     public UserAiRecommendationResponse recommendForUser(String username, String type, String city, Integer limit, boolean strictCity) {
         KhachHang khachHang = khachHangRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Chi khach hang moi co the xem goi y ca nhan hoa"));
+                .orElseThrow(() -> new RuntimeException("Chỉ khách hàng mới có thể xem gợi ý cá nhân hóa"));
 
         String normalizedType = normalizeType(type);
         int safeLimit = normalizeLimit(limit);
@@ -86,10 +89,10 @@ public class AiRecommendationService {
 
         List<AiRecommendationItemResponse> recommendations = new ArrayList<>();
         if (TYPE_ALL.equals(normalizedType) || TYPE_HOTEL.equals(normalizedType)) {
-            recommendations.addAll(recommendHotels(searchTokens, city, clickedAssetIds, bookedAssetIds, collaborativeScores, strictCity));
+            recommendations.addAll(recommendHotels(khachHang, searchTokens, city, clickedAssetIds, bookedAssetIds, collaborativeScores, strictCity));
         }
         if (TYPE_ALL.equals(normalizedType) || TYPE_RESTAURANT.equals(normalizedType)) {
-            recommendations.addAll(recommendRestaurants(searchTokens, city, clickedAssetIds, bookedAssetIds, collaborativeScores, strictCity));
+            recommendations.addAll(recommendRestaurants(khachHang, searchTokens, city, clickedAssetIds, bookedAssetIds, collaborativeScores, strictCity));
         }
 
         List<AiRecommendationItemResponse> ranked = recommendations.stream()
@@ -112,7 +115,7 @@ public class AiRecommendationService {
     @Transactional
     public void captureFeedback(String username, AiRecommendationFeedbackRequest request) {
         KhachHang khachHang = khachHangRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Chi khach hang moi co the gui phan hoi goi y AI"));
+                .orElseThrow(() -> new RuntimeException("Chỉ khách hàng mới có thể gửi phản hồi gợi ý AI"));
 
         if (Boolean.TRUE.equals(request.clicked()) && request.idTaiSan() != null && !request.idTaiSan().isBlank()) {
             String hoSoAIId = getOrCreateAiProfileId(khachHang, List.of(), null, TYPE_ALL);
@@ -145,7 +148,7 @@ public class AiRecommendationService {
     @Transactional
     public void captureUserEvent(String username, AiUserEventRequest request) {
         KhachHang khachHang = khachHangRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Chi khach hang moi co the cap nhat tin hieu AI"));
+                .orElseThrow(() -> new RuntimeException("Chỉ khách hàng mới có thể cập nhật tín hiệu AI"));
 
         String eventType = normalizeEventType(request.eventType());
         String hoSoAIId = getOrCreateAiProfileId(khachHang, List.of(), request.city(), request.assetType());
@@ -181,7 +184,7 @@ public class AiRecommendationService {
 
     public AiRecommendationItemResponse findTopDiscountRecommendation(String username) {
         KhachHang khachHang = khachHangRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Chi khach hang moi co the xem uu dai AI"));
+                .orElseThrow(() -> new RuntimeException("Chỉ khách hàng mới có thể xem ưu đãi AI"));
 
         String hoSoAIId = getOrCreateAiProfileId(khachHang, List.of(), null, TYPE_HOTEL);
         List<String> searchTokens = buildSearchTokens(khachHang, hoSoAIId);
@@ -190,13 +193,14 @@ public class AiRecommendationService {
         Map<String, Integer> collaborativeScores = collaborativeFilteringService.scoreCandidateAssets(khachHang.getId());
 
         return khachSanRepository.findByTrangThai(TrangThaiTaiSan.SAN_SANG).stream()
-                .map(hotel -> scoreHotel(hotel, searchTokens, null, clickedAssetIds, bookedAssetIds, collaborativeScores))
-                .filter(item -> item.reasons().stream().anyMatch(reason -> reason.contains("uu dai")))
+                .map(hotel -> scoreHotel(khachHang, hotel, searchTokens, null, clickedAssetIds, bookedAssetIds, collaborativeScores))
+                .filter(item -> item.reasons().stream().anyMatch(reason -> reason.contains("ưu đãi")))
                 .max(Comparator.comparing(AiRecommendationItemResponse::score))
                 .orElse(null);
     }
 
     private List<AiRecommendationItemResponse> recommendHotels(
+            KhachHang khachHang,
             List<String> searchTokens,
             String city,
             Set<String> clickedAssetIds,
@@ -206,12 +210,13 @@ public class AiRecommendationService {
     ) {
         return khachSanRepository.findByTrangThai(TrangThaiTaiSan.SAN_SANG).stream()
                 .filter(hotel -> !strictCity || matchesCity(hotel.getHoSoKinhDoanh(), city))
-                .map(hotel -> scoreHotel(hotel, searchTokens, city, clickedAssetIds, bookedAssetIds, collaborativeScores))
+                .map(hotel -> scoreHotel(khachHang, hotel, searchTokens, city, clickedAssetIds, bookedAssetIds, collaborativeScores))
                 .filter(item -> item != null)
                 .toList();
     }
 
     private List<AiRecommendationItemResponse> recommendRestaurants(
+            KhachHang khachHang,
             List<String> searchTokens,
             String city,
             Set<String> clickedAssetIds,
@@ -221,12 +226,13 @@ public class AiRecommendationService {
     ) {
         return nhaHangRepository.findByTrangThai(TrangThaiTaiSan.SAN_SANG).stream()
                 .filter(restaurant -> !strictCity || matchesCity(restaurant.getHoSoKinhDoanh(), city))
-                .map(restaurant -> scoreRestaurant(restaurant, searchTokens, city, clickedAssetIds, bookedAssetIds, collaborativeScores))
+                .map(restaurant -> scoreRestaurant(khachHang, restaurant, searchTokens, city, clickedAssetIds, bookedAssetIds, collaborativeScores))
                 .filter(item -> item != null)
                 .toList();
     }
 
     private AiRecommendationItemResponse scoreHotel(
+            KhachHang khachHang,
             KhachSan hotel,
             List<String> searchTokens,
             String city,
@@ -234,37 +240,46 @@ public class AiRecommendationService {
             Set<String> bookedAssetIds,
             Map<String, Integer> collaborativeScores
     ) {
-        List<String> reasons = new ArrayList<>();
+        TwoTowerRecommendationModel.TwoTowerScore twoTowerScore = twoTowerRecommendationModel.scoreHotel(
+                khachHang,
+                hotel,
+                searchTokens,
+                city,
+                clickedAssetIds,
+                bookedAssetIds,
+                collaborativeScores
+        );
+        List<String> reasons = new ArrayList<>(twoTowerScore.reasons());
         HoSoKinhDoanh profile = hotel.getHoSoKinhDoanh();
-        int score = 40;
+        int score = twoTowerScore.score();
 
         if (matchesCity(profile, city)) {
-            score += 25;
-            reasons.add("Phu hop thanh pho dang quan tam");
+            score += 8;
+            reasons.add("Ưu tiên vì trùng thành phố bạn đang tìm");
         }
 
         int keywordScore = scoreByKeywords(searchTokens, hotel.getTen(), hotel.getLoaiKhachSan(), hotel.getMoTa(), profile);
         if (keywordScore > 0) {
-            score += keywordScore;
-            reasons.add("Khop voi so thich hoac tu khoa gan day");
+            score += Math.min(keywordScore / 3, 10);
+            reasons.add("Khớp thêm với từ khóa và sở thích gần đây");
         }
 
         if (hotel.getHangSao() != null && hotel.getHangSao() >= 4) {
-            score += 10;
-            reasons.add("Chat luong luu tru cao");
+            score += 4;
+            reasons.add("Chất lượng lưu trú cao");
         }
 
         if (hotel.getGiaCoBan() != null && hotel.getGiaCoBan() > 0) {
-            score += 5;
-            reasons.add("Co gia tham khao ro rang");
+            score += 2;
+            reasons.add("Có giá tham khảo rõ ràng");
         }
 
         score = aiScoreCalculator.addBehaviorScore(score, hotel.getIdTaiSan(), clickedAssetIds, bookedAssetIds, collaborativeScores, reasons);
 
         Float bestDiscount = findBestRoomDiscount(hotel);
         if (bestDiscount != null && bestDiscount > 0) {
-            score += Math.min(bestDiscount.intValue(), 15);
-            reasons.add("Co uu dai phong dang ap dung");
+            score += Math.min(bestDiscount.intValue(), 8);
+            reasons.add("Có ưu đãi phòng đang áp dụng");
         }
 
         return new AiRecommendationItemResponse(
@@ -280,6 +295,7 @@ public class AiRecommendationService {
     }
 
     private AiRecommendationItemResponse scoreRestaurant(
+            KhachHang khachHang,
             NhaHang restaurant,
             List<String> searchTokens,
             String city,
@@ -287,29 +303,38 @@ public class AiRecommendationService {
             Set<String> bookedAssetIds,
             Map<String, Integer> collaborativeScores
     ) {
-        List<String> reasons = new ArrayList<>();
+        TwoTowerRecommendationModel.TwoTowerScore twoTowerScore = twoTowerRecommendationModel.scoreRestaurant(
+                khachHang,
+                restaurant,
+                searchTokens,
+                city,
+                clickedAssetIds,
+                bookedAssetIds,
+                collaborativeScores
+        );
+        List<String> reasons = new ArrayList<>(twoTowerScore.reasons());
         HoSoKinhDoanh profile = restaurant.getHoSoKinhDoanh();
-        int score = 40;
+        int score = twoTowerScore.score();
 
         if (matchesCity(profile, city)) {
-            score += 25;
-            reasons.add("Phu hop thanh pho dang quan tam");
+            score += 8;
+            reasons.add("Ưu tiên vì trùng thành phố bạn đang tìm");
         }
 
         int keywordScore = scoreByKeywords(searchTokens, restaurant.getTen(), restaurant.getLoaiAmThuc(), restaurant.getMoTa(), profile);
         if (keywordScore > 0) {
-            score += keywordScore;
-            reasons.add("Khop voi khau vi hoac tu khoa gan day");
+            score += Math.min(keywordScore / 3, 10);
+            reasons.add("Khớp thêm với khẩu vị và sở thích gần đây");
         }
 
         if (Boolean.TRUE.equals(restaurant.getCoDatBanTruoc())) {
-            score += 8;
-            reasons.add("Co ho tro dat ban truoc");
+            score += 4;
+            reasons.add("Có hỗ trợ đặt bàn trước");
         }
 
         if (restaurant.getSucChua() != null && restaurant.getSucChua() >= 30) {
-            score += 5;
-            reasons.add("Phu hop nhom khach dong");
+            score += 2;
+            reasons.add("Phù hợp với nhóm khách đông");
         }
 
         score = aiScoreCalculator.addBehaviorScore(score, restaurant.getIdTaiSan(), clickedAssetIds, bookedAssetIds, collaborativeScores, reasons);
@@ -330,21 +355,21 @@ public class AiRecommendationService {
         Set<String> signals = new LinkedHashSet<>();
 
         if (khachHang.getHangThanhVien() != null) {
-            signals.add("Hang thanh vien: " + khachHang.getHangThanhVien().name());
+            signals.add("Hạng thành viên: " + khachHang.getHangThanhVien().name());
         }
 
         if (khachHang.getTuKhoaGanDay() != null) {
             khachHang.getTuKhoaGanDay().stream()
                     .filter(value -> value != null && !value.isBlank())
                     .limit(5)
-                    .forEach(value -> signals.add("Tu khoa gan day: " + value));
+                    .forEach(value -> signals.add("Từ khóa gần đây: " + value));
         }
 
         soThichRepository.findByKhachHangId(khachHang.getId()).stream()
                 .map(SoThich::getTenSoThich)
                 .filter(value -> value != null && !value.isBlank())
                 .limit(5)
-                .forEach(value -> signals.add("So thich: " + value));
+                .forEach(value -> signals.add("Sở thích: " + value));
 
         Integer bookingCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM don_dat_cho WHERE khach_hang_id = ? AND deleted = false",
@@ -352,11 +377,11 @@ public class AiRecommendationService {
                 khachHang.getId()
         );
         if (bookingCount != null && bookingCount > 0) {
-            signals.add("Da co " + bookingCount + " don dat cho");
+            signals.add("Đã có " + bookingCount + " đơn đặt chỗ");
         }
 
         if (signals.isEmpty()) {
-            signals.add("Nguoi dung moi, uu tien dich vu pho bien va co du lieu ro rang");
+            signals.add("Người dùng mới, ưu tiên dịch vụ phổ biến và có dữ liệu rõ ràng");
         }
 
         return List.copyOf(signals);
@@ -405,8 +430,8 @@ public class AiRecommendationService {
     }
 
     private String buildProfileSummary(KhachHang khachHang, List<String> signals) {
-        return "AI dang goi y dua tren " + signals.size()
-                + " tin hieu tu ho so va hanh vi cua khach hang " + khachHang.getHoTen() + ".";
+        return "AI đang gợi ý dựa trên " + signals.size()
+                + " tín hiệu từ hồ sơ và hành vi của khách hàng " + khachHang.getHoTen() + ".";
     }
 
     private void capNhatHoSoAI(KhachHang khachHang, List<String> searchTokens, String city, String type) {
@@ -475,7 +500,7 @@ public class AiRecommendationService {
 
         String normalized = type.trim().toUpperCase(Locale.ROOT);
         if (!TYPE_ALL.equals(normalized) && !TYPE_HOTEL.equals(normalized) && !TYPE_RESTAURANT.equals(normalized)) {
-            throw new RuntimeException("Loai goi y khong hop le. Gia tri cho phep: ALL, HOTEL, RESTAURANT.");
+            throw new RuntimeException("Loại gợi ý không hợp lệ. Giá trị cho phép: ALL, HOTEL, RESTAURANT.");
         }
 
         return normalized;
@@ -488,7 +513,7 @@ public class AiRecommendationService {
 
         String normalized = eventType.trim().toUpperCase(Locale.ROOT);
         if (!List.of(EVENT_SEARCH, EVENT_VIEW, EVENT_CLICK, EVENT_BOOK, EVENT_REVIEW, EVENT_PROMOTION_VIEW).contains(normalized)) {
-            throw new RuntimeException("Loai su kien AI khong hop le");
+            throw new RuntimeException("Loại sự kiện AI không hợp lệ");
         }
 
         return normalized;
@@ -626,7 +651,7 @@ public class AiRecommendationService {
         }
 
         if (limit < 1 || limit > MAX_LIMIT) {
-            throw new RuntimeException("So luong goi y phai tu 1 den " + MAX_LIMIT + ".");
+            throw new RuntimeException("Số lượng gợi ý phải từ 1 đến " + MAX_LIMIT + ".");
         }
 
         return limit;
@@ -645,7 +670,7 @@ public class AiRecommendationService {
             return List.copyOf(reasons);
         }
 
-        return List.of("Dich vu dang san sang va phu hop de kham pha");
+        return List.of("Dịch vụ đang sẵn sàng và phù hợp để khám phá");
     }
 
     private void addToken(Set<String> tokens, String value) {

@@ -34,8 +34,8 @@ class AiScoreCalculatorTest {
 
         assertThat(score).isEqualTo(68);
         assertThat(reasons).contains(
-                "Ban da tung quan tam dich vu nay",
-                "Nguoi dung co hanh vi tuong tu cung quan tam"
+                "Bạn đã từng quan tâm dịch vụ này",
+                "Người dùng có hành vi tương tự cũng quan tâm"
         );
     }
 

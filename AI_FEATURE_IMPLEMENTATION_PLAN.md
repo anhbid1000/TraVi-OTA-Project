@@ -1,14 +1,14 @@
-# Ke hoach va trang thai trien khai chuc nang AI
+# Kế hoạch và trạng thái triển khai chức năng AI
 
-## 1. Muc tieu
+## 1. Mục tiêu
 
-Trien khai nhom chuc nang AI cho TraVi theo so do lop `AI_Context`, khong dua luong admin vao pham vi hien tai. AI hien tai tap trung vao nhom khach hang:
+Triển khai nhóm chức năng AI cho TraVi theo sơ đồ lớp `AI_Context`, không đưa luồng admin vào phạm vi hiện tại. AI hiện tại tập trung vào nhóm khách hàng:
 
-- Khach hang: goi y khach san/nha hang dua tren ho so, so thich, tu khoa tim kiem va thanh pho dang quan tam.
+- Khách hàng: gợi ý khách sạn/nhà hàng dựa trên hồ sơ, sở thích, từ khóa tìm kiếm và thành phố đang quan tâm.
 
-## 2. Can cu thiet ke
+## 2. Căn cứ thiết kế
 
-Da doi chieu cac SVG so do lop nguoi dung cung cap. Phan AI co cac class chinh:
+Đã đối chiếu các SVG sơ đồ lớp người dùng cung cấp. Phần AI có các class chính:
 
 - `HoSoAI`
 - `ThongBaoNguCanh`
@@ -19,23 +19,23 @@ Da doi chieu cac SVG so do lop nguoi dung cung cap. Phan AI co cac class chinh:
 - `ContextAwareController`
 - `AIProfileManager`
 
-Phan code hien tai uu tien hien thuc cac class du lieu co nhu cau luu tru DB:
+Phần code hiện tại ưu tiên hiện thực các class dữ liệu có nhu cầu lưu trữ DB:
 
-- `HoSoAI`: luu ho so AI cua khach hang, lich su click, tu khoa tim kiem, so thich tong hop, trang thai ca nhan hoa.
-- `ThongBaoNguCanh`: luu thong bao/canh bao ngu canh theo thiet ke class.
+- `HoSoAI`: lưu hồ sơ AI của khách hàng, lịch sử click, từ khóa tìm kiếm, sở thích tổng hợp, trạng thái cá nhân hóa.
+- `ThongBaoNguCanh`: lưu thông báo/cảnh báo ngữ cảnh theo thiết kế class.
 
-## 3. Backend da trien khai
+## 3. Backend đã triển khai
 
-### Entity va repository
+### Entity và repository
 
-Da them:
+Đã thêm:
 
 - `backend/src/main/java/com/ota/travi/entity/HoSoAI.java`
 - `backend/src/main/java/com/ota/travi/entity/ThongBaoNguCanh.java`
 - `backend/src/main/java/com/ota/travi/repository/HoSoAIRepository.java`
 - `backend/src/main/java/com/ota/travi/repository/ThongBaoNguCanhRepository.java`
 
-Da loai bo huong dat ten khong khop so do lop:
+Đã loại bỏ hướng đặt tên không khớp sơ đồ lớp:
 
 - `AiUserContext`
 - `AiRecommendationLog`
@@ -43,11 +43,11 @@ Da loai bo huong dat ten khong khop so do lop:
 
 ### Migration
 
-Da them:
+Đã thêm:
 
 - `backend/src/main/resources/db/migration/V3__ai_context_schema.sql`
 
-Bang duoc tao:
+Bảng được tạo:
 
 - `ho_so_ai`
 - `ho_so_ai_lich_su_click`
@@ -56,7 +56,7 @@ Bang duoc tao:
 
 ### API
 
-Da them controller:
+Đã thêm controller:
 
 - `backend/src/main/java/com/ota/travi/controller/AiController.java`
 
@@ -64,131 +64,131 @@ Endpoint:
 
 - `GET /api/v1/user/recommendations`
   - Query: `type=ALL|HOTEL|RESTAURANT`, `city`, `limit`
-  - Tra ve goi y AI ca nhan hoa cho khach hang.
+  - Trả về gợi ý AI cá nhân hóa cho khách hàng.
 
 - `POST /api/v1/user/recommendations/feedback`
   - Body: `idTaiSan`, `viewed`, `clicked`, `booked`, `feedbackRating`, `feedbackNote`
-  - Hien tai dung de cap nhat `HoSoAI.lichSuClick`.
+  - Hiện tại dùng để cập nhật `HoSoAI.lichSuClick`.
 
 ### Service
 
-Da them:
+Đã thêm:
 
 - `backend/src/main/java/com/ota/travi/service/AiRecommendationService.java`
 
-Logic hien tai:
+Logic hiện tại:
 
-- Lay tin hieu tu `KhachHang.hangThanhVien`, `KhachHang.tuKhoaGanDay`, `KhachHang.danhSachSoThich`.
-- Lay lich su don dat cho cua khach hang de bo sung tin hieu.
-- Cham diem `KhachSan` va `NhaHang` theo:
-  - Thanh pho dang quan tam.
-  - Ten, mo ta, loai dich vu, dia chi khop tu khoa/so thich.
-  - Hang sao khach san.
-  - Gia co ban.
-- Ho tro dat ban va suc chua nha hang.
-- Cap nhat `HoSoAI` moi khi tao goi y.
+- Lấy tín hiệu từ `KhachHang.hangThanhVien`, `KhachHang.tuKhoaGanDay`, `KhachHang.danhSachSoThich`.
+- Lấy lịch sử đơn đặt chỗ của khách hàng để bổ sung tín hiệu.
+- Chấm điểm `KhachSan` và `NhaHang` theo:
+  - Thành phố đang quan tâm.
+  - Tên, mô tả, loại dịch vụ, địa chỉ khớp từ khóa/sở thích.
+  - Hạng sao khách sạn.
+  - Giá cơ bản.
+- Hỗ trợ đặt bàn và sức chứa nhà hàng.
+- Cập nhật `HoSoAI` mỗi khi tạo gợi ý.
 
-## 4. Frontend da trien khai
+## 4. Frontend đã triển khai
 
-### API client va hook
+### API client và hook
 
-Da them module:
+Đã thêm module:
 
 - `frontend/src/features/ai/types.ts`
 - `frontend/src/features/ai/services/aiService.ts`
 - `frontend/src/features/ai/hooks/useAiRecommendations.ts`
 - `frontend/src/features/ai/index.ts`
 
-### Trang chu khach hang
+### Trang chủ khách hàng
 
-Da them component:
+Đã thêm component:
 
 - `frontend/src/features/ai/components/UserAiRecommendations.tsx`
 
-Da gan vao:
+Đã gắn vào:
 
 - `frontend/src/pages/HomePage.tsx`
 
-Hanh vi:
+Hành vi:
 
-- Chi hien thi khi user da dang nhap va role la `KHACH_HANG`.
-- Goi API `GET /api/v1/user/recommendations`.
-- Hien thi danh sach goi y khach san/nha hang.
-- Khi click goi y, gui feedback best-effort qua `POST /api/v1/user/recommendations/feedback`.
+- Chỉ hiển thị khi user đã đăng nhập và role là `KHACH_HANG`.
+- Gọi API `GET /api/v1/user/recommendations`.
+- Hiển thị danh sách gợi ý khách sạn/nhà hàng.
+- Khi click gợi ý, gửi feedback best-effort qua `POST /api/v1/user/recommendations/feedback`.
 
-### Dashboard doi tac
+### Dashboard đối tác
 
-Da hoan lai cac thay doi AI cho dashboard doi tac theo yeu cau moi:
+Đã hoàn lại các thay đổi AI cho dashboard đối tác theo yêu cầu mới:
 
-- Khong con route frontend dung dashboard AI rieng cho `/partner`.
-- Khong con hook `usePartnerAiInsights`.
-- Khong con API `/api/v1/partner/ai-insights`.
-- Route `/partner` quay ve dashboard doi tac placeholder trong `App.tsx`.
+- Không còn route frontend dùng dashboard AI riêng cho `/partner`.
+- Không còn hook `usePartnerAiInsights`.
+- Không còn API `/api/v1/partner/ai-insights`.
+- Route `/partner` quay về dashboard đối tác placeholder trong `App.tsx`.
 
-## 5. Loi phu da xu ly
+## 5. Lỗi phụ đã xử lý
 
-Trong log Docker co loi runtime cua booking module:
+Trong log Docker có lỗi runtime của booking module:
 
 - `operator does not exist: character varying = bigint`
 
-Nguyen nhan:
+Nguyên nhân:
 
-- Booking module dung id `Long`.
-- Bang core `don_dat_cho` dung id UUID/String.
-- Hibernate join nham bang core voi bang booking module.
+- Booking module dùng id `Long`.
+- Bảng core `don_dat_cho` dùng id UUID/String.
+- Hibernate join nhầm bảng core với bảng booking module.
 
-Da xu ly:
+Đã xử lý:
 
-- Doi booking module parent table sang `booking_don_dat_cho`.
-- Them migration:
+- Đổi booking module parent table sang `booking_don_dat_cho`.
+- Thêm migration:
   - `backend/src/main/resources/db/migration/V4__booking_module_tables.sql`
 
-## 6. Trang thai kiem thu
+## 6. Trạng thái kiểm thử
 
-Da chay backend compile:
+Đã chạy backend compile:
 
 ```powershell
 docker compose exec -T backend ./mvnw compile
 ```
 
-Ket qua:
+Kết quả:
 
 - `BUILD SUCCESS`
 
-Da chay frontend build:
+Đã chạy frontend build:
 
 ```powershell
 npm.cmd run build
 ```
 
-Tai thu muc:
+Tại thư mục:
 
 ```text
 frontend
 ```
 
-Ket qua:
+Kết quả:
 
 - `tsc -b` pass.
 - `vite build` pass.
 
-## 7. Viec con lai de hoan thien hon
+## 7. Việc còn lại để hoàn thiện hơn
 
-Nhung viec nay chua bat buoc de demo hien tai, nhung nen lam neu tiep tuc phat trien:
+Những việc này chưa bắt buộc để demo hiện tại, nhưng nên làm nếu tiếp tục phát triển:
 
-- Bo sung UI quan ly `ThongBaoNguCanh` neu can hien thi canh bao thoi tiet/su kien dia phuong.
-- Tach `AIEngine` thanh interface/service rieng neu muon thay rule-based bang OpenAI hoac model ngoai.
-- Them dynamic pricing theo `AIIntegrationController`.
-- Viet unit test cho `AiRecommendationService`.
-- Bo sung contract vao README backend neu day len sprint tiep theo.
+- Bổ sung UI quản lý `ThongBaoNguCanh` nếu cần hiển thị cảnh báo thời tiết/sự kiện địa phương.
+- Tách `AIEngine` thành interface/service riêng nếu muốn thay rule-based bằng OpenAI hoặc model ngoài.
+- Thêm dynamic pricing theo `AIIntegrationController`.
+- Viết unit test cho `AiRecommendationService`.
+- Bổ sung contract vào README backend nếu đẩy lên sprint tiếp theo.
 
-## 8. Cap nhat bo sung customer AI ngay 31/05/2026
+## 8. Cập nhật bổ sung customer AI ngày 31/05/2026
 
-Sau khi doi chieu lai `AI_TongQuan.md`, da bo sung cac phan con thieu cho customer AI theo huong MVP du demo, khong dung module admin va khong them entity khuyen mai moi khi du an chua co class khuyen mai rieng.
+Sau khi đối chiếu lại `AI_TongQuan.md`, đã bổ sung các phần còn thiếu cho customer AI theo hướng MVP đủ demo, không dùng module admin và không thêm entity khuyến mãi mới khi dự án chưa có class khuyến mãi riêng.
 
-### 8.1. AI Profile hoc tu hanh vi dong
+### 8.1. AI Profile học từ hành vi động
 
-Da bo sung endpoint:
+Đã bổ sung endpoint:
 
 - `POST /api/v1/user/ai-events`
 
@@ -202,58 +202,58 @@ Request:
 - `source`
 - `metadata`
 
-Da bo sung DTO:
+Đã bổ sung DTO:
 
 - `backend/src/main/java/com/ota/travi/dto/request/AiUserEventRequest.java`
 
-Da bo sung bang trong migration:
+Đã bổ sung bảng trong migration:
 
 - `ho_so_ai_lich_su_tim_kiem`
 - `ho_so_ai_hanh_vi`
 
-Luu y: project hien tai chua tu dong chay Flyway, nen da apply schema truc tiep vao Postgres container bang `psql`.
+Lưu ý: project hiện tại chưa tự động chạy Flyway, nên đã apply schema trực tiếp vào Postgres container bằng `psql`.
 
 ### 8.2. Search History
 
-Da gan tracking search vao frontend:
+Đã gắn tracking search vào frontend:
 
 - `frontend/src/features/hotels/hooks/useHotelSearch.ts`
 - `frontend/src/features/restaurants/hooks/useRestaurantSearch.ts`
 
-Khi khach hang da dang nhap va tim kiem khach san/nha hang, frontend gui event `SEARCH` ve backend de AI Profile ghi:
+Khi khách hàng đã đăng nhập và tìm kiếm khách sạn/nhà hàng, frontend gửi event `SEARCH` về backend để AI Profile ghi:
 
-- tu khoa
-- thanh pho
-- loai dich vu
-- nguon tim kiem
-- metadata nhu ngay, so khach, so ket qua
+- từ khóa
+- thành phố
+- loại dịch vụ
+- nguồn tìm kiếm
+- metadata như ngày, số khách, số kết quả
 
-Tracking nay la best-effort, loi AI tracking khong lam hong luong search catalog.
+Tracking này là best-effort, lỗi AI tracking không làm hỏng luồng search catalog.
 
 ### 8.3. Click/View/Booking/Review/Promotion Interaction
 
-Da nang cap `AiRecommendationService`:
+Đã nâng cấp `AiRecommendationService`:
 
-- `captureFeedback(...)` khong chi luu click cu, ma con ghi them event vao `ho_so_ai_hanh_vi`.
-- Ho tro cac tin hieu:
-  - click goi y
+- `captureFeedback(...)` không chỉ lưu click cũ, mà còn ghi thêm event vào `ho_so_ai_hanh_vi`.
+- Hỗ trợ các tín hiệu:
+  - click gợi ý
   - view/click asset
   - booked
   - review/rating/note
   - promotion view
 
-Frontend hien tai da co click feedback tu component goi y. Cac man hinh review thuc te neu duoc lam sau chi can goi chung endpoint `/api/v1/user/ai-events` hoac `/api/v1/user/recommendations/feedback`.
+Frontend hiện tại đã có click feedback từ component gợi ý. Các màn hình review thực tế nếu được làm sau chỉ cần gọi chung endpoint `/api/v1/user/ai-events` hoặc `/api/v1/user/recommendations/feedback`.
 
 ### 8.4. Hybrid Recommendation MVP
 
-Recommendation da duoc nang tu rule-based don gian thanh hybrid-lite:
+Recommendation đã được nâng từ rule-based đơn giản thành hybrid-lite:
 
 - Content-based:
-  - so thich
-  - tu khoa gan day
+  - sở thích
+  - từ khóa gần đây
   - search history
-  - thanh pho dang quan tam
-  - loai khach san/am thuc/mo ta/dia chi
+  - thành phố đang quan tâm
+  - loại khách sạn/ẩm thực/mô tả/địa chỉ
 
 - Behavior-based:
   - clicked asset
@@ -262,128 +262,128 @@ Recommendation da duoc nang tu rule-based don gian thanh hybrid-lite:
   - event behavior trong `ho_so_ai_hanh_vi`
 
 - Popular/promotion fallback:
-  - khach san 4-5 sao
-  - nha hang co dat ban truoc
-  - phong co `phanTramGiamGia`
+  - khách sạn 4-5 sao
+  - nhà hàng có đặt bàn trước
+  - phòng có `phanTramGiamGia`
 
-Chua phai collaborative filtering dung nghia vi chua co ma tran user-item du lon, nhung da co du tin hieu de demo flow AI Profile -> Recommendation.
+Chưa phải collaborative filtering đúng nghĩa vì chưa có ma trận user-item đủ lớn, nhưng đã có đủ tín hiệu để demo flow AI Profile -> Recommendation.
 
 ### 8.5. Promotion Recommendation
 
-Du an chua co entity khuyen mai rieng, nen promotion recommendation dang dung du lieu that co san:
+Dự án chưa có entity khuyến mãi riêng, nên promotion recommendation đang dùng dữ liệu thật có sẵn:
 
 - `Phong.phanTramGiamGia`
 
-Neu khach san co phong dang giam gia, recommendation tang diem va them ly do:
+Nếu khách sạn có phòng đang giảm giá, recommendation tăng điểm và thêm lý do:
 
-- `Co uu dai phong dang ap dung`
+- `Có ưu đãi phòng đang áp dụng`
 
-Smart Notification cung co thong bao `PROMOTION` dua tren goi y giam gia phu hop nhat.
+Smart Notification cũng có thông báo `PROMOTION` dựa trên gợi ý giảm giá phù hợp nhất.
 
-### 8.6. Smart Notification mo rong
+### 8.6. Smart Notification mở rộng
 
-`SmartNotificationService` da co them:
+`SmartNotificationService` đã có thêm:
 
-- `RECOMMENDATION`: nhac goi y phu hop neu score cao.
-- `PROMOTION`: nhac uu dai luu tru phu hop.
+- `RECOMMENDATION`: nhắc gợi ý phù hợp nếu score cao.
+- `PROMOTION`: nhắc ưu đãi lưu trú phù hợp.
 
-Van giu cac thong bao cu:
+Vẫn giữ các thông báo cũ:
 
 - `BOOKING_REMINDER`
 - `WEATHER_WARNING`
-- thong bao he thong tu `thong_bao_ngu_canh`
+- thông báo hệ thống từ `thong_bao_ngu_canh`
 
-### 8.7. Trang thai sau cap nhat
+### 8.7. Trạng thái sau cập nhật
 
-Da chay backend:
+Đã chạy backend:
 
 ```powershell
 docker compose exec -T backend ./mvnw compile
 ```
 
-Ket qua:
+Kết quả:
 
 - `BUILD SUCCESS`
 
-Da chay frontend:
+Đã chạy frontend:
 
 ```powershell
 npm.cmd run build
 ```
 
-Tai thu muc:
+Tại thư mục:
 
 ```text
 frontend
 ```
 
-Ket qua:
+Kết quả:
 
 - `tsc -b` pass
 - `vite build` pass
 
-Da restart backend container:
+Đã restart backend container:
 
 ```powershell
 docker compose restart backend
 ```
 
-## 9. Customer AI da lam va con lai
+## 9. Customer AI đã làm và còn lại
 
-Da lam:
+Đã làm:
 
 - AI User Profile
 - Preference setup cho cold start
 - Search History tracking
 - Click/View/Booking/Review/Promotion event tracking
 - Hotel/Restaurant Recommendation
-- Promotion Recommendation bang `phanTramGiamGia`
-- Travel Planner theo ngay
+- Promotion Recommendation bằng `phanTramGiamGia`
+- Travel Planner theo ngày
 - Smart Notification: booking, weather, recommendation, promotion
 
-## 10. Cap nhat nang cao ngay 31/05/2026
+## 10. Cập nhật nâng cao ngày 31/05/2026
 
-Theo yeu cau moi, cac muc "con lai" da duoc day len thanh code that trong du an.
+Theo yêu cầu mới, các mục "còn lại" đã được đẩy lên thành code thật trong dự án.
 
-### 10.1. Collaborative Filtering that
+### 10.1. Collaborative Filtering thật
 
-Da them:
+Đã thêm:
 
 - `backend/src/main/java/com/ota/travi/service/CollaborativeFilteringService.java`
 
-Nguon du lieu thuc te:
+Nguồn dữ liệu thực tế:
 
 - `ho_so_ai_hanh_vi`
 - `ho_so_ai_lich_su_click`
 - `don_dat_cho`
 - `danh_gia`
 
-Cach cham diem:
+Cách chấm điểm:
 
-- Lay cac tai san user hien tai da xem/click/book/review.
-- Tim cac `HoSoAI` cua user khac cung tuong tac voi cac tai san do.
-- Cong diem cho tai san ma nhom user tuong tu da quan tam, loai tru tai san user hien tai da tuong tac.
-- Diem collaborative duoc dua vao `AiRecommendationService` de tang score hotel/restaurant.
+- Lấy các tài sản user hiện tại đã xem/click/book/review.
+- Tìm các `HoSoAI` của user khác cùng tương tác với các tài sản đó.
+- Cộng điểm cho tài sản mà nhóm user tương tự đã quan tâm, loại trừ tài sản user hiện tại đã tương tác.
+- Điểm collaborative được đưa vào `AiRecommendationService` để tăng score hotel/restaurant.
 
-### 10.2. LLM that cho Travel Planner
+### 10.2. LLM thật cho Travel Planner
 
-Da them:
+Đã thêm:
 
 - `backend/src/main/java/com/ota/travi/service/AiTravelPlannerLlmService.java`
 
-Luong xu ly:
+Luồng xử lý:
 
-- `TravelPlannerService` van lay recommendation that tu scoring engine truoc.
-- Neu `OPENAI_API_KEY` hop le, service goi Spring AI `ChatClient` de sinh lich trinh JSON.
-- Neu chua co key that hoac LLM loi, tu dong fallback ve rule-based planner cu de UI khong bi hong.
+- `TravelPlannerService` vẫn lấy recommendation thật từ scoring engine trước.
+- Nếu `OPENAI_API_KEY` hợp lệ, service gọi Spring AI `ChatClient` để sinh lịch trình JSON.
+- Nếu chưa có key thật hoặc LLM lỗi, tự động fallback về rule-based planner cũ để UI không bị hỏng.
 
-Can cau hinh them:
+Cần cấu hình thêm:
 
-- Bien moi truong `OPENAI_API_KEY` phai la key that. Hien `.env` dang de placeholder `sk-your-real-openai-api-key-here`, service se khong dam bao goi LLM thanh cong neu key nay chua doi.
+- Biến môi trường `OPENAI_API_KEY` phải là key thật. Hiện `.env` đang để placeholder `sk-your-real-openai-api-key-here`, service sẽ không đảm bảo gọi LLM thành công nếu key này chưa đổi.
 
-### 10.3. Module khuyen mai rieng
+### 10.3. Module khuyến mãi riêng
 
-Da them:
+Đã thêm:
 
 - `backend/src/main/java/com/ota/travi/entity/KhuyenMai.java`
 - `backend/src/main/java/com/ota/travi/repository/KhuyenMaiRepository.java`
@@ -396,11 +396,11 @@ Endpoint:
 
 - `GET /api/v1/public/promotions/active?assetId=&type=`
 
-Recommendation engine da doc `KhuyenMai` dang active va cong diem neu hotel/restaurant co khuyen mai phu hop.
+Recommendation engine đã đọc `KhuyenMai` đang active và cộng điểm nếu hotel/restaurant có khuyến mãi phù hợp.
 
-### 10.4. Review UI/API day du
+### 10.4. Review UI/API đầy đủ
 
-Da them backend:
+Đã thêm backend:
 
 - `backend/src/main/java/com/ota/travi/entity/DanhGia.java`
 - `backend/src/main/java/com/ota/travi/repository/DanhGiaRepository.java`
@@ -414,50 +414,50 @@ Endpoint:
 - `GET /api/v1/public/assets/{assetId}/reviews`
 - `POST /api/v1/user/reviews`
 
-Da gan rating/count that vao catalog/detail:
+Đã gắn rating/count thật vào catalog/detail:
 
-- `PublicCatalogService` tinh `diemDanhGiaTrungBinh`
-- `PublicCatalogService` tinh `soLuongDanhGia`
+- `PublicCatalogService` tính `diemDanhGiaTrungBinh`
+- `PublicCatalogService` tính `soLuongDanhGia`
 
-Da them frontend:
+Đã thêm frontend:
 
 - `frontend/src/features/reviews/types.ts`
 - `frontend/src/features/reviews/services/reviewService.ts`
 - `frontend/src/features/reviews/components/ReviewPanel.tsx`
 
-Da gan UI vao:
+Đã gắn UI vào:
 
 - `frontend/src/features/hotels/pages/HotelDetailPage.tsx`
 - `frontend/src/features/restaurants/pages/RestaurantDetailPage.tsx`
 
-Khi khach gui review, backend dong thoi ghi event `REVIEW` vao AI Profile de Collaborative Filtering co them tin hieu.
+Khi khách gửi review, backend đồng thời ghi event `REVIEW` vào AI Profile để Collaborative Filtering có thêm tín hiệu.
 
-### 10.5. Unit test rieng cho scoring AI
+### 10.5. Unit test riêng cho scoring AI
 
-Da them:
+Đã thêm:
 
 - `backend/src/main/java/com/ota/travi/service/AiScoreCalculator.java`
 - `backend/src/test/java/com/ota/travi/service/AiScoreCalculatorTest.java`
 
-Test bao phu:
+Test bao phủ:
 
-- Collaborative boost va gioi han diem.
-- Behavior score voi click/book va collaborative signal.
-- Promotion score theo phan tram/so tien giam.
+- Collaborative boost và giới hạn điểm.
+- Behavior score với click/book và collaborative signal.
+- Promotion score theo phần trăm/số tiền giảm.
 
-Lenh da chay:
+Lệnh đã chạy:
 
 ```powershell
 docker compose exec -T backend ./mvnw test -Dtest=AiScoreCalculatorTest
 ```
 
-Ket qua:
+Kết quả:
 
 - `Tests run: 3, Failures: 0, Errors: 0`
 
-### 10.6. Trang thai kiem thu moi nhat
+### 10.6. Trạng thái kiểm thử mới nhất
 
-Da chay:
+Đã chạy:
 
 ```powershell
 docker compose exec -T backend ./mvnw compile
@@ -466,15 +466,67 @@ curl.exe -s -o NUL -w "%{http_code}" http://localhost:8080/api/v1/public/promoti
 curl.exe -s -o NUL -w "%{http_code}" http://localhost:8080/api/v1/public/assets/test/reviews
 ```
 
-Ket qua:
+Kết quả:
 
 - Backend compile: `BUILD SUCCESS`
 - Frontend build: `vite build` pass
 - Public promotions API: `200`
 - Public reviews API: `200`
-- Backend container dang `Up` tren cong `8080`.
+- Backend container đang `Up` trên cổng `8080`.
 
-Luu y van can:
+Lưu ý vẫn cần:
 
-- Doi `OPENAI_API_KEY` trong `.env` thanh key that de LLM planner goi model that.
-- Tao du lieu `khuyen_mai` mau neu muon thay banner/score khuyen mai ro trong demo.
+- Đổi `OPENAI_API_KEY` trong `.env` thành key thật để LLM planner gọi model thật.
+- Tạo dữ liệu `khuyen_mai` mẫu nếu muốn thấy banner/score khuyến mãi rõ trong demo.
+
+## 11. Nâng cấp recommendation lên mô hình Two-Tower
+
+Sau nhận xét recommendation cũ còn nặng tính rule-based, đã bổ sung lớp model `TwoTowerRecommendationModel`. Mục tiêu là để điểm gợi ý chính đến từ độ tương đồng vector giữa người dùng và dịch vụ, thay vì chỉ cộng điểm thủ công.
+
+### 11.1. Cách hoạt động
+
+Model chia recommendation thành 2 tower:
+
+- `User Tower`: biến thông tin khách hàng, thành phố đang quan tâm, loại dịch vụ, sở thích, từ khóa tìm kiếm, lịch sử click/đặt chỗ và collaborative signal thành user embedding.
+- `Item Tower`: biến thông tin khách sạn/nhà hàng, thành phố, quận huyện, loại dịch vụ, mô tả, giá, chất lượng và tiện ích thành item embedding.
+- `Dot product`: tính tích vô hướng giữa user embedding và item embedding.
+- `Sigmoid`: chuyển dot product thành xác suất người dùng có khả năng chọn dịch vụ.
+- `Score`: chuyển xác suất thành điểm 0-100 để frontend tiếp tục hiển thị như hiện tại.
+
+### 11.2. Dữ liệu mô phỏng khi chưa có dataset lớn
+
+Chưa cần thêm bảng mới. Model hiện dùng feature hashing để tạo embedding từ dữ liệu sẵn có:
+
+- Mỗi feature text/context được hash vào vector 32 chiều.
+- Nếu user và item có đặc trưng gần nhau, dot product tăng.
+- Lịch sử click/đặt chỗ và collaborative signal được đưa vào embedding như tín hiệu học từ hành vi.
+- Context thời tiết được suy luận từ thành phố và mùa hiện tại, ví dụ Đà Lạt/Sapa là `COOL`, Phú Quốc/Đà Nẵng/Nha Trang là `SUNNY`, mùa 5-10 là `RAINY`.
+
+Đây là phiên bản phục vụ/ranking theo hướng AI: có embedding, có dot product, có xác suất. Khi có dataset thật, có thể thay feature hashing bằng model huấn luyện bằng Python mà không cần đổi contract API.
+
+### 11.3. File đã thêm/sửa
+
+- `backend/src/main/java/com/ota/travi/service/TwoTowerRecommendationModel.java`
+- `backend/src/main/java/com/ota/travi/service/AiRecommendationService.java`
+- `backend/src/test/java/com/ota/travi/service/TwoTowerRecommendationModelTest.java`
+
+### 11.4. Vai trò của rule-based sau khi nâng cấp
+
+Rule-based không còn là cách chấm điểm chính. Điểm chính đến từ Two-Tower:
+
+```text
+score = sigmoid(dot(userEmbedding, itemEmbedding)) * 100
+```
+
+Phần rule còn lại chỉ là boost nhỏ để giải thích và giữ hành vi sản phẩm ổn định:
+
+- boost theo thành phố sau Two-Tower
+- boost theo từ khóa để bổ trợ embedding
+- boost nhỏ theo chất lượng, ưu đãi, booking và click
+
+### 11.5. Test mới
+
+Đã thêm test riêng cho Two-Tower:
+
+- Item khớp user/context phải có dot product và score cao hơn item không liên quan.
+- Collaborative signal phải tạo lý do gợi ý và tăng khả năng xếp hạng cho item liên quan.

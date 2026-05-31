@@ -72,7 +72,7 @@ public class AiTravelPlannerLlmService {
                 .append(" | ly do ")
                 .append(String.join(", ", item.reasons()))
                 .append('\n'));
-        builder.append("Lap lich trinh co buoi sang, trua, chieu, toi; uu tien goi y co id neu phu hop.");
+        builder.append("Lập lịch trình có buổi sáng, trưa, chiều, tối; ưu tiên gợi ý có id nếu phù hợp.");
         return builder.toString();
     }
 

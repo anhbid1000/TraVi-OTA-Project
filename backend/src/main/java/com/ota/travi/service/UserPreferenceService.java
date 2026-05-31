@@ -53,7 +53,7 @@ public class UserPreferenceService {
     @Transactional(readOnly = true)
     public List<SoThichResponse> getUserPreferences(String username) {
         KhachHang khachHang = khachHangRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Chi khach hang moi co the xem so thich"));
+                .orElseThrow(() -> new RuntimeException("Chỉ khách hàng mới có thể xem sở thích"));
 
         return soThichRepository.findByKhachHangId(khachHang.getId()).stream()
                 .map(st -> new SoThichResponse(st.getId(), st.getTenSoThich()))
@@ -63,11 +63,11 @@ public class UserPreferenceService {
     @Transactional
     public List<SoThichResponse> updateUserPreferences(String username, UpdatePreferencesRequest request) {
         KhachHang khachHang = khachHangRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Chi khach hang moi co the cap nhat so thich"));
+                .orElseThrow(() -> new RuntimeException("Chỉ khách hàng mới có thể cập nhật sở thích"));
 
         List<SoThich> requestedPreferences = soThichRepository.findByIdIn(request.soThichIds());
         if (requestedPreferences.size() != request.soThichIds().size()) {
-            throw new RuntimeException("Mot so so thich khong ton tai");
+            throw new RuntimeException("Một số sở thích không tồn tại");
         }
 
         jdbcTemplate.update("DELETE FROM khach_hang_so_thich WHERE khach_hang_id = ?", khachHang.getId());

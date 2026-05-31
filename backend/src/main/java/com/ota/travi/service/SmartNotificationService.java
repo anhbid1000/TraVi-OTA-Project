@@ -48,7 +48,7 @@ public class SmartNotificationService {
 
     public List<ThongBaoNguCanhResponse> generateSmartNotifications(String username) {
         KhachHang khachHang = khachHangRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Chi khach hang moi nhan duoc thong bao thong minh"));
+                .orElseThrow(() -> new RuntimeException("Chỉ khách hàng mới nhận được thông báo thông minh"));
 
         List<ThongBaoNguCanhResponse> notifications = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
@@ -69,8 +69,8 @@ public class SmartNotificationService {
                 notifications.add(new ThongBaoNguCanhResponse(
                         "auto-" + booking.getId(),
                         "BOOKING_REMINDER",
-                        "Ban co dat cho sap toi tai " + booking.getHoSoKinhDoanh().getTenCoSo()
-                                + " vao " + serviceTime + " - Ma: " + booking.getMaDon(),
+                        "Bạn có đặt chỗ sắp tới tại " + booking.getHoSoKinhDoanh().getTenCoSo()
+                                + " vào " + serviceTime + " - Mã: " + booking.getMaDon(),
                         "MEDIUM",
                         serviceTime,
                         "BOOKING"
@@ -113,15 +113,15 @@ public class SmartNotificationService {
                 notifications.add(new ThongBaoNguCanhResponse(
                         "recommendation-" + topRecommendation.id(),
                         "RECOMMENDATION",
-                        "AI de xuat " + topRecommendation.name()
-                                + " vi phu hop voi so thich va hanh vi gan day cua ban.",
+                        "AI đề xuất " + topRecommendation.name()
+                                + " vì phù hợp với sở thích và hành vi gần đây của bạn.",
                         "LOW",
                         now.plusHours(2),
                         "RECOMMENDATION"
                 ));
             }
         } catch (Exception ignored) {
-            // Loi goi y khong duoc lam hong luong thong bao booking/thoi tiet.
+            // Lỗi gợi ý không được làm hỏng luồng thông báo booking/thời tiết.
         }
     }
 
@@ -136,14 +136,14 @@ public class SmartNotificationService {
                 notifications.add(new ThongBaoNguCanhResponse(
                         "promotion-" + discountRecommendation.id(),
                         "PROMOTION",
-                        "Co uu dai luu tru phu hop voi ho so cua ban tai " + discountRecommendation.name() + ".",
+                        "Có ưu đãi lưu trú phù hợp với hồ sơ của bạn tại " + discountRecommendation.name() + ".",
                         "MEDIUM",
                         now.plusHours(1),
                         "PROMOTION"
                 ));
             }
         } catch (Exception ignored) {
-            // Loi uu dai khong duoc lam hong luong thong bao chinh.
+            // Lỗi ưu đãi không được làm hỏng luồng thông báo chính.
         }
     }
 
@@ -166,8 +166,8 @@ public class SmartNotificationService {
                 notifications.add(new ThongBaoNguCanhResponse(
                         "weather-" + booking.getId(),
                         "WEATHER_WARNING",
-                        "Thoi tiet tai diem den du bao " + weather.condition()
-                                + ". Hay chuan bi " + weather.warningMessage(),
+                        "Thời tiết tại điểm đến dự báo " + weather.condition()
+                                + ". Hãy chuẩn bị " + weather.warningMessage(),
                         "HIGH",
                         serviceTime,
                         "WEATHER"

@@ -19,16 +19,16 @@ public class AiScoreCalculator {
         int nextScore = score;
         if (bookedAssetIds.contains(assetId)) {
             nextScore += 18;
-            reasons.add("Tuong dong voi dich vu ban da tung dat");
+            reasons.add("Tương đồng với dịch vụ bạn đã từng đặt");
         } else if (clickedAssetIds.contains(assetId)) {
             nextScore += 12;
-            reasons.add("Ban da tung quan tam dich vu nay");
+            reasons.add("Bạn đã từng quan tâm dịch vụ này");
         }
 
         int collaborativeBoost = calculateCollaborativeBoost(collaborativeScores.getOrDefault(assetId, 0));
         if (collaborativeBoost > 0) {
             nextScore += collaborativeBoost;
-            reasons.add("Nguoi dung co hanh vi tuong tu cung quan tam");
+            reasons.add("Người dùng có hành vi tương tự cũng quan tâm");
         }
 
         return clampScore(nextScore);

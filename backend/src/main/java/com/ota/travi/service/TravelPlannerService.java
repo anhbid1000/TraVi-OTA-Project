@@ -30,7 +30,7 @@ public class TravelPlannerService {
 
     public ItineraryResponse generateItinerary(String username, ItineraryRequest request) {
         KhachHang khachHang = khachHangRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Chi khach hang moi co the tao lich trinh"));
+                .orElseThrow(() -> new RuntimeException("Chỉ khách hàng mới có thể tạo lịch trình"));
 
         UserAiRecommendationResponse recommendations = aiRecommendationService.recommendForUser(
                 khachHang.getUsername(),

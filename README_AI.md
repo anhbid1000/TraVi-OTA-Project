@@ -389,7 +389,7 @@ File: `backend/src/main/java/com/ota/travi/service/AiRecommendationService.java`
 ```java
 if (matchesCity(profile, city)) {
     score += 25;
-    reasons.add("Phu hop thanh pho dang quan tam");
+    reasons.add("Phù hợp với thành phố đang quan tâm");
 }
 ```
 
@@ -503,3 +503,20 @@ Hành vi người dùng -> Hồ sơ AI -> Recommendation Engine -> Travel Planne
 
 Đây là nền tảng tốt để phát triển thêm các tính năng AI nâng cao trong các giai đoạn tiếp theo như dynamic pricing, ranking model, embedding search hoặc recommendation learning-to-rank.
 
+## 10. Cập nhật: mô hình gợi ý Two-Tower
+
+Recommendation engine đã được nâng từ cách chấm điểm chủ yếu dựa trên luật sang hướng Two-Tower. Đây là phiên bản phục vụ trong đồ án: backend tạo vector đặc trưng từ dữ liệu hiện có, tính tích vô hướng giữa người dùng và dịch vụ, rồi dùng kết quả đó để xếp hạng gợi ý.
+
+- User Tower tạo embedding từ hồ sơ khách hàng, sở thích, từ khóa tìm kiếm, lịch sử click/đặt chỗ, tín hiệu collaborative filtering và ngữ cảnh thời tiết.
+- Item Tower tạo embedding từ khách sạn/nhà hàng, địa điểm, loại dịch vụ, mô tả, giá, chất lượng và tiện ích.
+- Hệ thống tính `dotProduct(userEmbedding, itemEmbedding)`, sau đó đưa qua hàm sigmoid để ước lượng xác suất người dùng có thể chọn dịch vụ.
+- Điểm hiển thị trên UI vẫn là thang 0-100, nhưng điểm gốc đến từ độ tương đồng vector thay vì chỉ cộng điểm thủ công.
+- Các luật cũ chỉ còn đóng vai trò boost nhỏ để giữ kết quả ổn định và giải thích được.
+
+File chính:
+
+- `backend/src/main/java/com/ota/travi/service/TwoTowerRecommendationModel.java`
+- `backend/src/main/java/com/ota/travi/service/AiRecommendationService.java`
+- `backend/src/test/java/com/ota/travi/service/TwoTowerRecommendationModelTest.java`
+
+Bản hiện tại dùng feature hashing để mô phỏng embedding khi chưa có tập dữ liệu huấn luyện lớn. Khi có dữ liệu thật, có thể huấn luyện Two-Tower bằng Python, export model hoặc embedding, rồi thay lớp tính vector hiện tại mà gần như không phải đổi frontend và API.
