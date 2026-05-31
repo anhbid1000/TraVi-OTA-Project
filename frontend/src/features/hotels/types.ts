@@ -71,6 +71,7 @@ export type RoomCombinationOption = {
   totalCapacity: number
   totalRooms: number
   totalPricePerNight: number
+  image?: string
   items: RoomComboItem[]
 }
 

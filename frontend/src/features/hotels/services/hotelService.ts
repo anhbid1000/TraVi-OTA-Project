@@ -267,19 +267,38 @@ function mapPolicies(payload: BackendHotelDetail['chinhSach']): HotelPolicy[] {
   return candidates.filter((item) => item.description && item.description !== 'Đang cập nhật')
 }
 
-function mapRoomComboOption(item: NonNullable<BackendHotelDetail['roomCombinationOptions']>[number]): RoomCombinationOption {
-  return {
-    totalCapacity: item.totalCapacity ?? 0,
-    totalRooms: item.totalRooms ?? 0,
-    totalPricePerNight: item.totalPricePerNight ?? 0,
-    items: (item.items ?? []).map((x) => ({
+function mapRoomComboOption(
+  item: NonNullable<BackendHotelDetail['roomCombinationOptions']>[number],
+  availableRooms: RoomAvailability[]
+): RoomCombinationOption {
+  let highestPriceRoomImage = ''
+  let maxPrice = -1
+
+  const items = (item.items ?? []).map((x) => {
+    if ((x.pricePerRoom ?? 0) > maxPrice) {
+      maxPrice = x.pricePerRoom ?? 0
+      const room = availableRooms.find((r) => r.id === x.roomId)
+      if (room && room.image) {
+        highestPriceRoomImage = room.image
+      }
+    }
+
+    return {
       roomId: x.roomId,
       roomName: normalizeVietnameseText(x.roomName, { titleCase: true }) || 'Phòng',
       roomType: normalizeVietnameseText(x.roomType, { titleCase: true }) || 'Unknown',
       quantity: x.quantity ?? 0,
       capacityPerRoom: x.capacityPerRoom ?? 0,
       pricePerRoom: x.pricePerRoom ?? 0,
-    })),
+    }
+  })
+
+  return {
+    totalCapacity: item.totalCapacity ?? 0,
+    totalRooms: item.totalRooms ?? 0,
+    totalPricePerNight: item.totalPricePerNight ?? 0,
+    image: highestPriceRoomImage,
+    items,
   }
 }
 
@@ -289,6 +308,8 @@ function mapHotelDetail(payload: BackendHotelDetail): HotelDetail {
     .map((part) => normalizeVietnameseText(part, { titleCase: true }))
   const location = locationParts.join(', ') || normalizeVietnameseText(payload.diaChi, { titleCase: true }) || 'Việt Nam'
   const description = normalizeVietnameseText(payload.moTa) || 'Đang cập nhật mô tả'
+
+  const rooms = (payload.availableRooms ?? []).map(mapRoom)
 
   return {
     id: payload.id,
@@ -305,8 +326,8 @@ function mapHotelDetail(payload: BackendHotelDetail): HotelDetail {
     images: (payload.images ?? []).map(mapImage),
     amenities: (payload.amenities ?? []).map(mapAmenity),
     policies: mapPolicies(payload.chinhSach),
-    rooms: (payload.availableRooms ?? []).map(mapRoom),
-    roomCombinationOptions: (payload.roomCombinationOptions ?? []).map(mapRoomComboOption),
+    rooms,
+    roomCombinationOptions: (payload.roomCombinationOptions ?? []).map((combo) => mapRoomComboOption(combo, rooms)),
   }
 }
 

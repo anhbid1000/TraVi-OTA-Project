@@ -71,8 +71,10 @@ public class PartnerBusinessProfileService {
         hoSo.setTrangThaiHoatDong(TrangThaiHoatDong.DANG_HOAT_DONG);
         hoSo.setDeleted(false);
 
-        ChinhSach chinhSach = toChinhSach(request.hoSo().chinhSach(), hoSo);
-        hoSo.setChinhSach(chinhSach);
+        if (request.hoSo().chinhSach() != null) {
+            ChinhSach chinhSach = toChinhSach(request.hoSo().chinhSach(), hoSo);
+            hoSo.setChinhSach(chinhSach);
+        }
         addPrimaryAsset(hoSo, request);
 
         return partnerAssetMapper.toHoSoResponse(hoSoKinhDoanhRepository.save(hoSo));
@@ -127,8 +129,7 @@ public class PartnerBusinessProfileService {
         hoSo.setEmailLienHe(request.hoSo().emailLienHe());
         hoSo.setDiaChi(request.hoSo().diaChi());
         hoSo.setThanhPho(request.hoSo().thanhPho());
-        hoSo.setQuanHuyen(request.hoSo().quanHuyen());
-        hoSo.setPhuongXa(request.hoSo().phuongXa());
+
         hoSo.setKinhDo(request.hoSo().kinhDo());
         hoSo.setViDo(request.hoSo().viDo());
         hoSo.setLoaiDichVu(request.hoSo().loaiDichVu());
@@ -144,6 +145,9 @@ private ChinhSach toChinhSach(ChinhSachRequest request, HoSoKinhDoanh hoSo) {
     }
 
     private void applyChinhSach(ChinhSach chinhSach, ChinhSachRequest request, HoSoKinhDoanh hoSo) {
+        if (request == null) {
+            return;
+        }
         chinhSach.setHoSoKinhDoanh(hoSo);
         chinhSach.setLoaiChinhSach(request.loaiChinhSach());
         chinhSach.setNoiDung(request.noiDung());
@@ -161,9 +165,9 @@ private ChinhSach toChinhSach(ChinhSachRequest request, HoSoKinhDoanh hoSo) {
 
     private void addPrimaryAsset(HoSoKinhDoanh hoSo, PartnerBusinessProfileRequest request) {
         if (request.hoSo().loaiDichVu() == LoaiDichVu.KHACH_SAN) {
-            hoSo.getDanhSachTaiSan().add(toKhachSan(request.khachSan(), request.danhSachAnh(), request.tienIchKhachSan(), hoSo));
+            hoSo.setTaiSan(toKhachSan(request.khachSan(), request.danhSachAnh(), request.tienIchKhachSan(), hoSo));
         } else if (request.hoSo().loaiDichVu() == LoaiDichVu.NHA_HANG) {
-            hoSo.getDanhSachTaiSan().add(toNhaHang(request.nhaHang(), request.danhSachAnh(), request.tienIchNhaHang(), hoSo));
+            hoSo.setTaiSan(toNhaHang(request.nhaHang(), request.danhSachAnh(), request.tienIchNhaHang(), hoSo));
         }
     }
 
@@ -208,7 +212,7 @@ private ChinhSach toChinhSach(ChinhSachRequest request, HoSoKinhDoanh hoSo) {
                     .orElseGet(() -> {
                         KhachSan newHotel = new KhachSan();
                         newHotel.setHoSoKinhDoanh(hoSo);
-                        hoSo.getDanhSachTaiSan().add(newHotel);
+                        hoSo.setTaiSan(newHotel);
                         return newHotel;
                     });
             applyKhachSan(khachSan, request.khachSan());
@@ -220,7 +224,7 @@ private ChinhSach toChinhSach(ChinhSachRequest request, HoSoKinhDoanh hoSo) {
                     .orElseGet(() -> {
                         NhaHang newRestaurant = new NhaHang();
                         newRestaurant.setHoSoKinhDoanh(hoSo);
-                        hoSo.getDanhSachTaiSan().add(newRestaurant);
+                        hoSo.setTaiSan(newRestaurant);
                         return newRestaurant;
                     });
             applyNhaHang(nhaHang, request.nhaHang());

@@ -918,6 +918,30 @@
     transform 0.2s ease;
 }
 
+.main-partner-nav .nav-spacer {
+  margin-left: auto;
+}
+
+.main-partner-nav button svg:last-child {
+  transition: transform 0.2s ease;
+}
+
+.management-subnav {
+  overflow: hidden;
+  animation: managementSlideDown 0.2s ease;
+}
+
+@keyframes managementSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .main-partner-nav button:not(.active):hover {
   background: #e8ece9;
   transform: translateX(4px);
@@ -2748,6 +2772,21 @@
   accent-color: #07814e;
 }
 
+.amenity-compact-option {
+  padding: 0 !important;
+  margin: 0 !important;
+  gap: 6px !important;
+}
+
+.amenity-compact-input {
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
 .single-status {
   align-items: flex-end;
   flex-direction: column;
@@ -2889,4 +2928,611 @@
 
 .dish-thumb.has-image img {
   border-radius: inherit;
+}
+
+.partner-dashboard-overview {
+  display: grid;
+  gap: 24px;
+}
+
+.partner-dashboard-header {
+  margin-bottom: 0;
+}
+
+.partner-dashboard-header-actions {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+.partner-dashboard-period-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #d6e0da;
+  border-radius: 12px;
+  padding: 4px;
+  background: #ffffff;
+}
+
+.partner-dashboard-period-switch button {
+  border: 0;
+  background: transparent;
+  color: #516158;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.partner-dashboard-period-switch button.active {
+  background: #daf7e8;
+  color: #085936;
+}
+
+.partner-dashboard-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #d6e0da;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #274939;
+  font-weight: 700;
+}
+
+.partner-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.partner-dashboard-kpi-grid {
+  grid-column: span 12;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.partner-dashboard-kpi-card {
+  border-radius: 14px;
+  border: 1px solid #dce6e0;
+  background: #ffffff;
+  padding: 18px;
+  box-shadow: 0 8px 22px rgba(18, 42, 29, 0.05);
+  display: grid;
+  gap: 8px;
+}
+
+.partner-dashboard-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.partner-dashboard-kpi-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #e8f6ee;
+  color: #0c6a41;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.partner-dashboard-kpi-growth {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.partner-dashboard-kpi-growth.positive {
+  background: #e5f8ee;
+  color: #04663a;
+}
+
+.partner-dashboard-kpi-growth.negative {
+  background: #fdeaea;
+  color: #b22020;
+}
+
+.partner-dashboard-kpi-card p {
+  margin: 0;
+  color: #637067;
+  font-size: 14px;
+}
+
+.partner-dashboard-kpi-card strong {
+  font-size: 28px;
+  color: #073c24;
+  line-height: 1.2;
+}
+
+.partner-dashboard-kpi-hint {
+  color: #627167;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.partner-dashboard-panel {
+  border-radius: 14px;
+  border: 1px solid #dce6e0;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(18, 42, 29, 0.05);
+  padding: 20px;
+}
+
+.partner-dashboard-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.partner-dashboard-panel-head h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #103b28;
+}
+
+.partner-dashboard-panel-head p {
+  margin: 4px 0 0;
+  color: #647169;
+  font-size: 14px;
+}
+
+.partner-dashboard-chart-panel {
+  grid-column: span 8;
+}
+
+.partner-dashboard-chart-wrap {
+  min-height: 280px;
+  position: relative;
+}
+
+.partner-dashboard-restaurant-chart-wrap {
+  min-height: 280px;
+}
+
+.partner-dashboard-restaurant-bars {
+  height: 250px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.partner-dashboard-restaurant-bar-item {
+  height: 100%;
+  display: grid;
+  gap: 8px;
+  align-items: end;
+}
+
+.partner-dashboard-restaurant-bar-track {
+  height: 100%;
+  border-radius: 10px 10px 6px 6px;
+  background: linear-gradient(to top, #f1f5f2, #f8fbf9);
+  border: 1px solid #dbe6df;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.partner-dashboard-restaurant-bar-fill {
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(180deg, #2d9f66 0%, #0b6038 100%);
+}
+
+.partner-dashboard-restaurant-bar-item span {
+  color: #5e6d64;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.partner-dashboard-chart-svg {
+  width: 100%;
+  height: 240px;
+}
+
+.partner-dashboard-chart-labels {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  color: #65726a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.partner-dashboard-chart-empty {
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  color: #67756d;
+  font-weight: 700;
+  border: 1px dashed #d5e1da;
+  border-radius: 10px;
+  background: #f9fcfa;
+}
+
+.partner-dashboard-availability-panel {
+  grid-column: span 4;
+  display: grid;
+  gap: 14px;
+}
+
+.partner-dashboard-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #eaf8f0;
+  color: #08643d;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.partner-dashboard-peak-list {
+  display: grid;
+  gap: 14px;
+}
+
+.partner-dashboard-peak-item {
+  display: grid;
+  gap: 7px;
+}
+
+.partner-dashboard-peak-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #1c3429;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.partner-dashboard-peak-title-row strong {
+  color: #0a6138;
+}
+
+.partner-dashboard-peak-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #edf2ef;
+}
+
+.partner-dashboard-peak-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.partner-dashboard-peak-fill.tone-0 {
+  background: #0d7b48;
+}
+
+.partner-dashboard-peak-fill.tone-1 {
+  background: #1d9a5c;
+}
+
+.partner-dashboard-peak-fill.tone-2 {
+  background: #88b59a;
+}
+
+.partner-dashboard-peak-fill.tone-3 {
+  background: #bac6bf;
+}
+
+.partner-dashboard-occupancy-ring {
+  width: 188px;
+  height: 188px;
+  border-radius: 50%;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+}
+
+.partner-dashboard-occupancy-ring-inner {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 10px solid #f1f5f2;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.partner-dashboard-occupancy-ring-inner strong {
+  display: block;
+  font-size: 30px;
+  line-height: 1.1;
+  color: #0b492d;
+}
+
+.partner-dashboard-occupancy-ring-inner span {
+  color: #65736a;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.partner-dashboard-availability-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.partner-dashboard-availability-stats article {
+  border: 1px solid #dce7e0;
+  border-radius: 10px;
+  background: #f8fbf9;
+  text-align: center;
+  padding: 12px 10px;
+}
+
+.partner-dashboard-availability-stats strong {
+  display: block;
+  color: #0a5f38;
+  font-size: 26px;
+}
+
+.partner-dashboard-availability-stats span {
+  color: #5f6f65;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.partner-dashboard-bookings-panel {
+  grid-column: span 8;
+  padding: 0;
+  overflow: hidden;
+}
+
+.partner-dashboard-bookings-panel .partner-dashboard-panel-head {
+  padding: 18px 20px 12px;
+  margin: 0;
+}
+
+.partner-dashboard-table-wrap {
+  overflow-x: auto;
+}
+
+.partner-dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.partner-dashboard-table th,
+.partner-dashboard-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #e7ece8;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.partner-dashboard-table th {
+  color: #556259;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.partner-dashboard-table td {
+  font-size: 14px;
+  color: #1f3328;
+}
+
+.partner-dashboard-guest-cell span {
+  display: block;
+  font-weight: 800;
+}
+
+.partner-dashboard-guest-cell small {
+  color: #607067;
+  font-weight: 600;
+}
+
+.partner-dashboard-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.partner-dashboard-status.success {
+  background: #e5f8ee;
+  color: #04663a;
+}
+
+.partner-dashboard-status.warning {
+  background: #fff2cf;
+  color: #7b5500;
+}
+
+.partner-dashboard-status.info {
+  background: #e6f1ff;
+  color: #0d4ba8;
+}
+
+.partner-dashboard-status.negative {
+  background: #fdeaea;
+  color: #ad2020;
+}
+
+.partner-dashboard-status.neutral {
+  background: #ecf0ed;
+  color: #4f5f56;
+}
+
+.partner-dashboard-top-room-panel {
+  grid-column: span 4;
+}
+
+.partner-dashboard-top-room-list {
+  display: grid;
+  gap: 10px;
+}
+
+.partner-dashboard-top-room-item {
+  border: 1px solid #dbe6df;
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.partner-dashboard-top-room-image {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #d9f7e8, #f2fcf7);
+  display: grid;
+  place-items: center;
+  color: #0a6138;
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.partner-dashboard-top-room-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.partner-dashboard-top-room-content {
+  min-width: 0;
+}
+
+.partner-dashboard-top-room-content strong,
+.partner-dashboard-top-room-content span,
+.partner-dashboard-top-room-content small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.partner-dashboard-top-room-content strong {
+  color: #133b28;
+}
+
+.partner-dashboard-top-room-content span {
+  color: #4f6358;
+  font-size: 13px;
+}
+
+.partner-dashboard-top-room-content small {
+  color: #647268;
+  font-size: 12px;
+}
+
+.partner-dashboard-top-room-price {
+  color: #0b6038;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.partner-dashboard-top-room-empty {
+  padding: 18px;
+  border: 1px dashed #d0ddd5;
+  border-radius: 10px;
+  color: #65756b;
+  text-align: center;
+  font-weight: 700;
+}
+
+.partner-dashboard-loading,
+.partner-dashboard-empty {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.partner-dashboard-loading strong,
+.partner-dashboard-empty h2 {
+  color: #0f3624;
+  margin: 0;
+}
+
+.partner-dashboard-loading span,
+.partner-dashboard-empty p {
+  margin: 0;
+  color: #647169;
+}
+
+.partner-dashboard-empty .primary-btn {
+  margin-top: 8px;
+}
+
+@media (max-width: 1200px) {
+  .partner-dashboard-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .partner-dashboard-chart-panel,
+  .partner-dashboard-bookings-panel,
+  .partner-dashboard-availability-panel,
+  .partner-dashboard-top-room-panel {
+    grid-column: span 12;
+  }
+}
+
+@media (max-width: 768px) {
+  .partner-dashboard-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .partner-dashboard-range {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .partner-dashboard-header-actions {
+    width: 100%;
+    justify-items: stretch;
+  }
+
+  .partner-dashboard-period-switch {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .partner-dashboard-period-switch button {
+    flex: 1;
+  }
+
+  .partner-dashboard-restaurant-bars {
+    gap: 8px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .partner-dashboard-availability-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .partner-dashboard-table th,
+  .partner-dashboard-table td {
+    padding: 12px;
+  }
 }

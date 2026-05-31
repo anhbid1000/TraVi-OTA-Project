@@ -25,8 +25,8 @@ public class TienIchNhaHang {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "nha_hang_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name="nha_hang_id")
     private NhaHang nhaHang;
 
     @Column(nullable = false)

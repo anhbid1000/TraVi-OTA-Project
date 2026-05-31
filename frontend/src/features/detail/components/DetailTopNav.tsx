@@ -34,9 +34,16 @@ export function DetailTopNav({ active }: DetailTopNavProps) {
             >
               Nhà hàng
             </Link>
-            <span className="cursor-default rounded-lg px-3 py-2 text-sm font-semibold text-on-surface-variant">
-              Trải nghiệm
-            </span>
+            <Link
+              to="/search"
+              className={`cursor-pointer px-3 py-2 text-sm font-semibold transition-colors ${
+                active === 'search'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-primary'
+              }`}
+            >
+              Tra cứu
+            </Link>
           </nav>
         </div>
         <AuthActions />

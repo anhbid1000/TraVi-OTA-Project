@@ -46,7 +46,11 @@ public final class RestaurantSpecification {
                 return null;
             }
             Join<NhaHang, HoSoKinhDoanh> hoSoJoin = root.join("hoSoKinhDoanh", JoinType.INNER);
-            return cb.equal(cb.lower(hoSoJoin.get("thanhPho")), city.trim().toLowerCase(Locale.ROOT));
+            String normalizedKeyword = "%" + city.trim().toLowerCase(Locale.ROOT) + "%";
+            return cb.or(
+                    cb.like(cb.lower(hoSoJoin.get("thanhPho")), normalizedKeyword),
+                    cb.like(cb.lower(hoSoJoin.get("diaChi")), normalizedKeyword)
+            );
         };
     }
 
@@ -99,9 +103,7 @@ public final class RestaurantSpecification {
                     cb.like(cb.lower(root.get("moTa")), normalizedKeyword),
                     cb.like(cb.lower(root.get("loaiAmThuc")), normalizedKeyword),
                     cb.like(cb.lower(hoSoJoin.get("tenCoSo")), normalizedKeyword),
-                    cb.like(cb.lower(hoSoJoin.get("diaChi")), normalizedKeyword),
-                    cb.like(cb.lower(hoSoJoin.get("quanHuyen")), normalizedKeyword),
-                    cb.like(cb.lower(hoSoJoin.get("phuongXa")), normalizedKeyword)
+                    cb.like(cb.lower(hoSoJoin.get("diaChi")), normalizedKeyword)
             );
         };
     }
@@ -143,4 +145,3 @@ public final class RestaurantSpecification {
         return value != null && !value.isBlank();
     }
 }
-

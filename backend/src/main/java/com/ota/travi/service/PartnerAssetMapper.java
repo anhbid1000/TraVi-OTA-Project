@@ -45,8 +45,8 @@ public class PartnerAssetMapper {
                 hoSo.getEmailLienHe(),
                 hoSo.getDiaChi(),
                 hoSo.getThanhPho(),
-                hoSo.getQuanHuyen(),
-                hoSo.getPhuongXa(),
+                null,
+                null,
                 hoSo.getKinhDo(),
                 hoSo.getViDo(),
                 hoSo.getLoaiDichVu(),
@@ -57,7 +57,7 @@ public class PartnerAssetMapper {
                 hoSo.getThoiGianDangKy(),
                 hoSo.getThoiGianCapNhat(),
                 toChinhSachResponse(hoSo.getChinhSach()),
-                hoSo.getDanhSachTaiSan().stream().map(this::toTaiSanResponse).toList()
+                hoSo.getTaiSan() == null ? null : toTaiSanResponse(hoSo.getTaiSan())
         );
     }
 
@@ -71,8 +71,11 @@ public class PartnerAssetMapper {
                 khachSan.getGiaCoBan(),
                 khachSan.getIsDynamicPricing(),
                 khachSan.getHangSao(),
+                khachSan.getLoaiKhachSan(),
                 khachSan.getGioNhanPhong(),
                 khachSan.getGioTraPhong(),
+                khachSan.getSoTang(),
+                khachSan.getTongSoPhong(),
                 khachSan.getDanhSachPhong().stream().map(this::toPhongResponse).toList(),
                 khachSan.getDanhSachAnh().stream().map(this::toAnhResponse).toList(),
                 khachSan.getTienIch().stream().map(this::toTienIchKhachSanResponse).collect(Collectors.toSet())
@@ -92,6 +95,8 @@ public class PartnerAssetMapper {
                 nhaHang.getLoaiAmThuc(),
                 nhaHang.getGioMoCua(),
                 nhaHang.getGioDongCua(),
+                nhaHang.getCoDatBanTruoc(),
+                nhaHang.getCoDatMonTruoc(),
                 nhaHang.getDanhSachBan().stream().map(this::toBanResponse).toList(),
                 nhaHang.getDanhSachAnh().stream().map(this::toAnhResponse).toList(),
                 nhaHang.getTienIch().stream().map(this::toTienIchNhaHangResponse).toList(),
@@ -104,9 +109,14 @@ public class PartnerAssetMapper {
                 phong.getId(),
                 phong.getKhachSan().getIdTaiSan(),
                 phong.getSoPhong(),
+                phong.getTenPhong(),
                 phong.getLoaiPhong(),
+                phong.getMoTa(),
                 phong.getSucChuaToiDa(),
+                phong.getSoGiuong(),
                 phong.getDienTich(),
+                phong.getGiaCoBan(),
+                phong.getSoLuongPhong(),
                 phong.getTrangThai(),
                 phong.getTienIch(),
                 phong.getPhanTramGiamGia(),
@@ -118,7 +128,9 @@ public class PartnerAssetMapper {
         return new BanResponse(
                 ban.getId(),
                 ban.getNhaHang().getIdTaiSan(),
+                ban.getTenBan(),
                 ban.getViTriSanh(),
+                ban.getMoTa(),
                 ban.getSoChoNgoi(),
                 ban.getTrangThai()
         );
@@ -129,10 +141,13 @@ public class PartnerAssetMapper {
                 monAn.getId(),
                 monAn.getThucDon().getId(),
                 monAn.getTenMon(),
+                monAn.getMoTa(),
                 monAn.getGiaBan(),
+                monAn.getDanhMucMon(),
                 monAn.getTrangThai(),
                 monAn.getDuongDanUrl(),
-                monAn.getTheNguCanh()
+                monAn.getTheNguCanh(),
+                monAn.getDeleted()
         );
     }
 
@@ -161,9 +176,15 @@ public class PartnerAssetMapper {
     }
 
     private TaiSanResponse toTaiSanResponse(TaiSan taiSan) {
+        String loaiTaiSan = taiSan instanceof KhachSan ? "KHACH_SAN" : (taiSan instanceof NhaHang ? "NHA_HANG" : "UNKNOWN");
+        String ten = taiSan instanceof KhachSan ? ((KhachSan) taiSan).getTen() :
+                (taiSan instanceof NhaHang ? ((NhaHang) taiSan).getTen() : null);
+
         return new TaiSanResponse(
                 taiSan.getIdTaiSan(),
                 taiSan.getHoSoKinhDoanh().getIdHoSo(),
+                loaiTaiSan,
+                ten,
                 taiSan.getMoTa(),
                 taiSan.getTrangThai(),
                 taiSan.getGiaCoBan(),
@@ -175,7 +196,9 @@ public class PartnerAssetMapper {
         return new ThucDonResponse(
                 thucDon.getId(),
                 thucDon.getNhaHang().getIdTaiSan(),
+                thucDon.getTenThucDon(),
                 thucDon.getPhanLoai(),
+                thucDon.getTrangThai(),
                 thucDon.getMonAn().stream().map(this::toMonAnResponse).toList(),
                 thucDon.getCombo().stream().map(this::toComboResponse).toList()
         );
@@ -223,4 +246,3 @@ public class PartnerAssetMapper {
         );
     }
 }
-

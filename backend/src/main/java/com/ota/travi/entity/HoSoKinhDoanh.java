@@ -72,12 +72,6 @@ public class HoSoKinhDoanh {
     @Column(length = 100)
     private String thanhPho;
 
-    @Column(length = 100)
-    private String quanHuyen;
-
-    @Column(length = 100)
-    private String phuongXa;
-
     private Double kinhDo;
 
     private Double viDo;
@@ -95,6 +89,11 @@ public class HoSoKinhDoanh {
     @OneToOne(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
     private ChinhSach chinhSach;
 
-    @OneToMany(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<TaiSan> danhSachTaiSan = new ArrayList<>();}
+    @OneToOne(mappedBy = "hoSoKinhDoanh", cascade = CascadeType.ALL, orphanRemoval = true)
+    private TaiSan taiSan;
+
+    public String getPhuongXa() {
+        return null;
+    }
+}
 

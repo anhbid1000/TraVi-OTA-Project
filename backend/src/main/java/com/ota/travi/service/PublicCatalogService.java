@@ -205,8 +205,8 @@ public class PublicCatalogService {
                 hotel.getMoTa(),
                 hotel.getHoSoKinhDoanh().getDiaChi(),
                 hotel.getHoSoKinhDoanh().getThanhPho(),
-                hotel.getHoSoKinhDoanh().getQuanHuyen(),
-                hotel.getHoSoKinhDoanh().getPhuongXa(),
+                null,
+                null,
                 hotel.getHoSoKinhDoanh().getKinhDo(),
                 hotel.getHoSoKinhDoanh().getViDo(),
                 hotel.getHangSao(),
@@ -267,6 +267,19 @@ public class PublicCatalogService {
                 .sorted(Comparator.comparingDouble(ScoredRestaurant::score).reversed())
                 .limit(resolvedSize)
                 .map(ScoredRestaurant::response)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TienIchKhachSanResponse> getAllHotelAmenities() {
+        return tienIchKhachSanRepository.findAll().stream()
+                .sorted(Comparator.comparing(TienIchKhachSan::getTenTienIch, String.CASE_INSENSITIVE_ORDER))
+                .map(amenity -> new TienIchKhachSanResponse(
+                        amenity.getId(),
+                        amenity.getTenTienIch(),
+                        amenity.getLoaiTienIch(),
+                        amenity.getMoTa()
+                ))
                 .toList();
     }
 
@@ -379,8 +392,8 @@ public class PublicCatalogService {
                 restaurant.getMoTa(),
                 restaurant.getHoSoKinhDoanh().getDiaChi(),
                 restaurant.getHoSoKinhDoanh().getThanhPho(),
-                restaurant.getHoSoKinhDoanh().getQuanHuyen(),
-                restaurant.getHoSoKinhDoanh().getPhuongXa(),
+                null,
+                null,
                 restaurant.getHoSoKinhDoanh().getKinhDo(),
                 restaurant.getHoSoKinhDoanh().getViDo(),
                 restaurant.getLoaiAmThuc(),

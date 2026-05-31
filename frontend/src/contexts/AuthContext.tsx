@@ -19,7 +19,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(() => tokenStorage.getUserFromToken())
   const [accessToken, setAccessToken] = useState<string | null>(() => tokenStorage.getAccessToken())
   const [refreshToken, setRefreshToken] = useState<string | null>(() => tokenStorage.getRefreshToken())
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const syncSessionFromStorage = useCallback(() => {
     setUser(tokenStorage.getUserFromToken())
@@ -100,12 +100,54 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [clearSession, syncSessionFromStorage])
 
   useEffect(() => {
-    if (!accessToken || !tokenStorage.isAccessTokenExpired()) {
-      return
+    let isMounted = true
+
+    const bootstrapSession = async () => {
+      const hasAccessToken = Boolean(tokenStorage.getAccessToken())
+      const hasRefreshToken = Boolean(tokenStorage.getRefreshToken())
+      const isAccessExpired = hasAccessToken && tokenStorage.isAccessTokenExpired()
+
+      if (!hasAccessToken) {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+        return
+      }
+
+      if (!isAccessExpired) {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+        return
+      }
+
+      if (!hasRefreshToken) {
+        if (isMounted) {
+          clearSession()
+          setIsLoading(false)
+        }
+        return
+      }
+
+      try {
+        await refreshSession()
+      } catch {
+        if (isMounted) {
+          clearSession()
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
     }
 
-    void refreshSession().catch(clearSession)
-  }, [accessToken, clearSession, refreshSession])
+    void bootstrapSession()
+
+    return () => {
+      isMounted = false
+    }
+  }, [clearSession, refreshSession])
 
   const isAuthenticated = Boolean(accessToken && !tokenStorage.isAccessTokenExpired())
 

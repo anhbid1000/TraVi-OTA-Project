@@ -11,6 +11,9 @@ import type {
   MenuItemStatus,
   RoomPayload,
   RoomResponse,
+  PartnerDashboardOverviewResponse,
+  PartnerRestaurantDashboardOverviewResponse,
+  RestaurantDashboardPeriod,
   TablePayload,
   TableResponse,
 } from '../types/asset'
@@ -25,6 +28,22 @@ export const partnerAssetService = {
   getBusinessProfileDetail(id: string) {
     return api
       .get<BusinessProfileResponse>(`/v1/partner/business-profiles/${id}`)
+      .then((response) => response.data)
+  },
+
+  getDashboardOverview(days = 30) {
+    return api
+      .get<PartnerDashboardOverviewResponse>('/v1/partner/dashboard/overview', {
+        params: { days },
+      })
+      .then((response) => response.data)
+  },
+
+  getRestaurantDashboardOverview(period: RestaurantDashboardPeriod = 'TODAY') {
+    return api
+      .get<PartnerRestaurantDashboardOverviewResponse>('/v1/partner/dashboard/restaurant-overview', {
+        params: { period },
+      })
       .then((response) => response.data)
   },
 
@@ -58,15 +77,61 @@ createBusinessProfile(payload: BusinessProfilePayload) {
       }))
   },
 
+  getHotelAmenities() {
+    return api
+      .get<Array<{ id: string; tenTienIch: string; loaiTienIch: string; moTa: string }>>(
+        '/v1/public/amenities/hotels'
+      )
+      .then((response) => response.data)
+  },
+  getRestaurantAmenities() {
+    return api
+      .get<{ amenities: Array<{ value: string; label: string; description?: string | null }> }>(
+        '/v1/public/restaurants/filter-options/data'
+      )
+      .then((response) => response.data.amenities.map((item) => item.label))
+  },
+
   getRooms(hotelId: string) {
     return api
       .get<RoomResponse[]>(`/v1/partner/hotels/${hotelId}/rooms`)
+      .then((response) => response.data)
+  },
+  getHotelDetail(hotelId: string) {
+    return api
+      .get<{
+        idTaiSan: string
+        idHoSo: string
+        ten: string
+        moTa?: string
+        giaCoBan: number
+        hangSao?: number
+        loaiKhachSan?: string
+        gioNhanPhong?: string
+        gioTraPhong?: string
+        soTang?: number
+        tongSoPhong?: number
+        tienIch?: Array<{ id: string; tenTienIch: string; loaiTienIch?: string; moTa?: string }>
+        danhSachAnh?: Array<{
+          id: string
+          doiTuongId: string
+          duongDanUrl: string
+          moTaAnh?: string
+          laAnhDaiDien?: boolean
+          ngayTaiLen?: string
+        }>
+      }>(`/v1/partner/hotels/${hotelId}`)
       .then((response) => response.data)
   },
 
   createRoom(hotelId: string, payload: RoomPayload) {
     return api
       .post<RoomResponse>(`/v1/partner/hotels/${hotelId}/rooms`, payload)
+      .then((response) => response.data)
+  },
+  updateHotelAmenities(hotelId: string, amenityIds: string[]) {
+    return api
+      .patch(`/v1/partner/hotels/${hotelId}/amenities`, { amenityIds })
       .then((response) => response.data)
   },
 
@@ -83,6 +148,47 @@ createBusinessProfile(payload: BusinessProfilePayload) {
   getTables(restaurantId: string) {
     return api
       .get<TableResponse[]>(`/v1/partner/restaurants/${restaurantId}/tables`)
+      .then((response) => response.data)
+  },
+  getRestaurantDetail(restaurantId: string) {
+    return api
+      .get<{
+        idTaiSan: string
+        idHoSo: string
+        ten: string
+        moTa?: string
+        giaCoBan: number
+        sucChua?: number
+        loaiAmThuc?: string
+        gioMoCua?: string
+        gioDongCua?: string
+        coDatBanTruoc?: boolean
+        coDatMonTruoc?: boolean
+        danhSachAnh?: Array<{
+          id: string
+          doiTuongId: string
+          duongDanUrl: string
+          moTaAnh?: string
+          laAnhDaiDien?: boolean
+          ngayTaiLen?: string
+        }>
+        tienIch?: Array<{
+          id: string
+          tenTienIch: string
+          loaiTienIch?: string
+          moTa?: string
+          coThuPhi?: boolean
+          phiSuDung?: number
+        }>
+      }>(`/v1/partner/restaurants/${restaurantId}`)
+      .then((response) => response.data)
+  },
+  updateRestaurantAmenities(
+    restaurantId: string,
+    tienIchNhaHang: Array<{ tenTienIch: string; loaiTienIch: string; moTa: string; coThuPhi: boolean; phiSuDung: number }>,
+  ) {
+    return api
+      .patch(`/v1/partner/restaurants/${restaurantId}/amenities`, { tienIchNhaHang })
       .then((response) => response.data)
   },
 
@@ -177,4 +283,3 @@ createBusinessProfile(payload: BusinessProfilePayload) {
     return api.delete(`/v1/partner/restaurants/${restaurantId}/combos/${comboId}`)
   },
 }
-

@@ -17,6 +17,8 @@ public record NhaHangResponse(
         String loaiAmThuc,
         LocalTime gioMoCua,
         LocalTime gioDongCua,
+        Boolean coDatBanTruoc,
+        Boolean coDatMonTruoc,
         List<BanResponse> danhSachBan,
         List<AnhResponse> danhSachAnh,
         List<TienIchNhaHangResponse> tienIch,

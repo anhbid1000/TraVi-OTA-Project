@@ -4,7 +4,7 @@ import { cn } from '../../utils/cn'
 import { useAuth } from '../../hooks/useAuth'
 import { tokenStorage } from '../../services/tokenStorage'
 import type { LoginRequest } from '../../types/auth'
-import { getDefaultPathByRole, normalizeRole } from '../../routes/routeGuards'
+import { getDefaultPathByRole, getUserRole, normalizeRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { AuthTextField, GoogleAuthButton, LoginTemplate } from '../../features/auth/components'
 import {
@@ -49,7 +49,7 @@ export function CustomerLogin() {
 
   const validateCustomerRole = async () => {
     const user = tokenStorage.getUserFromToken()
-    const role = normalizeRole(user?.role)
+    const role = normalizeRole(getUserRole(user))
 
     if (role !== 'KHACH_HANG') {
       await logout()
@@ -57,7 +57,7 @@ export function CustomerLogin() {
       return null
     }
 
-    return getDefaultPathByRole(user?.role)
+    return getDefaultPathByRole(getUserRole(user))
   }
 
   const updateField = (field: keyof LoginFormValues, value: string) => {

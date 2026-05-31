@@ -8,9 +8,12 @@ public record MonAnResponse(
         String id,
         String thucDonId,
         String tenMon,
+        String moTa,
         Double giaBan,
+        String danhMucMon,
         TrangThaiMonAn trangThai,
         String duongDanUrl,
-        List<String> theNguCanh
+        List<String> theNguCanh,
+        Boolean deleted
 ) {
 }

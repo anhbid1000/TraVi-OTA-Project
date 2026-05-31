@@ -3,6 +3,10 @@ package com.ota.travi.repository;
 import com.ota.travi.entity.DonKhachSan;
 import com.ota.travi.enums.TrangThaiDon;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -18,5 +22,30 @@ public interface DonKhachSanRepository extends JpaRepository<DonKhachSan, String
     List<DonKhachSan> findByTrangThaiAndPaymentExpiredAtBeforeAndDeletedFalse(
             TrangThaiDon trangThai,
             LocalDateTime dateTime
+    );
+
+    @Query("""
+            SELECT DISTINCT d
+            FROM DonKhachSan d
+            LEFT JOIN FETCH d.chiTietDon ct
+            LEFT JOIN FETCH ct.phong p
+            WHERE d.hoSoKinhDoanh.idHoSo = :businessProfileId
+              AND d.deleted = false
+              AND d.trangThai IN :statuses
+              AND d.ngayTao >= :fromDateTime
+              AND d.ngayTao < :toDateTime
+            ORDER BY d.ngayTao DESC
+            """)
+    List<DonKhachSan> findDashboardOrders(
+            @Param("businessProfileId") String businessProfileId,
+            @Param("statuses") List<TrangThaiDon> statuses,
+            @Param("fromDateTime") LocalDateTime fromDateTime,
+            @Param("toDateTime") LocalDateTime toDateTime
+    );
+
+    Page<DonKhachSan> findByHoSoKinhDoanh_IdHoSoAndDeletedFalseAndTrangThaiInOrderByNgayTaoDesc(
+            String businessProfileId,
+            List<TrangThaiDon> statuses,
+            Pageable pageable
     );
 }

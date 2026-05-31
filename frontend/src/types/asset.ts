@@ -35,11 +35,16 @@ export type BusinessProfilePayload = {
   khachSan?: {
     ten: string
     hangSao: number
+    loaiKhachSan?: string
     moTa: string
     giaCoBan: number
     isDynamicPricing: boolean
     gioNhanPhong: string
     gioTraPhong: string
+    gioNhanPhongMacDinh?: string
+    gioTraPhongMacDinh?: string
+    soTang?: number
+    tongSoPhong?: number
   } | null
   nhaHang?: {
     ten: string
@@ -78,26 +83,150 @@ export type BusinessProfileResponse = {
   doiTacHoTen?: string
   tenCoSo: string
   sdtLienHe: string
+  emailLienHe?: string
+  diaChi?: string
+  thanhPho?: string
+  quanHuyen?: string
+  phuongXa?: string
+  kinhDo?: number
+  viDo?: number
   loaiDichVu: ServiceType
   maSoThue: string
   giayPhepKinhDoanh: string
   toaDoGPS: string
   trangThaiHoatDong?: 'CHUA_HOAT_DONG' | 'DANG_HOAT_DONG' | 'TAM_DUNG' | 'BI_KHOA'
   thoiGianDangKy: string
+  thoiGianCapNhat?: string
   chinhSach?: {
     id: string
     hoSoKinhDoanhId: string
     loaiChinhSach: string
     noiDung: string
     ngayApDung: string
+    gioNhanPhong?: string
+    gioTraPhong?: string
+    gioMoCua?: string
+    gioDongCua?: string
+    chinhSachHuy?: string
+    chinhSachHoanTien?: string
+    quyDinhTreEm?: string
+    quyDinhVatNuoi?: string
+    ghiChuKhac?: string
   } | null
-  danhSachTaiSan: Array<{
+  taiSan?: {
     idTaiSan: string
-    hoSoKinhDoanhId: string
+    idHoSo: string
+    loaiTaiSan: ServiceType | string
+    ten?: string
     moTa?: string
     trangThai?: string
     giaCoBan?: number
     isDynamicPricing?: boolean
+  } | null
+  danhSachTaiSan?: Array<{
+    idTaiSan: string
+    hoSoKinhDoanhId?: string
+    idHoSo?: string
+    loaiTaiSan?: ServiceType | string
+    ten?: string
+    moTa?: string
+    trangThai?: string
+    giaCoBan?: number
+    isDynamicPricing?: boolean
+  }>
+}
+
+export type PartnerDashboardOverviewResponse = {
+  businessProfileId: string
+  assetId: string
+  tenCoSo: string
+  loaiDichVu: ServiceType
+  tuNgay: string
+  denNgay: string
+  tongQuan: {
+    tongDoanhThu: number
+    tyLeTangTruongDoanhThu: number
+    tyLeLapDay: number
+    tyLeTangTruongLapDay: number
+    giaTrungBinhMoiDem: number
+    tyLeTangTruongGiaTrungBinh: number
+    tongLuotDat: number
+    tyLeTangTruongLuotDat: number
+  }
+  doanhThuTheoNgay: Array<{
+    ngay: string
+    doanhThu: number
+  }>
+  tinhTrangHomNay: {
+    soPhongDaDat: number
+    soPhongConTrong: number
+    tongSoPhongKhaDung: number
+    tyLeDaDat: number
+  }
+  datChoGanDay: Array<{
+    id: string
+    maDon: string
+    tenKhach: string
+    ngayNhanPhong: string
+    ngayTraPhong: string
+    loaiPhong: string
+    tongTien: number
+    trangThai: string
+  }>
+  topPhongNhuCau: Array<{
+    roomId: string
+    tenPhong: string
+    loaiPhong: string
+    soLuotDat: number
+    giaTrungBinh: number
+    anhDaiDienUrl?: string | null
+  }>
+}
+
+export type RestaurantDashboardPeriod = 'TODAY' | 'WEEK' | 'MONTH'
+
+export type PartnerRestaurantDashboardOverviewResponse = {
+  businessProfileId: string
+  restaurantId: string
+  tenNhaHang: string
+  period: RestaurantDashboardPeriod
+  tuThoiDiem: string
+  denThoiDiem: string
+  tongQuan: {
+    tongDoanhThu: number
+    tyLeTangTruongDoanhThu: number
+    tyLeLapDayBan: number
+    soBanDangPhucVu: number
+    tongSoBanKhaDung: number
+    giaTriDonTrungBinh: number
+    tyLeTangTruongGiaTriDon: number
+    tongLuotKhach: number
+    chenhLechLuotKhach: number
+  }
+  doanhThuTheoGio: Array<{
+    gio: number
+    doanhThu: number
+  }>
+  khungGioCaoDiem: Array<{
+    tenKhungGio: string
+    moTa: string
+    tyLe: number
+  }>
+  donGanDay: Array<{
+    id: string
+    maDon: string
+    tenKhachHang: string
+    thoiGian: string
+    banSo: string
+    tongTien: number
+    trangThai: string
+  }>
+  monBanChay: Array<{
+    monAnId: string
+    tenMon: string
+    tongSoLuong: number
+    giaTrungBinh: number
+    anhMon?: string | null
   }>
 }
 
@@ -127,9 +256,14 @@ export type RoomResponse = {
   id: string
   khachSanId: string
   soPhong: string
+  tenPhong?: string
   loaiPhong: string
+  moTa?: string
   sucChuaToiDa: number
+  soGiuong?: number
   dienTich: number
+  giaCoBan?: number
+  soLuongPhong?: number
   trangThai: string
   tienIch: string[]
   phanTramGiamGia: number
@@ -154,7 +288,9 @@ export type TablePayload = {
 export type TableResponse = {
   id: string
   nhaHangId: string
+  tenBan?: string
   viTriSanh: string
+  moTa?: string
   soChoNgoi: number
   trangThai: TableStatus
 }
@@ -171,10 +307,13 @@ export type MenuItemResponse = {
   id: string
   thucDonId: string
   tenMon: string
+  moTa?: string
   giaBan: number
+  danhMucMon?: string
   trangThai: MenuItemStatus
   duongDanUrl?: string
   theNguCanh: string[]
+  deleted?: boolean
 }
 
 export type ComboPayload = {
@@ -209,7 +348,9 @@ export type MenuPayload = {
 export type MenuResponse = {
   id: string
   nhaHangId: string
+  tenThucDon?: string
   phanLoai?: string
+  trangThai?: string
   monAn?: MenuItemResponse[]
   combo?: ComboResponse[]
 }

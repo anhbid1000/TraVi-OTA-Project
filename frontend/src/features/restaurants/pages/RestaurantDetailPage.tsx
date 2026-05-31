@@ -60,6 +60,7 @@ export function RestaurantDetailPage() {
   }, [restaurant])
 
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({})
+  const [bookingError, setBookingError] = useState('')
   const [activeMenuTag, setActiveMenuTag] = useState<MenuTag>('Tất cả')
 
   const menuTags = useMemo<MenuTag[]>(() => {
@@ -80,6 +81,13 @@ export function RestaurantDetailPage() {
     () => Object.values(selectedItems).reduce((sum, quantity) => sum + quantity, 0),
     [selectedItems],
   )
+  const selectedItemNames = useMemo(() => {
+    const entries: Record<string, string> = {}
+    visibleMenuItems.forEach((item) => {
+      entries[item.id] = item.name
+    })
+    return entries
+  }, [visibleMenuItems])
 
   const totalPrice = useMemo(() => {
     if (!restaurant) {
@@ -177,14 +185,22 @@ export function RestaurantDetailPage() {
           />
         </div>
 
-        <DetailHeader
-          title={restaurant.name}
-          location={restaurant.location}
-          rating={restaurant.rating}
-          reviewCount={restaurant.reviewCount}
-          category={restaurant.cuisine}
-
-        />
+        <div className="mb-10 mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto] lg:items-start">
+          <DetailHeader
+            title={restaurant.name}
+            location={restaurant.location}
+            rating={restaurant.rating}
+            reviewCount={restaurant.reviewCount}
+            category={restaurant.cuisine}
+          />
+          <WeatherAlertCard
+            latitude={restaurant.latitude}
+            longitude={restaurant.longitude}
+            date={date || new Date().toISOString().split('T')[0]}
+            endDate={date || new Date().toISOString().split('T')[0]}
+            locationName={restaurant.location}
+          />
+        </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           <section className="space-y-10 lg:col-span-8">
@@ -372,6 +388,11 @@ export function RestaurantDetailPage() {
         selectedPreOrderItems={selectedPreOrderItems}
         totalPrice={totalPrice}
         onAction={() => {
+          if (!time.trim()) {
+            setBookingError('Vui lòng chọn thời gian trước khi đặt bàn.')
+            return
+          }
+          setBookingError('')
           navigate('/checkout', {
             state: {
               type: 'restaurant',
@@ -380,13 +401,21 @@ export function RestaurantDetailPage() {
               time,
               guests,
               selectedItems,
+              selectedItemNames,
               totalPrice,
             },
           });
         }}
         actionLabel="Đặt bàn"
-        actionDisabled={restaurant.tablesRemaining <= 0}
+        actionDisabled={restaurant.tablesRemaining <= 0 || !time.trim()}
       />
+      {bookingError && (
+        <div className="fixed inset-x-0 bottom-20 z-40 mx-auto w-full max-w-7xl px-4 md:px-12">
+          <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 shadow-sm">
+            {bookingError}
+          </div>
+        </div>
+      )}
 
       <footer className="border-t border-outline-variant/30 bg-surface-container-lowest">
         <div className="mx-auto grid w-full max-w-7xl gap-6 px-5 py-10 text-sm md:grid-cols-4 md:px-12">

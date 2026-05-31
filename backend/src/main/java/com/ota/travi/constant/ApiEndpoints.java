@@ -15,6 +15,7 @@ public final class ApiEndpoints {
     public static final String PUBLIC_HOTELS_SEARCH = PUBLIC_PREFIX + "/hotels/search";
     public static final String PUBLIC_HOTELS_FEATURED = PUBLIC_PREFIX + "/hotels/featured";
     public static final String PUBLIC_HOTELS_FILTER_OPTIONS = PUBLIC_PREFIX + "/hotels/filter-options/data";
+    public static final String PUBLIC_HOTEL_AMENITIES = PUBLIC_PREFIX + "/amenities/hotels";
     public static final String PUBLIC_HOTEL_DETAIL = PUBLIC_PREFIX + "/hotels/{id}";
     public static final String PUBLIC_RESTAURANTS_SEARCH = PUBLIC_PREFIX + "/restaurants/search";
     public static final String PUBLIC_RESTAURANTS_FEATURED = PUBLIC_PREFIX + "/restaurants/featured";
@@ -50,6 +51,7 @@ public final class ApiEndpoints {
     public static final String PARTNER_LEGACY_PREFIX = API_PREFIX + "/partner";
     public static final String PARTNER_LEGACY_BUSINESS_PROFILES = PARTNER_LEGACY_PREFIX + "/business-profiles";
     public static final String PARTNER_PREFIX = BASE_PREFIX + "/partner";
+    public static final String PARTNER_DASHBOARD = PARTNER_PREFIX + "/dashboard";
     public static final String PARTNER_BUSINESS_PROFILES = PARTNER_PREFIX + "/business-profiles";
     public static final String PARTNER_HOTELS = PARTNER_PREFIX + "/hotels"; // manage partner hotels
     public static final String PARTNER_RESTAURANTS = PARTNER_PREFIX + "/restaurants";

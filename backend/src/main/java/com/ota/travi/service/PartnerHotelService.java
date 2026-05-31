@@ -1,12 +1,15 @@
 package com.ota.travi.service;
 
 import com.ota.travi.dto.request.AnhRequest;
+import com.ota.travi.dto.request.HotelAmenitiesUpdateRequest;
 import com.ota.travi.dto.request.PhongRequest;
 import com.ota.travi.dto.request.PhongUpsertRequest;
+import com.ota.travi.dto.response.KhachSanResponse;
 import com.ota.travi.dto.response.PhongResponse;
 import com.ota.travi.entity.AnhPhong;
 import com.ota.travi.entity.KhachSan;
 import com.ota.travi.entity.Phong;
+import com.ota.travi.entity.TienIchKhachSan;
 import com.ota.travi.enums.TrangThaiPhong;
 import com.ota.travi.enums.TrangThaiDonDatCho;
 import com.ota.travi.exception.BusinessConflictException;
@@ -15,6 +18,7 @@ import com.ota.travi.exception.ResourceNotFoundException;
 import com.ota.travi.repository.KhachSanRepository;
 import com.ota.travi.repository.PhongRepository;
 import com.ota.travi.repository.DatPhongRepository;
+import com.ota.travi.repository.TienIchKhachSanRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +42,24 @@ public class PartnerHotelService {
 
     @Autowired
     private PartnerAssetMapper partnerAssetMapper;
+    @Autowired
+    private TienIchKhachSanRepository tienIchKhachSanRepository;
+
+    @Transactional(readOnly = true)
+    public KhachSanResponse getHotelDetail(String partnerId, String hotelId) {
+        return partnerAssetMapper.toKhachSanResponse(requireOwnedHotel(partnerId, hotelId));
+    }
+
+    @Transactional
+    public KhachSanResponse updateHotelAmenities(String partnerId, String hotelId, HotelAmenitiesUpdateRequest request) {
+        KhachSan khachSan = requireOwnedHotel(partnerId, hotelId);
+        khachSan.getTienIch().clear();
+        if (request.amenityIds() != null && !request.amenityIds().isEmpty()) {
+            List<TienIchKhachSan> amenities = tienIchKhachSanRepository.findAllById(request.amenityIds());
+            khachSan.getTienIch().addAll(amenities);
+        }
+        return partnerAssetMapper.toKhachSanResponse(khachSanRepository.save(khachSan));
+    }
 
     @Transactional
     public PhongResponse createRoom(String partnerId, String hotelId, PhongUpsertRequest request) {
@@ -148,4 +170,3 @@ public class PartnerHotelService {
         );
     }
 }
-

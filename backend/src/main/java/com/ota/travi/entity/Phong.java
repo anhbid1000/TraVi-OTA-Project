@@ -38,39 +38,54 @@ import com.ota.travi.enums.TrangThaiPhong;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Phong {
+    // ID Phòng
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    // ID Khách sạn
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "khach_san_id", nullable = false)
     private KhachSan khachSan;
 
-    @Column(nullable = false)
+    // Số phòng / mã phòng hiển thị trong khách sạn
+    @Column(nullable = false, length = 50)
     private String soPhong;
 
+    // Tên phòng
     @Column(nullable = false)
     private String tenPhong;
 
+    // Loại phòng (Deluxe, Standard, King, Twin...)
     @Column(nullable = false)
     private String loaiPhong;
 
+    // Mô tả phòng
     @Column(length = 1000)
     private String moTa;
 
+    // Maximum pax
     private Integer sucChuaToiDa;
 
+    // Số bed
     private Integer soGiuong;
 
+    // Diện tích phòng
     private Float dienTich;
 
+    // Giá cơ bản dịch vụ
+    @Column(nullable = false)
     private Double giaCoBan;
 
+    // Số luươn phong
+    @Column(nullable = false)
     private Integer soLuongPhong;
 
     @Enumerated(EnumType.STRING)
     private TrangThaiPhong trangThai = TrangThaiPhong.SAN_SANG;
 
+
+    // Room Amenities
     @ElementCollection
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "phong_tien_ich", joinColumns = @JoinColumn(name = "phong_id"))
@@ -88,6 +103,7 @@ public class Phong {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    // List image
     @OneToMany(mappedBy = "phong", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnhPhong> danhSachAnh = new ArrayList<>();
 }

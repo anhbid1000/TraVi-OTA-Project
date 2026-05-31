@@ -17,8 +17,8 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 public class VaiTro {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
     @Column(nullable = false, unique = true)
     private String ten;
@@ -28,7 +28,4 @@ public class VaiTro {
 
     @CreationTimestamp
     private Timestamp ngayTao;
-
-
-
 }

@@ -2,23 +2,17 @@ package com.ota.travi.controller;
 
 import com.ota.travi.dto.request.BanRequest;
 import com.ota.travi.dto.request.ComboRequest;
+import com.ota.travi.dto.request.HotelAmenitiesUpdateRequest;
 import com.ota.travi.dto.request.MenuItemStatusRequest;
 import com.ota.travi.dto.request.MonAnRequest;
 import com.ota.travi.dto.request.PartnerBusinessProfileRequest;
 import com.ota.travi.dto.request.PhongUpsertRequest;
+import com.ota.travi.dto.request.RestaurantAmenitiesUpdateRequest;
 import com.ota.travi.dto.request.ThucDonRequest;
-import com.ota.travi.dto.response.FileUploadResponse;
-import com.ota.travi.dto.response.BanResponse;
-import com.ota.travi.dto.response.ComboResponse;
-import com.ota.travi.dto.response.HoSoKinhDoanhResponse;
-import com.ota.travi.dto.response.MonAnResponse;
-import com.ota.travi.dto.response.PhongResponse;
-import com.ota.travi.dto.response.ThucDonResponse;
+import com.ota.travi.dto.response.*;
 import com.ota.travi.security.CustomUserDetails;
-import com.ota.travi.service.FileStorageService;
-import com.ota.travi.service.PartnerBusinessProfileService;
-import com.ota.travi.service.PartnerHotelService;
-import com.ota.travi.service.PartnerRestaurantService;
+import com.ota.travi.service.*;
+
 
 import jakarta.validation.Valid;
 
@@ -39,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import static com.ota.travi.constant.ApiEndpoints.PARTNER_BUSINESS_PROFILES;
 import static com.ota.travi.constant.ApiEndpoints.PARTNER_HOTELS;
+
 import static com.ota.travi.constant.ApiEndpoints.PARTNER_LEGACY_BUSINESS_PROFILES;
 import static com.ota.travi.constant.ApiEndpoints.PARTNER_RESTAURANTS;
 
@@ -49,6 +44,7 @@ public class PartnerAssetController {
     private final PartnerHotelService partnerHotelService;
     private final PartnerRestaurantService partnerRestaurantService;
     private final FileStorageService fileStorageService;
+
 
     public PartnerAssetController(
             PartnerBusinessProfileService partnerBusinessProfileService,
@@ -101,6 +97,44 @@ public class PartnerAssetController {
             @Valid @RequestBody PartnerBusinessProfileRequest request
     ) {
         HoSoKinhDoanhResponse response = partnerBusinessProfileService.updateBusinessProfile(userDetails.getUser().getId(), id, request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping(PARTNER_HOTELS + "/{id}")
+    public ResponseEntity<?> getHotelDetail(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String id
+    ) {
+        KhachSanResponse response = partnerHotelService.getHotelDetail(userDetails.getUser().getId(), id);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PatchMapping(PARTNER_HOTELS + "/{id}/amenities")
+    public ResponseEntity<?> updateHotelAmenities(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String id,
+            @Valid @RequestBody HotelAmenitiesUpdateRequest request
+    ) {
+        KhachSanResponse response = partnerHotelService.updateHotelAmenities(userDetails.getUser().getId(), id, request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping(PARTNER_RESTAURANTS + "/{id}")
+    public ResponseEntity<?> getRestaurantDetail(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String id
+    ) {
+        NhaHangResponse response = partnerRestaurantService.getRestaurantDetail(userDetails.getUser().getId(), id);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PatchMapping(PARTNER_RESTAURANTS + "/{id}/amenities")
+    public ResponseEntity<?> updateRestaurantAmenities(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String id,
+            @Valid @RequestBody RestaurantAmenitiesUpdateRequest request
+    ) {
+        NhaHangResponse response = partnerRestaurantService.updateRestaurantAmenities(userDetails.getUser().getId(), id, request);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -316,4 +350,3 @@ public class PartnerAssetController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
-

@@ -36,6 +36,22 @@ public interface DonKhachSanChiTietRepository extends JpaRepository<DonKhachSanC
             WHERE ct.phong.khachSan.idTaiSan = :hotelId
               AND ct.donKhachSan.deleted = false
               AND ct.donKhachSan.trangThai IN :activeStatuses
+              AND ct.donKhachSan.ngayCheckIn < :requestedCheckOut
+              AND ct.donKhachSan.ngayCheckOut > :requestedCheckIn
+            """)
+    Integer sumBookedQuantityByHotelAndDateRange(
+            @Param("hotelId") String hotelId,
+            @Param("requestedCheckIn") LocalDate requestedCheckIn,
+            @Param("requestedCheckOut") LocalDate requestedCheckOut,
+            @Param("activeStatuses") List<TrangThaiDon> activeStatuses
+    );
+
+    @Query("""
+            SELECT COALESCE(SUM(ct.soLuong), 0)
+            FROM DonKhachSanChiTiet ct
+            WHERE ct.phong.khachSan.idTaiSan = :hotelId
+              AND ct.donKhachSan.deleted = false
+              AND ct.donKhachSan.trangThai IN :activeStatuses
               AND ct.donKhachSan.ngayTao >= :fromDateTime
             """)
     Integer sumRecentBookedQuantityByHotel(
@@ -44,4 +60,3 @@ public interface DonKhachSanChiTietRepository extends JpaRepository<DonKhachSanC
             @Param("activeStatuses") List<TrangThaiDon> activeStatuses
     );
 }
-

@@ -1,7 +1,6 @@
 package com.ota.travi.dto.response;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import com.ota.travi.enums.LoaiDichVu;
 import com.ota.travi.enums.TrangThaiHoatDong;
@@ -26,6 +25,6 @@ public record HoSoKinhDoanhResponse(
         LocalDateTime thoiGianDangKy,
         LocalDateTime thoiGianCapNhat,
         ChinhSachResponse chinhSach,
-        List<TaiSanResponse> danhSachTaiSan
+        TaiSanResponse taiSan
 ) {
 }

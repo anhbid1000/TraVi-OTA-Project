@@ -48,12 +48,12 @@ function getStayWeatherEndDate(checkIn: string, checkOut: string) {
 
 function describeRoomCombo(combo: RoomCombinationOption) {
   return combo.items
-    .map((item) => `${item.quantity}x ${item.roomType} (${item.capacityPerRoom} khách/phòng)`)
+    .map((item) => `${item.quantity}x ${item.roomName} (${item.capacityPerRoom} khách/phòng)`)
     .join(', ')
 }
 
 function getRoomComboTitle(combo: RoomCombinationOption, index: number) {
-  const mainTypes = combo.items.map((item) => item.roomType).join(' + ')
+  const mainTypes = combo.items.map((item) => item.quantity > 1 ? `${item.quantity}x ${item.roomName}` : item.roomName).join(' + ')
   return mainTypes || `Tổ hợp phòng ${index + 1}`
 }
 
@@ -269,12 +269,12 @@ export function HotelDetailPage() {
                     return (
                       <SelectableItemCard
                         key={`${combo.totalRooms}-${combo.totalCapacity}-${idx}`}
-                        image=""
+                        image={combo.image || ''}
                         title={getRoomComboTitle(combo, idx)}
                         meta={[
                           `${combo.totalRooms} phòng`,
                           `Chứa tối đa ${combo.totalCapacity} khách`,
-                          ...combo.items.map((item) => `${item.quantity}x ${item.roomType}`),
+                          ...combo.items.map((item) => `${item.quantity}x ${item.roomName}`),
                         ]}
                         description={describeRoomCombo(combo)}
                         price={`${formatVnd(combo.totalPricePerNight)} / đêm`}

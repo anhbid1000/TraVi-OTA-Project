@@ -72,11 +72,6 @@ const isPublicAuthRequest = (url?: string) => {
   return normalizedUrl.startsWith('/v1/auth/') && normalizedUrl !== '/v1/auth/logout';
 };
 
-const isPublicRequest = (url?: string) => {
-  const normalizedUrl = normalizeRequestUrl(url)
-  return normalizedUrl.startsWith('/v1/public/')
-}
-
 const refreshAccessToken = async () => {
   const refreshToken = localStorage.getItem('travi_refresh_token');
 

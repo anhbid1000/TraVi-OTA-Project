@@ -3,16 +3,20 @@ package com.ota.travi.service;
 import com.ota.travi.dto.request.BanRequest;
 import com.ota.travi.dto.request.ComboRequest;
 import com.ota.travi.dto.request.MonAnRequest;
+import com.ota.travi.dto.request.RestaurantAmenitiesUpdateRequest;
 import com.ota.travi.dto.request.ThucDonRequest;
+import com.ota.travi.dto.request.TienIchNhaHangRequest;
 import com.ota.travi.dto.response.BanResponse;
 import com.ota.travi.dto.response.ComboResponse;
 import com.ota.travi.dto.response.MonAnResponse;
+import com.ota.travi.dto.response.NhaHangResponse;
 import com.ota.travi.dto.response.ThucDonResponse;
 import com.ota.travi.entity.Ban;
 import com.ota.travi.entity.Combo;
 import com.ota.travi.entity.MonAn;
 import com.ota.travi.entity.NhaHang;
 import com.ota.travi.entity.ThucDon;
+import com.ota.travi.entity.TienIchNhaHang;
 import com.ota.travi.enums.TrangThaiMonAn;
 import com.ota.travi.enums.TrangThaiDonDatCho;
 import com.ota.travi.exception.BusinessConflictException;
@@ -65,6 +69,25 @@ public class PartnerRestaurantService {
 
     @Autowired
     private PartnerAssetMapper partnerAssetMapper;
+
+    @Transactional(readOnly = true)
+    public NhaHangResponse getRestaurantDetail(String partnerId, String restaurantId) {
+        return partnerAssetMapper.toNhaHangResponse(requireOwnedRestaurant(partnerId, restaurantId));
+    }
+
+    @Transactional
+    public NhaHangResponse updateRestaurantAmenities(String partnerId, String restaurantId, RestaurantAmenitiesUpdateRequest request) {
+        NhaHang nhaHang = requireOwnedRestaurant(partnerId, restaurantId);
+        nhaHang.getTienIch().clear();
+        if (request.tienIchNhaHang() != null) {
+            request.tienIchNhaHang().forEach(item -> {
+                TienIchNhaHang tienIch = new TienIchNhaHang();
+                applyTienIchNhaHang(tienIch, item, nhaHang);
+                nhaHang.getTienIch().add(tienIch);
+            });
+        }
+        return partnerAssetMapper.toNhaHangResponse(nhaHangRepository.save(nhaHang));
+    }
 
     @Transactional
     public BanResponse createTable(String partnerId, String restaurantId, BanRequest request) {
@@ -287,6 +310,15 @@ public class PartnerRestaurantService {
         monAn.setTheNguCanh(request.theNguCanh() == null ? new ArrayList<>() : new ArrayList<>(request.theNguCanh()));
     }
 
+    private void applyTienIchNhaHang(TienIchNhaHang tienIch, TienIchNhaHangRequest request, NhaHang nhaHang) {
+        tienIch.setNhaHang(nhaHang);
+        tienIch.setTenTienIch(request.tenTienIch());
+        tienIch.setLoaiTienIch(request.loaiTienIch());
+        tienIch.setMoTa(request.moTa());
+        tienIch.setCoThuPhi(Boolean.TRUE.equals(request.coThuPhi()));
+        tienIch.setPhiSuDung(request.phiSuDung() == null ? 0.0f : request.phiSuDung());
+    }
+
     private ThucDon findOrCreateDefaultMenu(NhaHang nhaHang) {
         return thucDonRepository.findByNhaHang_IdTaiSanAndPhanLoai(nhaHang.getIdTaiSan(), DEFAULT_MENU_CATEGORY).stream()
                 .findFirst()
@@ -347,5 +379,3 @@ public class PartnerRestaurantService {
         );
     }
 }
-
-

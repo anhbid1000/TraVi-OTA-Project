@@ -3,8 +3,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { cn } from '../../utils/cn'
 import { useAuth } from '../../hooks/useAuth'
 import { tokenStorage } from '../../services/tokenStorage'
+import { partnerAssetService } from '../../services/partnerAssetService'
 import type { LoginRequest } from '../../types/auth'
-import { normalizeRole } from '../../routes/routeGuards'
+import { getUserRole, normalizeRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { AuthTextField, GoogleAuthButton, LoginTemplate } from '../../features/auth/components'
 import {
@@ -90,7 +91,7 @@ export function PartnerLogin() {
       })
 
       const user = tokenStorage.getUserFromToken()
-      const role = normalizeRole(user?.role)
+      const role = normalizeRole(getUserRole(user))
 
       if (role !== 'DOI_TAC') {
         await logout()
@@ -98,7 +99,9 @@ export function PartnerLogin() {
         return
       }
 
-      navigate('/partner', { replace: true })
+      const profiles = await partnerAssetService.getBusinessProfiles().catch(() => [])
+      const targetPath = profiles.length > 0 ? '/partner/dashboard' : '/partner/business-profile'
+      navigate(targetPath, { replace: true })
     } catch (error) {
       setSubmitError(getApiErrorMessage(error, 'Email hoặc mật khẩu không đúng.'))
     } finally {
@@ -117,7 +120,7 @@ export function PartnerLogin() {
       })
 
       const user = tokenStorage.getUserFromToken()
-      const role = normalizeRole(user?.role)
+      const role = normalizeRole(getUserRole(user))
 
       if (role !== 'DOI_TAC') {
         await logout()
@@ -125,7 +128,9 @@ export function PartnerLogin() {
         return
       }
 
-      navigate('/partner', { replace: true })
+      const profiles = await partnerAssetService.getBusinessProfiles().catch(() => [])
+      const targetPath = profiles.length > 0 ? '/partner/dashboard' : '/partner/business-profile'
+      navigate(targetPath, { replace: true })
     } catch (error) {
       setSubmitError(getApiErrorMessage(error, 'Đăng nhập Google thất bại.'))
     } finally {

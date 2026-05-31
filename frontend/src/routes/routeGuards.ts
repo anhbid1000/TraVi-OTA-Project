@@ -22,8 +22,20 @@ export const normalizeRole = (role?: string) =>
     .trim()
     .toUpperCase();
 
+export const getUserRole = (user: AuthUser | null) => {
+  if (!user) {
+    return undefined
+  }
+
+  return typeof user.role === 'string' && user.role.trim()
+    ? user.role
+    : typeof user.vaiTro === 'string'
+      ? user.vaiTro
+      : undefined
+}
+
 export const hasAllowedRole = (user: AuthUser | null, allowedRoles: readonly RoleName[]) => {
-  const currentRole = normalizeRole(user?.role);
+  const currentRole = normalizeRole(getUserRole(user));
 
   if (!currentRole) {
     return false;

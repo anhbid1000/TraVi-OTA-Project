@@ -43,9 +43,6 @@ public class LichSuKiemDuyetHoSo {
     @JoinColumn(name = "ho_so_kinh_doanh_id", nullable = false)
     private HoSoKinhDoanh hoSoKinhDoanh;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "admin_id")
-    private QuanTriVien admin;
 
     @Column(length = 1000)
     private String lyDo;

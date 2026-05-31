@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { authService } from '../../services/authService'
 import { tokenStorage } from '../../services/tokenStorage'
 import type { RegisterRequest } from '../../types/auth'
-import { getDefaultPathByRole } from '../../routes/routeGuards'
+import { getDefaultPathByRole, getUserRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { AuthTextField, GoogleAuthButton, LoginTemplate } from '../../features/auth/components'
 import {
@@ -161,7 +161,7 @@ export function CustomerRegister() {
       })
 
       const user = tokenStorage.getUserFromToken()
-      const defaultPath = getDefaultPathByRole(user?.role)
+      const defaultPath = getDefaultPathByRole(getUserRole(user))
 
       navigate(defaultPath, { replace: true })
     } catch (error) {

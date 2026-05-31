@@ -25,7 +25,7 @@ public record BusinessProfileResponse(
         LocalDateTime thoiGianDangKy,
         LocalDateTime thoiGianCapNhat,
         ChinhSachResponse chinhSach,
-        List<TaiSanResponse> danhSachTaiSan
+        TaiSanResponse taiSan
 ) {
 }
 

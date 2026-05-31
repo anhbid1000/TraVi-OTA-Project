@@ -1,4 +1,4 @@
-import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom'
 import {
   CustomerLogin,
   CustomerRegister,
@@ -12,22 +12,24 @@ import { HomePage } from './pages/HomePage'
 import { CheckoutPage } from './pages/CheckoutPage'
 import { PaymentPage } from './pages/PaymentPage'
 import { ProtectedRoute, StaffRoute } from './routes'
+import {
+  PartnerBusinessProfilePage,
+  PartnerDashboardOverviewPage,
+  PartnerHotelProfilePage,
+  PartnerLayout,
+  PartnerMenuManagementPage,
+  PartnerRestaurantProfilePage,
+  PartnerRoomManagementPage,
+  PartnerTableLayoutPage,
+} from './pages/partner'
 import { HotelCatalogPage } from './features/hotels/pages/HotelCatalogPage'
 import { RestaurantCatalogPage } from './features/restaurants/pages/RestaurantCatalogPage'
 import { HotelDetailPage } from './features/hotels/pages/HotelDetailPage'
 import { RestaurantDetailPage } from './features/restaurants/pages/RestaurantDetailPage'
+import { SearchPage } from './pages/search'
 import './App.css'
 
 
-
-function PartnerDashboardPage() {
-  return (
-    <main>
-      <h1>Đối tác Dashboard</h1>
-      <p>Trang này chỉ dành cho đối tác.</p>
-    </main>
-  )
-}
 
 function NotFoundPage() {
   return (
@@ -46,6 +48,7 @@ function NotFoundPage() {
  * /hotels/:id                   - Chi tiết khách sạn
  * /restaurants                  - Danh sách nhà hàng (catalog)
  * /restaurants/:id              - Chi tiết nhà hàng
+ * /search                       - Trang tra cứu đơn đặt chỗ
  * /login, /register, ...        - Auth flow cho khách
  * /partner/login, ...           - Auth flow cho đối tác
  * /admin/login                  - Auth flow cho admin
@@ -65,6 +68,7 @@ function App() {
         <Route path="/restaurants" element={<RestaurantCatalogPage />} />
         <Route path="/restaurants/:id" element={<RestaurantDetailPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/search" element={<SearchPage />} />
 
         <Route path="/login" element={<CustomerLogin />} />
         <Route path="/register" element={<CustomerRegister />} />
@@ -100,7 +104,17 @@ function App() {
           <Route path="/payment" element={<PaymentPage />} />
         </Route>
         <Route element={<StaffRoute redirectTo="/partner/login" />}>
-          <Route path="/partner" element={<PartnerDashboardPage />} />
+          <Route path="/partner" element={<PartnerLayout />}>
+            <Route index element={<PartnerDashboardOverviewPage />} />
+            <Route path="dashboard" element={<PartnerDashboardOverviewPage />} />
+            <Route path="business-profile" element={<PartnerBusinessProfilePage />} />
+            <Route path="hotels" element={<Navigate to="/partner/hotel" replace />} />
+            <Route path="hotel" element={<PartnerHotelProfilePage />} />
+            <Route path="restaurant" element={<PartnerRestaurantProfilePage />} />
+            <Route path="room" element={<PartnerRoomManagementPage />} />
+            <Route path="tables" element={<PartnerTableLayoutPage />} />
+            <Route path="menus" element={<PartnerMenuManagementPage />} />
+          </Route>
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
@@ -110,4 +124,3 @@ function App() {
 }
 
 export default App
-

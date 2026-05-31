@@ -15,8 +15,11 @@ public record KhachSanResponse(
         Double giaCoBan,
         Boolean isDynamicPricing,
         Integer hangSao,
+        String loaiKhachSan,
         LocalTime gioNhanPhong,
         LocalTime gioTraPhong,
+        Integer soTang,
+        Integer tongSoPhong,
         List<PhongResponse> danhSachPhong,
         List<AnhResponse> danhSachAnh,
         Set<TienIchKhachSanResponse> tienIch

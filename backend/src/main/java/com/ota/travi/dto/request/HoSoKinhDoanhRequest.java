@@ -47,12 +47,10 @@ public record HoSoKinhDoanhRequest(
         @Size(max = 500, message = "Giấy phép kinh doanh không được vượt quá 500 ký tự")
         String giayPhepKinhDoanh,
 
-        @NotBlank(message = "Tọa độ GPS không được để trống")
         @Size(max = 100, message = "Tọa độ GPS không được vượt quá 100 ký tự")
         String toaDoGPS,
 
         @Valid
-        @NotNull(message = "Chính sách không được để trống")
         ChinhSachRequest chinhSach
 ) {
 }

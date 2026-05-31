@@ -208,7 +208,7 @@ export function RestaurantCatalogPage() {
           <nav className="hidden shrink-0 items-center gap-1 text-sm font-semibold xl:flex">
             <Link to="/hotels" className="cursor-pointer rounded-lg px-3 py-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary">Khách sạn</Link>
             <Link to="/restaurants" className="cursor-pointer border-b-2 border-primary px-3 py-2 text-primary">Nhà hàng</Link>
-            <span className="rounded-lg px-3 py-2 text-on-surface-variant">Trải nghiệm</span>
+            <Link to="/search" className="cursor-pointer rounded-lg px-3 py-2 text-on-surface-variant transition-colors hover:bg-surface-container-low hover:text-primary">Tra cứu</Link>
           </nav>
 
           {/* Right: Auth */}

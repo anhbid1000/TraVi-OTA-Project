@@ -9,6 +9,7 @@ import com.ota.travi.dto.response.RestaurantAssignedTableResponse;
 import com.ota.travi.dto.response.RestaurantBookingResponse;
 import com.ota.travi.dto.response.UserProfileResponse;
 import com.ota.travi.entity.Ban;
+import com.ota.travi.entity.DatPhong;
 import com.ota.travi.entity.DonKhachSan;
 import com.ota.travi.entity.DonKhachSanChiTiet;
 import com.ota.travi.entity.DonNhaHang;
@@ -26,6 +27,7 @@ import com.ota.travi.repository.DonDatChoRepository;
 import com.ota.travi.repository.DonKhachSanChiTietRepository;
 import com.ota.travi.repository.DonKhachSanRepository;
 import com.ota.travi.repository.DonNhaHangRepository;
+import com.ota.travi.repository.DatPhongRepository;
 import com.ota.travi.repository.KhachSanRepository;
 import com.ota.travi.repository.NhaHangRepository;
 import com.ota.travi.repository.PhongRepository;
@@ -70,6 +72,8 @@ public class UserService {
 
     @Autowired
     private DonKhachSanChiTietRepository donKhachSanChiTietRepository;
+    @Autowired
+    private DatPhongRepository datPhongRepository;
 
     @Autowired
     private HotelBookingPaymentHoldService hotelBookingPaymentHoldService;
@@ -135,6 +139,7 @@ public class UserService {
 
         List<HotelBookingRoomResponse> roomResponses = new ArrayList<>();
         List<DonKhachSanChiTiet> chiTietList = new ArrayList<>();
+        List<DatPhong> datPhongList = new ArrayList<>();
 
         double tongTienGoc = 0.0;
         for (HotelBookingRoomRequest roomRequest : request.rooms()) {
@@ -175,6 +180,14 @@ public class UserService {
             chiTiet.setThanhTien(thanhTien);
             chiTietList.add(chiTiet);
 
+            DatPhong datPhong = new DatPhong();
+            datPhong.setDonDatCho(don);
+            datPhong.setPhong(phong);
+            datPhong.setNgayCheckIn(request.ngayCheckIn());
+            datPhong.setNgayCheckOut(request.ngayCheckOut());
+            datPhong.setGhiChuKhachHangPhongDonDat(request.ghiChu());
+            datPhongList.add(datPhong);
+
             roomResponses.add(new HotelBookingRoomResponse(
                     phong.getId(),
                     phong.getTenPhong(),
@@ -192,9 +205,16 @@ public class UserService {
         don.setTongTienGoc(tongTienGoc);
         don.setTienKhuyenMai(0.0);
         don.setTongTienThanhToan(tongTienGoc);
-        don.setChiTietDon(chiTietList);
-
         DonKhachSan saved = donKhachSanRepository.save(don);
+        for (DonKhachSanChiTiet chiTiet : chiTietList) {
+            chiTiet.setDonKhachSan(saved);
+        }
+        List<DonKhachSanChiTiet> savedChiTiet = donKhachSanChiTietRepository.saveAll(chiTietList);
+        saved.setChiTietDon(savedChiTiet);
+        for (DatPhong datPhong : datPhongList) {
+            datPhong.setDonDatCho(saved);
+        }
+        datPhongRepository.saveAll(datPhongList);
         hotelBookingPaymentHoldService.putPending(saved);
 
         return new HotelBookingResponse(

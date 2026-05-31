@@ -2,6 +2,8 @@ package com.ota.travi.repository;
 
 import com.ota.travi.entity.DonNhaHang;
 import com.ota.travi.enums.TrangThaiDon;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -66,5 +68,45 @@ public interface DonNhaHangRepository extends JpaRepository<DonNhaHang, String> 
             TrangThaiDon trangThai,
             LocalDateTime dateTime
     );
-}
 
+    @Query("""
+            SELECT DISTINCT dn
+            FROM DonNhaHang dn
+            JOIN FETCH dn.banDaGan link
+            JOIN FETCH link.ban b
+            WHERE b.nhaHang.idTaiSan = :restaurantId
+              AND dn.deleted = false
+              AND dn.trangThai IN :statuses
+              AND dn.ngayGioBatDau >= :fromDateTime
+              AND dn.ngayGioBatDau < :toDateTime
+            ORDER BY dn.ngayGioBatDau DESC
+            """)
+    List<DonNhaHang> findDashboardOrdersByRestaurantAndDateRange(
+            @Param("restaurantId") String restaurantId,
+            @Param("statuses") List<TrangThaiDon> statuses,
+            @Param("fromDateTime") LocalDateTime fromDateTime,
+            @Param("toDateTime") LocalDateTime toDateTime
+    );
+
+    Page<DonNhaHang> findDistinctByBanDaGan_Ban_NhaHang_IdTaiSanAndDeletedFalseAndTrangThaiInOrderByNgayGioBatDauDesc(
+            String restaurantId,
+            List<TrangThaiDon> statuses,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT COUNT(DISTINCT link.ban.id)
+            FROM DonNhaHang dn
+            JOIN dn.banDaGan link
+            WHERE link.ban.nhaHang.idTaiSan = :restaurantId
+              AND dn.deleted = false
+              AND dn.trangThai IN :statuses
+              AND dn.ngayGioBatDau <= :atTime
+              AND dn.ngayGioKetThuc >= :atTime
+            """)
+    Long countOccupiedTablesAtTime(
+            @Param("restaurantId") String restaurantId,
+            @Param("statuses") List<TrangThaiDon> statuses,
+            @Param("atTime") LocalDateTime atTime
+    );
+}

@@ -2,10 +2,7 @@ package com.ota.travi.controller;
 
 import com.ota.travi.dto.request.HotelSearchRequest;
 import com.ota.travi.dto.request.RestaurantSearchRequest;
-import com.ota.travi.dto.response.HotelCatalogResponse;
-import com.ota.travi.dto.response.HotelDetailResponse;
-import com.ota.travi.dto.response.RestaurantCatalogResponse;
-import com.ota.travi.dto.response.RestaurantDetailResponse;
+import com.ota.travi.dto.response.*;
 import com.ota.travi.service.PublicCatalogService;
 import com.ota.travi.service.WeatherService;
 import jakarta.validation.ConstraintViolation;
@@ -28,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.ota.travi.constant.ApiEndpoints.PUBLIC_HOTEL_AMENITIES;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_HOTEL_DETAIL;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_HOTELS_FEATURED;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_HOTELS_FILTER_OPTIONS;
@@ -312,6 +310,11 @@ public class PublicCatalogController {
     @GetMapping(PUBLIC_CITIES)
     public ResponseEntity<List<String>> getPublicCities() {
         return ResponseEntity.ok(publicCatalogService.getPublicCities());
+    }
+
+    @GetMapping(PUBLIC_HOTEL_AMENITIES)
+    public ResponseEntity<List<TienIchKhachSanResponse>> getAllHotelAmenities() {
+        return ResponseEntity.ok(publicCatalogService.getAllHotelAmenities());
     }
 
     @GetMapping(PUBLIC_HOTELS_FILTER_OPTIONS)

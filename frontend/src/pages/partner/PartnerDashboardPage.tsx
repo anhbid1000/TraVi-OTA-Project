@@ -1,26 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import L from 'leaflet'
 import { MapContainer, Marker, TileLayer, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
   Bed,
-  BookOpen,
-  BriefcaseBusiness,
   Building2,
-  Check,
   CheckCircle2,
-  CircleHelp,
-  DoorOpen,
   Eye,
   FileText,
   Grid2X2,
   Hotel,
   LayoutGrid,
-  LogOut,
   MapPin,
   Pencil,
   Plus,
@@ -45,9 +38,7 @@ import type {
   ServiceType,
   TableResponse,
 } from '../../types/asset'
-import type { AuthUser } from '../../types/auth'
 import { getApiErrorMessage } from '../../utils/apiError'
-import { useAuth } from '../../hooks/useAuth'
 import '../dashboard.css'
 
 type PartnerView =
@@ -68,6 +59,9 @@ type ProfileFormState = {
   moTa: string
   giaCoBan: string
   hangSao: string
+  loaiKhachSan: string
+  soTang: string
+  tongSoPhong: string
   loaiAmThuc: string
   sucChua: string
   emailLienHe: string
@@ -107,8 +101,21 @@ type UploadOptions = {
 }
 
 const RESTAURANT_AREAS = ['Sảnh chính', 'Sân thượng', 'Phòng VIP', 'Phòng riêng']
-const HOTEL_AMENITY_OPTIONS = ['Wifi miễn phí', 'Lễ tân 24/7', 'Bãi đỗ xe', 'Hồ bơi', 'Phòng gym', 'Spa', 'Nhà hàng', 'Đưa đón sân bay']
-const RESTAURANT_AMENITY_OPTIONS = ['Đặt bàn online', 'Đặt món trước', 'Phòng riêng', 'Bãi đỗ xe', 'Wifi miễn phí', 'Thanh toán thẻ', 'Phục vụ ngoài trời', 'Mang về']
+const VIETNAM_MAJOR_CITIES = [
+  'Hà Nội',
+  'TP. Hồ Chí Minh',
+  'Đà Nẵng',
+  'Hải Phòng',
+  'Cần Thơ',
+  'Nha Trang',
+  'Huế',
+  'Đà Lạt',
+  'Vũng Tàu',
+  'Phú Quốc',
+  'Quy Nhơn',
+  'Hạ Long',
+]
+const RESTAURANT_AMENITY_OPTIONS = ['Đặt bàn online', 'Đặt món trước', 'Phòng riêng', 'Bãi đỗ xe', 'WiFi miễn phí', 'Thanh toán thẻ', 'Phục vụ ngoài trời', 'Mang về']
 const MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png']
 const ALLOWED_LICENSE_TYPES = [...ALLOWED_IMAGE_TYPES, 'application/pdf']
@@ -133,6 +140,9 @@ const initialProfileForm: ProfileFormState = {
   moTa: '',
   giaCoBan: '500000',
   hangSao: '4',
+  loaiKhachSan: 'Khách sạn',
+  soTang: '1',
+  tongSoPhong: '1',
   loaiAmThuc: 'Ẩm thực Việt',
   sucChua: '80',
   emailLienHe: '',
@@ -160,6 +170,7 @@ const initialRoomForm = {
   soPhong: '',
   tenPhong: '',
   loaiPhong: 'Phòng Deluxe',
+  moTa: '',
   sucChuaToiDa: '2',
   soGiuong: '1',
   dienTich: '45',
@@ -168,6 +179,29 @@ const initialRoomForm = {
   phanTramGiamGia: '0',
   tienIch: ['WIFI', 'DIEU_HOA'],
   imageName: '',
+}
+const ROOM_AMENITY_BY_LABEL: Record<string, string> = {
+  'wi-fi': 'WIFI',
+  wifi: 'WIFI',
+  'điều hòa': 'DIEU_HOA',
+  'dieu hoa': 'DIEU_HOA',
+  tv: 'TV',
+  'tủ lạnh': 'TU_LANH',
+  'tu lanh': 'TU_LANH',
+  'ban công': 'BAN_CONG',
+  'ban cong': 'BAN_CONG',
+  'bồn tắm': 'BON_TAM',
+  'bon tam': 'BON_TAM',
+  'view đẹp': 'VIEW_DEP',
+  'view dep': 'VIEW_DEP',
+}
+function normalizeAmenityLabel(value: string) {
+  return value.trim().toLowerCase()
+}
+function getAllowedRoomAmenities(hotelAmenities: string[]) {
+  return hotelAmenities
+    .map((name) => ({ label: name, value: ROOM_AMENITY_BY_LABEL[normalizeAmenityLabel(name)] }))
+    .filter((item): item is { label: string; value: string } => Boolean(item.value))
 }
 
 const initialMenuForm = {
@@ -246,11 +280,16 @@ function buildBusinessPayload(form: ProfileFormState): BusinessProfilePayload {
       khachSan: {
         ten: tenCoSo,
         hangSao: Number(form.hangSao),
+        loaiKhachSan: form.loaiKhachSan.trim(),
         moTa,
         giaCoBan: Number(form.giaCoBan),
         isDynamicPricing: false,
-        gioNhanPhong: '14:00',
-        gioTraPhong: '12:00',
+        gioNhanPhong: form.gioNhanPhong,
+        gioTraPhong: form.gioTraPhong,
+        gioNhanPhongMacDinh: form.gioNhanPhong,
+        gioTraPhongMacDinh: form.gioTraPhong,
+        soTang: Number(form.soTang),
+        tongSoPhong: Number(form.tongSoPhong),
       },
       nhaHang: null,
 
@@ -352,7 +391,10 @@ function getTableArea(viTriSanh: string) {
 }
 
 function getProfileErrorStep(errors: ProfileFormErrors) {
-  if (errors.tenCoSo || errors.sdtLienHe || errors.moTa || errors.giaCoBan || errors.hangSao || errors.loaiAmThuc || errors.sucChua) {
+  if (
+    errors.tenCoSo || errors.sdtLienHe || errors.moTa || errors.giaCoBan || errors.hangSao ||
+    errors.loaiKhachSan || errors.soTang || errors.tongSoPhong || errors.loaiAmThuc || errors.sucChua
+  ) {
     return 1
   }
   if (errors.maSoThue || errors.businessLicense) return 2
@@ -401,6 +443,12 @@ function getProfileFormErrors(form: ProfileFormState, targetStep = 5): ProfileFo
     if (form.loaiDichVu === 'KHACH_SAN' && !isIntegerBetween(form.hangSao, 1, 5)) {
       errors.hangSao = 'Hạng sao phải từ 1 đến 5.'
     }
+    if (form.loaiDichVu === 'KHACH_SAN') {
+      if (!form.loaiKhachSan.trim()) errors.loaiKhachSan = 'Vui lòng nhập loại khách sạn.'
+      else if (form.loaiKhachSan.trim().length > 100) errors.loaiKhachSan = 'Loại khách sạn không được vượt quá 100 ký tự.'
+      if (!isIntegerBetween(form.soTang, 1, 1000)) errors.soTang = 'Số tầng phải là số nguyên lớn hơn hoặc bằng 1.'
+      if (!isIntegerBetween(form.tongSoPhong, 1, 100000)) errors.tongSoPhong = 'Tổng số phòng phải là số nguyên lớn hơn hoặc bằng 1.'
+    }
 
     if (form.loaiDichVu === 'NHA_HANG') {
       if (!form.loaiAmThuc.trim()) errors.loaiAmThuc = 'Vui lòng nhập loại ẩm thực.'
@@ -417,26 +465,21 @@ function getProfileFormErrors(form: ProfileFormState, targetStep = 5): ProfileFo
     else if (form.giayPhepKinhDoanh.trim().length > 500) errors.businessLicense = 'Đường dẫn file giấy phép quá dài.'
   }
 
-  if (targetStep >= 3 && !parseCoordinates(form.toaDoGPS)) {
+  // Vị trí (tọa độ) là optional ở bước tạo hồ sơ kinh doanh.
+  // Nếu người dùng có nhập thì vẫn validate format.
+  if (targetStep >= 3 && form.toaDoGPS.trim() && !parseCoordinates(form.toaDoGPS)) {
     errors.toaDoGPS = 'Tọa độ phải đúng định dạng lat,lng và nằm trong phạm vi hợp lệ.'
   }
 
-  if (targetStep >= 4 && form.danhSachAnh.length === 0) {
-    errors.danhSachAnh = 'Vui lòng tải lên ít nhất một ảnh cơ sở.'
+  // Ảnh, tiện ích, chính sách/quy định được chuyển sang bước cấu hình khách sạn/nhà hàng.
+  // Ở bước tạo hồ sơ kinh doanh, các field này là optional.
+  if (targetStep >= 4 && form.danhSachAnh.length > 0) {
+    // no-op: keep for future stricter validate if needed
   }
 
   if (targetStep >= 5) {
-    if (form.loaiDichVu === 'KHACH_SAN') {
-      if (!form.gioNhanPhong.trim()) errors.gioNhanPhong = 'Vui lòng nhập giờ nhận phòng.'
-      if (!form.gioTraPhong.trim()) errors.gioTraPhong = 'Vui lòng nhập giờ trả phòng.'
-    } else {
-      if (!form.gioMoCua.trim()) errors.gioMoCua = 'Vui lòng nhập giờ mở cửa.'
-      if (!form.gioDongCua.trim()) errors.gioDongCua = 'Vui lòng nhập giờ đóng cửa.'
-    }
-
-    if (!form.chinhSachHuy.trim()) errors.chinhSachHuy = 'Vui lòng nhập chính sách hủy.'
-    if (!form.quyDinhTreEm.trim()) errors.quyDinhTreEm = 'Vui lòng nhập chính sách trẻ em và thú cưng.'
-    if (!form.ghiChuKhac.trim()) errors.ghiChuKhac = 'Vui lòng nhập ghi chú hoặc quy định khác.'
+    // Policy/time fields are optional at business-profile creation stage.
+    // If user provides them, basic sanity checks can be added later.
   }
 
   return errors
@@ -445,42 +488,35 @@ function getFirstError(errors: ProfileFormErrors) {
   return Object.values(errors)[0] ?? ''
 }
 
-function getStringClaim(user: AuthUser | null, keys: string[]) {
-  if (!user) return ''
-
-  for (const key of keys) {
-    const value = user[key]
-    if (typeof value === 'string' && value.trim()) {
-      return value
-    }
-  }
-
-  return ''
-}
-
-function getPartnerInitials(user: AuthUser | null) {
-  const displayName = getStringClaim(user, ['hoTen', 'fullName', 'name', 'username', 'email'])
-  if (!displayName) return 'TV'
-
-  const normalized = displayName.includes('@') ? displayName.split('@')[0] : displayName
-  const words = normalized.trim().split(/\s+/).filter(Boolean)
-  if (words.length === 1) {
-    return words[0].slice(0, 2).toUpperCase()
-  }
-
-  return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase()
-}
-
 function hydrateProfileForm(profile: BusinessProfileResponse): ProfileFormState {
+  const primaryAsset = profile.taiSan ?? profile.danhSachTaiSan?.[0]
+
   return {
     ...initialProfileForm,
     tenCoSo: profile.tenCoSo ?? '',
     sdtLienHe: profile.sdtLienHe ?? '',
+    emailLienHe: profile.emailLienHe ?? '',
+    diaChi: profile.diaChi ?? '',
+    thanhPho: profile.thanhPho ?? '',
+    quanHuyen: profile.quanHuyen ?? '',
+    phuongXa: profile.phuongXa ?? '',
+    kinhDo: profile.kinhDo != null ? String(profile.kinhDo) : initialProfileForm.kinhDo,
+    viDo: profile.viDo != null ? String(profile.viDo) : initialProfileForm.viDo,
     loaiDichVu: profile.loaiDichVu,
     maSoThue: profile.maSoThue ?? '',
     giayPhepKinhDoanh: profile.giayPhepKinhDoanh ?? '',
     toaDoGPS: profile.toaDoGPS ?? initialProfileForm.toaDoGPS,
-    giaCoBan: String(profile.danhSachTaiSan?.[0]?.giaCoBan ?? initialProfileForm.giaCoBan),
+    moTa: primaryAsset?.moTa ?? '',
+    giaCoBan: String(primaryAsset?.giaCoBan ?? initialProfileForm.giaCoBan),
+    chinhSachHuy: profile.chinhSach?.chinhSachHuy ?? '',
+    chinhSachHoanTien: profile.chinhSach?.chinhSachHoanTien ?? '',
+    quyDinhTreEm: profile.chinhSach?.quyDinhTreEm ?? '',
+    quyDinhVatNuoi: profile.chinhSach?.quyDinhVatNuoi ?? '',
+    ghiChuKhac: profile.chinhSach?.ghiChuKhac ?? '',
+    gioNhanPhong: profile.chinhSach?.gioNhanPhong ?? '',
+    gioTraPhong: profile.chinhSach?.gioTraPhong ?? '',
+    gioMoCua: profile.chinhSach?.gioMoCua ?? '',
+    gioDongCua: profile.chinhSach?.gioDongCua ?? '',
   }
 }
 
@@ -750,10 +786,15 @@ function ConfirmationDialog({
     </div>
   )
 }
+type PartnerLayoutContext = {
+  activeView: PartnerView
+  setActiveView: React.Dispatch<React.SetStateAction<PartnerView>>
+}
+
 export function PartnerDashboardPage() {
-  const { user, logout } = useAuth()
+  const { activeView, setActiveView } = useOutletContext<PartnerLayoutContext>()
   const navigate = useNavigate()
-  const [activeView, setActiveView] = useState<PartnerView>('business-profile')
+  const [searchParams] = useSearchParams()
   const [step, setStep] = useState(1)
   const [profileForm, setProfileForm] = useState<ProfileFormState>(() => {
     const draft = localStorage.getItem('partner:profileDraft')
@@ -801,7 +842,7 @@ export function PartnerDashboardPage() {
       setIsConfirming(false)
     }
   }
-  const assetId = profile?.danhSachTaiSan?.[0]?.idTaiSan
+  const assetId = profile?.taiSan?.idTaiSan ?? profile?.danhSachTaiSan?.[0]?.idTaiSan
   const isHotel = profile?.loaiDichVu === 'KHACH_SAN'
   const isRestaurant = profile?.loaiDichVu === 'NHA_HANG'
 
@@ -810,6 +851,13 @@ export function PartnerDashboardPage() {
     const active = menuItems.filter((item) => item.trangThai === 'DANG_BAN').length
     return { total: menuItems.length, active, outOfStock: menuItems.length - active }
   }, [menuItems])
+
+  useEffect(() => {
+    const view = searchParams.get('view')
+    if (view === 'business-profile' || view === 'hotel-setup' || view === 'room-management' || view === 'restaurant-setup' || view === 'table-layout' || view === 'menu-management') {
+      setActiveView(view)
+    }
+  }, [searchParams, setActiveView])
 
   const filteredRooms = useMemo(() => {
     const keyword = roomSearch.trim().toLowerCase()
@@ -832,11 +880,13 @@ export function PartnerDashboardPage() {
         .includes(keyword),
     )
   }, [menuItems, menuSearch])
-  const partnerAvatarUrl = getStringClaim(user, ['avatarUrl', 'anhDaiDien', 'hinhDaiDien', 'photoUrl', 'picture'])
-  const partnerInitials = getPartnerInitials(user)
 
+  const [availableHotelAmenities, setAvailableHotelAmenities] = useState<Array<{ id: string; tenTienIch: string; loaiTienIch: string; moTa: string }>>([])
+  const [selectedHotelAmenityIds, setSelectedHotelAmenityIds] = useState<string[]>([])
+  const [availableRestaurantAmenities, setAvailableRestaurantAmenities] = useState<string[]>(RESTAURANT_AMENITY_OPTIONS)
+  
   useEffect(() => {
-    const loadPartnerData = async () => {
+    const loadProfile = async () => {
       try {
         const profiles = await partnerAssetService.getBusinessProfiles()
         const currentProfile = profiles[0] ?? null
@@ -850,35 +900,117 @@ export function PartnerDashboardPage() {
         setProfileForm(hydrateProfileForm(currentProfile))
         localStorage.setItem('partner:lastProfile', JSON.stringify(currentProfile))
 
-        const currentAssetId = currentProfile.danhSachTaiSan?.[0]?.idTaiSan
+        const currentAssetId = currentProfile.taiSan?.idTaiSan ?? currentProfile.danhSachTaiSan?.[0]?.idTaiSan
         if (!currentAssetId) {
           return
         }
 
         if (currentProfile.loaiDichVu === 'KHACH_SAN') {
-          const roomList = await partnerAssetService.getRooms(currentAssetId)
+          const [roomList, amenitiesList, hotelDetail] = await Promise.all([
+            partnerAssetService.getRooms(currentAssetId),
+            partnerAssetService.getHotelAmenities().catch(() => []),
+            partnerAssetService.getHotelDetail(currentAssetId).catch(() => null),
+          ])
           setRooms(roomList)
+          setAvailableHotelAmenities(amenitiesList)
+          if (hotelDetail) {
+            setProfileForm((current) => {
+              const hotelAmenityNames = Array.isArray(hotelDetail.tienIch)
+                ? hotelDetail.tienIch.map((item) => item.tenTienIch)
+                : current.tienIchKhachSan
+              const hotelAmenityIds = Array.isArray(hotelDetail.tienIch)
+                ? hotelDetail.tienIch.map((item) => item.id)
+                : []
+              const hotelImagesRaw = Array.isArray(hotelDetail.danhSachAnh)
+                ? hotelDetail.danhSachAnh.map((image) => ({
+                    url: image.duongDanUrl,
+                    moTa: image.moTaAnh || 'Ảnh khách sạn',
+                    laAnhDaiDien: Boolean(image.laAnhDaiDien),
+                  }))
+                : current.danhSachAnh
+              const hotelImages =
+                hotelImagesRaw.length > 0 && !hotelImagesRaw.some((item) => item.laAnhDaiDien)
+                  ? hotelImagesRaw.map((item, index) => ({ ...item, laAnhDaiDien: index === 0 }))
+                  : hotelImagesRaw
+              setSelectedHotelAmenityIds(hotelAmenityIds)
+
+              return {
+                ...current,
+                loaiDichVu: 'KHACH_SAN',
+                tenCoSo: hotelDetail.ten ?? current.tenCoSo,
+                moTa: hotelDetail.moTa ?? current.moTa,
+                giaCoBan: hotelDetail.giaCoBan != null ? String(hotelDetail.giaCoBan) : current.giaCoBan,
+                hangSao: hotelDetail.hangSao != null ? String(hotelDetail.hangSao) : current.hangSao,
+                loaiKhachSan: hotelDetail.loaiKhachSan ?? current.loaiKhachSan,
+                gioNhanPhong: hotelDetail.gioNhanPhong ?? current.gioNhanPhong,
+                gioTraPhong: hotelDetail.gioTraPhong ?? current.gioTraPhong,
+                soTang: hotelDetail.soTang != null ? String(hotelDetail.soTang) : current.soTang,
+                tongSoPhong: hotelDetail.tongSoPhong != null ? String(hotelDetail.tongSoPhong) : current.tongSoPhong,
+                tienIchKhachSan: hotelAmenityNames,
+                danhSachAnh: hotelImages,
+              }
+            })
+          }
         }
 
         if (currentProfile.loaiDichVu === 'NHA_HANG') {
-          const [tableList, menuList, comboList] = await Promise.all([
+          const [tableList, menuList, comboList, restaurantDetail, restaurantAmenities] = await Promise.all([
             partnerAssetService.getTables(currentAssetId),
             partnerAssetService.getMenuItems(currentAssetId),
             partnerAssetService.getCombos(currentAssetId),
+            partnerAssetService.getRestaurantDetail(currentAssetId).catch(() => null),
+            partnerAssetService.getRestaurantAmenities().catch(() => []),
           ])
           setTables(tableList)
           setMenuItems(menuList)
           setCombos(comboList)
+          if (restaurantAmenities.length > 0) {
+            setAvailableRestaurantAmenities(restaurantAmenities)
+          }
+          if (restaurantDetail) {
+            setProfileForm((current) => {
+              const restaurantAmenityNames = Array.isArray(restaurantDetail.tienIch)
+                ? restaurantDetail.tienIch.map((item) => item.tenTienIch)
+                : current.tienIchNhaHang
+              const restaurantImagesRaw = Array.isArray(restaurantDetail.danhSachAnh)
+                ? restaurantDetail.danhSachAnh.map((image) => ({
+                    url: image.duongDanUrl,
+                    moTa: image.moTaAnh || 'Ảnh nhà hàng',
+                    laAnhDaiDien: Boolean(image.laAnhDaiDien),
+                  }))
+                : current.danhSachAnh
+              const restaurantImages =
+                restaurantImagesRaw.length > 0 && !restaurantImagesRaw.some((item) => item.laAnhDaiDien)
+                  ? restaurantImagesRaw.map((item, index) => ({ ...item, laAnhDaiDien: index === 0 }))
+                  : restaurantImagesRaw
+              return {
+                ...current,
+                loaiDichVu: 'NHA_HANG',
+                tenCoSo: restaurantDetail.ten ?? current.tenCoSo,
+                moTa: restaurantDetail.moTa ?? current.moTa,
+                giaCoBan: restaurantDetail.giaCoBan != null ? String(restaurantDetail.giaCoBan) : current.giaCoBan,
+                loaiAmThuc: restaurantDetail.loaiAmThuc ?? current.loaiAmThuc,
+                sucChua: restaurantDetail.sucChua != null ? String(restaurantDetail.sucChua) : current.sucChua,
+                gioMoCua: restaurantDetail.gioMoCua ?? current.gioMoCua,
+                gioDongCua: restaurantDetail.gioDongCua ?? current.gioDongCua,
+                tienIchNhaHang: restaurantAmenityNames,
+                danhSachAnh: restaurantImages,
+              }
+            })
+          }
         }
       } catch (err) {
         showError(err, 'Không thể tải dữ liệu bảng điều khiển đối tác.')
       }
     }
 
-    void loadPartnerData()
+    void loadProfile()
   }, [])
 
   const updateProfileField = (name: keyof ProfileFormState, value: ProfileFormValue) => {
+    if (name === 'loaiDichVu' && profile) {
+      return
+    }
     setProfileForm((current) => ({ ...current, [name]: value }))
     setProfileErrors((current) => ({ ...current, [name]: undefined }))
     if (name === 'giayPhepKinhDoanh') {
@@ -953,6 +1085,13 @@ export function PartnerDashboardPage() {
   }
 
   const saveProfile = async () => {
+    if (profile && profileForm.loaiDichVu !== profile.loaiDichVu) {
+      setError('Không thể thay đổi loại hình dịch vụ sau khi đã tạo hồ sơ. Vui lòng tạo hồ sơ mới nếu cần chuyển loại hình.')
+      setMessage('')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
     const errors = getProfileFormErrors(profileForm, 5)
     setProfileErrors(errors)
 
@@ -979,6 +1118,7 @@ export function PartnerDashboardPage() {
 
       setProfile(response)
       setStep(5)
+      window.dispatchEvent(new Event('partner:profile-created'))
 
       setProfileForm((current) => {
         const hydrated = hydrateProfileForm(response)
@@ -987,6 +1127,9 @@ export function PartnerDashboardPage() {
           ...hydrated,
           moTa: current.moTa,
           hangSao: current.hangSao,
+          loaiKhachSan: current.loaiKhachSan,
+          soTang: current.soTang,
+          tongSoPhong: current.tongSoPhong,
           loaiAmThuc: current.loaiAmThuc,
           sucChua: current.sucChua,
           emailLienHe: current.emailLienHe,
@@ -1017,8 +1160,20 @@ export function PartnerDashboardPage() {
       showMessage(
         existingProfileId
           ? 'Hồ sơ kinh doanh đã được cập nhật.'
-          : 'Hồ sơ kinh doanh đã được tạo và kích hoạt thành công.',
+          : response.loaiDichVu === 'KHACH_SAN'
+            ? 'Hồ sơ kinh doanh đã được tạo thành công. Vui lòng tiếp tục cấu hình thông tin khách sạn và khai báo phòng trước khi mở bán.'
+            : 'Hồ sơ kinh doanh đã được tạo thành công. Vui lòng tiếp tục cấu hình thông tin nhà hàng trước khi mở bán.',
       )
+
+      if (!existingProfileId) {
+        if (response.loaiDichVu === 'KHACH_SAN') {
+          setActiveView('hotel-setup')
+          navigate('/partner/hotel', { replace: true })
+        } else {
+          setActiveView('restaurant-setup')
+          navigate('/partner/restaurant', { replace: true })
+        }
+      }
     } catch (err) {
       showError(
         err,
@@ -1048,7 +1203,7 @@ export function PartnerDashboardPage() {
         soPhong: roomForm.soPhong,
         tenPhong: roomForm.tenPhong?.trim() || roomForm.soPhong,
         loaiPhong: roomForm.loaiPhong,
-        moTa: '',
+        moTa: roomForm.moTa?.trim() || '',
         sucChuaToiDa: Number(roomForm.sucChuaToiDa),
         soGiuong: Number(roomForm.soGiuong),
         dienTich: Number(roomForm.dienTich),
@@ -1098,13 +1253,14 @@ export function PartnerDashboardPage() {
     setEditingRoomId(room.id)
     setRoomForm({
       soPhong: room.soPhong,
-      tenPhong: room.soPhong, // Fallback
+      tenPhong: room.tenPhong?.trim() || room.soPhong,
       loaiPhong: room.loaiPhong,
+      moTa: room.moTa?.trim() || '',
       sucChuaToiDa: String(room.sucChuaToiDa),
-      soGiuong: '1',
+      soGiuong: String(room.soGiuong ?? 1),
       dienTich: String(room.dienTich),
-      giaCoBan: '500000',
-      soLuongPhong: '1',
+      giaCoBan: String(room.giaCoBan ?? ''),
+      soLuongPhong: String(room.soLuongPhong ?? 1),
       phanTramGiamGia: String(room.phanTramGiamGia ?? 0),
       tienIch: room.tienIch,
       imageName: room.danhSachAnh?.find((image) => image.laAnhDaiDien)?.duongDanUrl ?? room.danhSachAnh?.[0]?.duongDanUrl ?? '',
@@ -1532,80 +1688,9 @@ export function PartnerDashboardPage() {
     }
   }
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/partner/login')
-  }
-
-  const navItems: Array<{ id: PartnerView; label: string; icon: React.ReactNode }> = [
-    { id: 'business-profile', label: 'Hồ sơ kinh doanh', icon: <BriefcaseBusiness size={20} /> },
-    { id: 'hotel-setup', label: 'Thiết lập khách sạn', icon: <Bed size={20} /> },
-    { id: 'room-management', label: 'Quản lý phòng', icon: <DoorOpen size={20} /> },
-    { id: 'restaurant-setup', label: 'Thiết lập nhà hàng', icon: <Utensils size={20} /> },
-    { id: 'table-layout', label: 'Bố trí bàn', icon: <Grid2X2 size={20} /> },
-    { id: 'menu-management', label: 'Quản lý thực đơn', icon: <BookOpen size={20} /> },
-  ]
-
   return (
-    <div className="dashboard-shell partner-shell">
-      <aside className="dashboard-sidebar partner-sidebar">
-        <div className="partner-sidebar-inner">
-          <div className="partner-brand-card">
-            <div className="partner-user-avatar large">
-              {partnerAvatarUrl ? <img src={partnerAvatarUrl} alt="Ảnh đại diện đối tác" /> : partnerInitials}
-            </div>
-            <div className="brand-title">
-              <strong>Bảng điều khiển TraVi</strong>
-              <span>Cổng đối tác</span>
-            </div>
-          </div>
-
-          <nav className="side-nav partner-nav main-partner-nav">
-            <button>
-              <LayoutGrid size={20} />
-              Tổng quan
-            </button>
-            <button>
-              <CalendarIcon />
-              Đặt phòng
-            </button>
-            <button>
-              <AnalyticsIcon />
-              Phân tích
-            </button>
-            <button className="active">
-              <BriefcaseBusiness size={20} />
-              Quản lý
-            </button>
-            <button>
-              <SettingsIcon />
-              Cài đặt
-            </button>
-          </nav>
-
-          <div className="management-subnav">
-            <p>Quản lý</p>
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                className={activeView === item.id ? 'active' : ''}
-                onClick={() => setActiveView(item.id)}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="sidebar-footer">
-          <button><CircleHelp size={20} /> Trung tâm trợ giúp</button>
-          <button onClick={handleLogout}><LogOut size={20} /> Đăng xuất</button>
-        </div>
-      </aside>
-
-      <main className="dashboard-main partner-main">
-        {/* Persistent notification */}
+    <>
+      {/* Persistent notification */}
         {(message || error) && (
           <ProfessionalNotification
             type={error ? 'error' : 'success'}
@@ -1633,11 +1718,41 @@ export function PartnerDashboardPage() {
             isUploadingLicense={isUploadingLicense}
             toggleAmenity={toggleAmenity}
             addCustomAmenity={addCustomAmenity}
+            availableHotelAmenities={availableHotelAmenities}
           />
         )}
 
         {activeView === 'hotel-setup' && (
-          <HotelSetupView profile={profile} profileForm={profileForm} setActiveView={setActiveView} />
+          <HotelSetupView
+            profile={profile}
+            profileForm={profileForm}
+            updateProfileField={updateProfileField}
+            setActiveView={setActiveView}
+            saveProfile={saveProfile}
+            isSubmitting={isSubmitting}
+            uploadFile={uploadFile}
+            availableHotelAmenities={availableHotelAmenities}
+            selectedHotelAmenityIds={selectedHotelAmenityIds}
+            onToggleHotelAmenity={(amenityId) =>
+              setSelectedHotelAmenityIds((current) =>
+                current.includes(amenityId) ? current.filter((id) => id !== amenityId) : [...current, amenityId],
+              )
+            }
+            onSaveHotelAmenities={async () => {
+              const hotelId = profile?.taiSan?.idTaiSan ?? profile?.danhSachTaiSan?.[0]?.idTaiSan
+              if (!hotelId) return
+              try {
+                const updatedHotel = await partnerAssetService.updateHotelAmenities(hotelId, selectedHotelAmenityIds)
+                const amenityNames = Array.isArray(updatedHotel?.tienIch)
+                  ? updatedHotel.tienIch.map((item: { tenTienIch: string }) => item.tenTienIch)
+                  : profileForm.tienIchKhachSan
+                setProfileForm((current) => ({ ...current, tienIchKhachSan: amenityNames }))
+                showMessage('Đã lưu tiện ích khách sạn thành công.')
+              } catch (err) {
+                showError(err, 'Không thể lưu tiện ích khách sạn.')
+              }
+            }}
+          />
         )}
 
         {activeView === 'room-management' && (
@@ -1658,7 +1773,33 @@ export function PartnerDashboardPage() {
         )}
 
         {activeView === 'restaurant-setup' && (
-          <RestaurantSetupView profile={profile} profileForm={profileForm} setActiveView={setActiveView} />
+          <RestaurantSetupView
+            profile={profile}
+            profileForm={profileForm}
+            updateProfileField={updateProfileField}
+            setActiveView={setActiveView}
+            saveProfile={saveProfile}
+            isSubmitting={isSubmitting}
+            uploadFile={uploadFile}
+            availableRestaurantAmenities={availableRestaurantAmenities}
+            onSaveRestaurantAmenities={async () => {
+              const restaurantId = profile?.taiSan?.idTaiSan ?? profile?.danhSachTaiSan?.[0]?.idTaiSan
+              if (!restaurantId) return
+              const payload = profileForm.tienIchNhaHang.map((name) => ({
+                tenTienIch: name,
+                loaiTienIch: 'CO_BAN',
+                moTa: name,
+                coThuPhi: false,
+                phiSuDung: 0,
+              }))
+              try {
+                await partnerAssetService.updateRestaurantAmenities(restaurantId, payload)
+                showMessage('Đã lưu tiện ích nhà hàng thành công.')
+              } catch (err) {
+                showError(err, 'Không thể lưu tiện ích nhà hàng.')
+              }
+            }}
+          />
         )}
 
         {activeView === 'table-layout' && (
@@ -1706,7 +1847,6 @@ export function PartnerDashboardPage() {
             deleteCombo={deleteCombo}
           />
         )}
-      </main>
       {confirmation && (
         <ConfirmationDialog
           confirmation={confirmation}
@@ -1724,6 +1864,7 @@ export function PartnerDashboardPage() {
           roomForm={roomForm}
           setRoomForm={setRoomForm}
           saveRoom={saveRoom}
+          availableRoomAmenities={getAllowedRoomAmenities(profileForm.tienIchKhachSan)}
           isEditing={Boolean(editingRoomId)}
           isSaving={isRoomSaving}
           uploadFile={uploadFile}
@@ -1766,7 +1907,7 @@ export function PartnerDashboardPage() {
           }}
         />
       )}
-    </div>
+    </>
   )
 }
 
@@ -1774,6 +1915,7 @@ function RoomModal({
   roomForm,
   setRoomForm,
   saveRoom,
+  availableRoomAmenities,
   isEditing,
   isSaving,
   uploadFile,
@@ -1782,6 +1924,7 @@ function RoomModal({
   roomForm: typeof initialRoomForm
   setRoomForm: React.Dispatch<React.SetStateAction<typeof initialRoomForm>>
   saveRoom: () => void
+  availableRoomAmenities: Array<{ label: string; value: string }>
   isEditing: boolean
   isSaving: boolean
   uploadFile: (file: File, options?: UploadOptions) => Promise<UploadedAsset | null>
@@ -1807,8 +1950,36 @@ function RoomModal({
         <div className="form-grid two-column">
           <label><span>Số phòng</span><input value={roomForm.soPhong} onChange={(e) => setRoomForm((c) => ({ ...c, soPhong: e.target.value }))} /></label>
           <label><span>Loại phòng</span><input value={roomForm.loaiPhong} onChange={(e) => setRoomForm((c) => ({ ...c, loaiPhong: e.target.value }))} /></label>
+          <label className="full"><span>Mô tả phòng</span><textarea value={roomForm.moTa} onChange={(e) => setRoomForm((c) => ({ ...c, moTa: e.target.value }))} /></label>
           <label><span>Sức chứa</span><input value={roomForm.sucChuaToiDa} onChange={(e) => setRoomForm((c) => ({ ...c, sucChuaToiDa: e.target.value }))} /></label>
+          <label><span>Số giường</span><input value={roomForm.soGiuong} onChange={(e) => setRoomForm((c) => ({ ...c, soGiuong: e.target.value }))} /></label>
           <label><span>Diện tích (m²)</span><input value={roomForm.dienTich} onChange={(e) => setRoomForm((c) => ({ ...c, dienTich: e.target.value }))} /></label>
+          <label><span>Giá cơ bản (VND)</span><input value={roomForm.giaCoBan} onChange={(e) => setRoomForm((c) => ({ ...c, giaCoBan: e.target.value }))} /></label>
+          <label><span>Số lượng phòng</span><input value={roomForm.soLuongPhong} onChange={(e) => setRoomForm((c) => ({ ...c, soLuongPhong: e.target.value }))} /></label>
+          <label><span>Giảm giá (%)</span><input value={roomForm.phanTramGiamGia} onChange={(e) => setRoomForm((c) => ({ ...c, phanTramGiamGia: e.target.value }))} /></label>
+          <label className="full">
+            <span>Tiện ích phòng (dựa trên tiện ích khách sạn đã chọn)</span>
+            <div style={{ display: 'grid', gap: 8, marginTop: 6 }}>
+              {availableRoomAmenities.length === 0 && <small>Chưa có tiện ích khách sạn phù hợp để gán cho phòng.</small>}
+              {availableRoomAmenities.map((amenity) => (
+                <label key={amenity.value} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={roomForm.tienIch.includes(amenity.value)}
+                    onChange={() =>
+                      setRoomForm((c) => ({
+                        ...c,
+                        tienIch: c.tienIch.includes(amenity.value)
+                          ? c.tienIch.filter((item) => item !== amenity.value)
+                          : [...c.tienIch, amenity.value],
+                      }))
+                    }
+                  />
+                  <span>{amenity.label}</span>
+                </label>
+              ))}
+            </div>
+          </label>
         </div>
         <div className="form-grid two-column">
           <label className="full">
@@ -1977,30 +2148,31 @@ function ComboModal({
   )
 }
 
-function CalendarIcon() {
+/* CalendarIcon moved to PartnerLayout */
+/* function CalendarIcon() {
   return (
     <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
       <path d="M7 3v4M17 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
     </svg>
   )
-}
+} */
 
-function AnalyticsIcon() {
+/* function AnalyticsIcon() {
   return (
     <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
       <path d="M4 19V5M4 19h16M8 16l3-4 3 2 5-7M8 16v-4M14 14v-4M19 7v9" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
     </svg>
   )
-}
+} */
 
-function SettingsIcon() {
+/* function SettingsIcon() {
   return (
     <svg aria-hidden="true" fill="none" height="20" viewBox="0 0 24 24" width="20">
       <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" strokeWidth="2" />
       <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.08A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.08A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.08A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06A2 2 0 0 1 19.8 6.94l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.08A1.7 1.7 0 0 0 19.4 15Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
     </svg>
   )
-}
+} */
 function getBusinessProfileStatus(profile: BusinessProfileResponse | null) {
   if (!profile) {
     return {
@@ -2055,11 +2227,12 @@ type BusinessProfileViewProps = {
   isUploadingLicense: boolean
   toggleAmenity: (amenity: string) => void
   addCustomAmenity: (value: string) => void
+  availableHotelAmenities: Array<{ id: string; tenTienIch: string; loaiTienIch: string; moTa: string }>
 }
 
 function BusinessProfileView({
-  step,
-  setStep,
+  step: _step,
+  setStep: _setStep,
   profile,
   profileForm,
   profileErrors,
@@ -2072,17 +2245,13 @@ function BusinessProfileView({
   isUploadingLicense,
   toggleAmenity,
   addCustomAmenity,
+  availableHotelAmenities,
 }: BusinessProfileViewProps) {
-  const currentStepErrors = Object.fromEntries(
-    Object.entries(profileErrors).filter(([key]) => {
-      if (step === 1) return ['tenCoSo', 'sdtLienHe', 'moTa', 'giaCoBan', 'hangSao', 'loaiAmThuc', 'sucChua'].includes(key)
-      if (step === 2) return ['maSoThue', 'businessLicense'].includes(key)
-      if (step === 3) return ['toaDoGPS'].includes(key)
-      if (step === 4) return ['danhSachAnh'].includes(key)
-      return ['gioNhanPhong', 'gioTraPhong', 'gioMoCua', 'gioDongCua', 'chinhSachHuy', 'quyDinhTreEm', 'ghiChuKhac'].includes(key)
-    }),
-  ) as ProfileFormErrors
+  // One-page form: keep existing validation + upload/map logic,
+  // but render all sections in a single screen.
+  const currentStepErrors = profileErrors
 
+  const isEditMode = Boolean(profile?.idHoSo)
   const currentStepError = getFirstError(currentStepErrors)
   const profileStatus = getBusinessProfileStatus(profile)
   const businessCoverImage = getBusinessCoverImage(profileForm)
@@ -2136,12 +2305,31 @@ function BusinessProfileView({
     }
   }
 
+  const groupedHotelAmenities = Object.entries(
+    availableHotelAmenities.reduce((groups, amenity) => {
+      const type = amenity.loaiTienIch || 'KHAC'
+      if (!groups[type]) groups[type] = []
+      groups[type].push(amenity)
+      return groups
+    }, {} as Record<string, typeof availableHotelAmenities>)
+  ).map(([type, amenities]) => ({
+    type,
+    label: amenities[0]?.loaiTienIch 
+      ? amenities[0].loaiTienIch.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()) 
+      : 'Khác',
+    amenities: amenities.map(a => a.tenTienIch)
+  }))
+
   return (
     <>
       <header className="partner-page-header split">
         <div>
-          <h1>Thiết lập hồ sơ kinh doanh</h1>
-          <p>Hoàn thiện thông tin cơ sở kinh doanh để kích hoạt hiển thị trên hệ thống.</p>
+          <h1>{isEditMode ? 'Hồ sơ kinh doanh' : 'Thiết lập hồ sơ kinh doanh'}</h1>
+          <p>
+            {isEditMode
+              ? 'Thông tin hồ sơ hiện tại của cơ sở kinh doanh. Quý đối tác có thể chỉnh sửa trực tiếp toàn bộ thông tin tại đây.'
+              : 'Hoàn thiện thông tin cơ sở kinh doanh để kích hoạt hiển thị trên hệ thống.'}
+          </p>
         </div>
 
         <div className="status-cluster single-status">
@@ -2153,34 +2341,15 @@ function BusinessProfileView({
 
       <div className="partner-profile-grid business-profile-layout">
         <section className="profile-form-area">
-          <div className="wizard-steps">
-            <button className={step > 1 ? 'done' : step === 1 ? 'active' : ''} onClick={() => setStep(1)}>
-              {step > 1 ? <Check size={20} /> : <span>1</span>}
-              Cơ bản
-            </button>
-
-            <button className={step > 2 ? 'done' : step === 2 ? 'active' : ''} onClick={() => setStep(2)}>
-              {step > 2 ? <Check size={20} /> : <span>2</span>}
-              Pháp lý
-            </button>
-
-            <button className={step > 3 ? 'done' : step === 3 ? 'active' : ''} onClick={() => setStep(3)}>
-              {step > 3 ? <Check size={20} /> : <span>3</span>}
-              Vị trí
-            </button>
-
-            <button className={step > 4 ? 'done' : step === 4 ? 'active' : ''} onClick={() => setStep(4)}>
-              {step > 4 ? <Check size={20} /> : <span>4</span>}
-              Ảnh & Tiện ích
-            </button>
-
-            <button className={step === 5 ? 'active' : ''} onClick={() => setStep(5)}>
-              <span>5</span>
-              Chính sách
-            </button>
+          <div className="profile-completion-strip">
+            <div>
+              <strong>Hoàn thiện hồ sơ kinh doanh</strong>
+              <span>Toàn bộ thông tin được gom trên một trang để Quý đối tác kiểm tra và gửi khởi tạo nhanh hơn.</span>
+            </div>
+            <span className="mini-pill info">Một bước duy nhất</span>
           </div>
 
-          <section className="panel partner-card">
+          <section className="panel partner-card partner-profile-one-page">
             {currentStepError && (
               <div className="form-error-summary">
                 <XCircle size={18} />
@@ -2188,7 +2357,7 @@ function BusinessProfileView({
               </div>
             )}
 
-            {step === 1 && (
+            {(
               <>
                 <div className="accent-heading">
                   <Building2 size={22} />
@@ -2222,10 +2391,12 @@ function BusinessProfileView({
                       <select
                         value={profileForm.loaiDichVu}
                         onChange={(event) => updateProfileField('loaiDichVu', event.target.value as ServiceType)}
+                        disabled={Boolean(profile)}
                       >
                         <option value="KHACH_SAN">Khách sạn</option>
                         <option value="NHA_HANG">Nhà hàng</option>
                       </select>
+                      {profile && <small>Loại dịch vụ đã được khóa sau khi hồ sơ được tạo.</small>}
                     </label>
 
                     <label className={profileErrors.giaCoBan ? 'field-error' : ''}>
@@ -2241,20 +2412,74 @@ function BusinessProfileView({
                     </label>
 
                     {profileForm.loaiDichVu === 'KHACH_SAN' ? (
-                      <label className={profileErrors.hangSao ? 'field-error' : ''}>
-                        Hạng sao khách sạn
-                        <select
-                          value={profileForm.hangSao}
-                          onChange={(event) => updateProfileField('hangSao', event.target.value)}
-                        >
-                          <option value="1">1 sao</option>
-                          <option value="2">2 sao</option>
-                          <option value="3">3 sao</option>
-                          <option value="4">4 sao</option>
-                          <option value="5">5 sao</option>
-                        </select>
-                        {profileErrors.hangSao && <small>{profileErrors.hangSao}</small>}
-                      </label>
+                      <>
+                        <label className={profileErrors.hangSao ? 'field-error' : ''}>
+                          Hạng sao khách sạn
+                          <select
+                            value={profileForm.hangSao}
+                            onChange={(event) => updateProfileField('hangSao', event.target.value)}
+                          >
+                            <option value="1">1 sao</option>
+                            <option value="2">2 sao</option>
+                            <option value="3">3 sao</option>
+                            <option value="4">4 sao</option>
+                            <option value="5">5 sao</option>
+                          </select>
+                          {profileErrors.hangSao && <small>{profileErrors.hangSao}</small>}
+                        </label>
+
+                        <label className={profileErrors.loaiKhachSan ? 'field-error' : ''}>
+                          Loại khách sạn
+                          <input
+                            value={profileForm.loaiKhachSan}
+                            onChange={(event) => updateProfileField('loaiKhachSan', event.target.value)}
+                            placeholder="Resort, Boutique, City Hotel..."
+                          />
+                          {profileErrors.loaiKhachSan && <small>{profileErrors.loaiKhachSan}</small>}
+                        </label>
+
+                        <label className={profileErrors.soTang ? 'field-error' : ''}>
+                          Số tầng
+                          <input
+                            type="number"
+                            min="1"
+                            value={profileForm.soTang}
+                            onChange={(event) => updateProfileField('soTang', event.target.value)}
+                            placeholder="Ví dụ: 12"
+                          />
+                          {profileErrors.soTang && <small>{profileErrors.soTang}</small>}
+                        </label>
+
+                        <label className={profileErrors.tongSoPhong ? 'field-error' : ''}>
+                          Tổng số phòng
+                          <input
+                            type="number"
+                            min="1"
+                            value={profileForm.tongSoPhong}
+                            onChange={(event) => updateProfileField('tongSoPhong', event.target.value)}
+                            placeholder="Ví dụ: 120"
+                          />
+                          {profileErrors.tongSoPhong && <small>{profileErrors.tongSoPhong}</small>}
+                        </label>
+
+                        <label>
+                          Giờ nhận phòng
+                          <input
+                            type="time"
+                            value={profileForm.gioNhanPhong}
+                            onChange={(event) => updateProfileField('gioNhanPhong', event.target.value)}
+                          />
+                        </label>
+
+                        <label>
+                          Giờ trả phòng
+                          <input
+                            type="time"
+                            value={profileForm.gioTraPhong}
+                            onChange={(event) => updateProfileField('gioTraPhong', event.target.value)}
+                          />
+                        </label>
+                      </>
                     ) : (
                       <>
                         <label className={profileErrors.loaiAmThuc ? 'field-error' : ''}>
@@ -2311,7 +2536,7 @@ function BusinessProfileView({
               </>
             )}
 
-            {step === 2 && (
+            {(
               <>
                 <div className="accent-heading">
                   <FileText size={22} />
@@ -2380,299 +2605,25 @@ function BusinessProfileView({
               </>
             )}
 
-            {step === 3 && (
-              <>
-                <div className="accent-heading">
-                  <MapPin size={22} />
-                  <h2>Vị trí</h2>
-                </div>
-
-                <div className="map-section">
-                  <BusinessLocationMap
-                    value={profileForm.toaDoGPS}
-                    onChange={(coordinates) => updateProfileField('toaDoGPS', coordinates)}
-                  />
-
-                  <label className={profileErrors.toaDoGPS ? 'field-error' : ''}>
-                    Tọa độ GPS
-                    <input
-                      value={profileForm.toaDoGPS}
-                      onChange={(event) => updateProfileField('toaDoGPS', event.target.value)}
-                    />
-                    {profileErrors.toaDoGPS && <small>{profileErrors.toaDoGPS}</small>}
-                  </label>
-                </div>
-              </>
-            )}
-
-            {step === 4 && (
-              <>
-                <div className="accent-heading">
-                  <UploadCloud size={22} />
-                  <h2>Ảnh & Tiện ích</h2>
-                </div>
-
-                <div className="form-grid single">
-                  <div>
-                    <label>Tiện ích</label>
-
-                    <div className="amenity-options-grid">
-                      {(profileForm.loaiDichVu === 'KHACH_SAN' ? HOTEL_AMENITY_OPTIONS : RESTAURANT_AMENITY_OPTIONS).map((amenity) => {
-                        const checked = profileForm.loaiDichVu === 'KHACH_SAN'
-                          ? profileForm.tienIchKhachSan.includes(amenity)
-                          : profileForm.tienIchNhaHang.includes(amenity)
-
-                        return (
-                          <label key={amenity} className={`amenity-option ${checked ? 'selected' : ''}`}>
-                            <input
-                              className="amenity-checkbox-input"
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleAmenity(amenity)}
-                            />
-                            <span>{amenity}</span>
-                          </label>
-                        )
-                      })}
-                    </div>
-
-                    <input
-                      style={{ marginTop: 12 }}
-                      placeholder="Thêm tiện ích khác rồi nhấn Enter..."
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault()
-                          addCustomAmenity(event.currentTarget.value)
-                          event.currentTarget.value = ''
-                        }
-                      }}
-                    />
-
-                    <small>Có thể chọn nhanh bằng checkbox hoặc nhập tiện ích riêng.</small>
-                  </div>
-
-                  <div className="business-image-uploader">
-                    <label
-                      className="license-drop-zone business-image-drop-zone"
-                      onDragOver={(event) => event.preventDefault()}
-                      onDrop={(event) => {
-                        event.preventDefault()
-
-                        const file = event.dataTransfer.files?.[0]
-
-                        if (file) {
-                          void handleBusinessImageUpload(file)
-                        }
-                      }}
-                    >
-                      <UploadCloud size={30} />
-
-                      <strong>
-                        {isUploadingProfileImage ? 'Đang tải ảnh cơ sở...' : 'Kéo thả ảnh cơ sở hoặc bấm để chọn'}
-                      </strong>
-
-                      <span>JPG hoặc PNG, tối đa 10MB. Ảnh sẽ được lưu và gửi kèm hồ sơ.</span>
-
-                      <input
-                        type="file"
-                        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                        onChange={async (event) => {
-                          const file = event.target.files?.[0]
-                          if (!file) return
-
-                          await handleBusinessImageUpload(file)
-                          event.target.value = ''
-                        }}
-                      />
-                    </label>
-
-                    <label>
-                      Hoặc thêm bằng URL ảnh
-
-                      <input
-                        placeholder="https://example.com/image.jpg"
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter') {
-                            event.preventDefault()
-                            addBusinessImage(event.currentTarget.value)
-                            event.currentTarget.value = ''
-                          }
-                        }}
-                      />
-
-                      <small>Có thể upload trực tiếp hoặc nhập URL ảnh rồi nhấn Enter.</small>
-                    </label>
-                  </div>
-
-                  {profileErrors.danhSachAnh && <p className="field-error-text">{profileErrors.danhSachAnh}</p>}
-
-                  {profileForm.danhSachAnh.length > 0 && (
-                    <div className="business-cover-preview-card">
-                      <img src={businessCoverImage} alt="Ảnh đại diện cơ sở đang chọn" />
-                      <div>
-                        <strong>Ảnh đại diện cơ sở</strong>
-                        <span>Ảnh này sẽ dùng làm ảnh chính khi hiển thị hồ sơ.</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {profileForm.danhSachAnh.length > 0 && (
-                    <div className="uploaded-file-list">
-                      {profileForm.danhSachAnh.map((img, index) => (
-                        <div key={index} className={`uploaded-file business-image-row ${img.laAnhDaiDien ? 'is-cover' : ''}`}>
-                          <img className="uploaded-image-thumb" src={img.url} alt="Ảnh cơ sở" />
-
-                          <div className="uploaded-image-info">
-                            <div className="uploaded-image-title-row">
-                              <strong>{img.laAnhDaiDien ? 'Ảnh đại diện' : `Ảnh cơ sở ${index + 1}`}</strong>
-                              {img.laAnhDaiDien && <span>Đang làm ảnh chính</span>}
-                            </div>
-
-                            <input
-                              value={img.moTa}
-                              onChange={(event) => {
-                                const newImages = [...profileForm.danhSachAnh]
-                                newImages[index].moTa = event.target.value
-                                updateProfileField('danhSachAnh', newImages)
-                              }}
-                              placeholder="Mô tả ảnh..."
-                            />
-                          </div>
-
-                          <div className="uploaded-image-actions">
-                            {!img.laAnhDaiDien && (
-                              <button type="button" className="secondary-btn compact-btn" onClick={() => setBusinessCoverImage(index)}>
-                                Đặt đại diện
-                              </button>
-                            )}
-
-                            <button type="button" className="icon-btn danger" onClick={() => removeBusinessImage(index)} title="Xóa ảnh">
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-            {step === 5 && (
-              <>
-                <div className="accent-heading">
-                  <FileText size={22} />
-                  <h2>Chính sách & Quy định</h2>
-                </div>
-
-                <div className="form-grid single">
-                  {profileForm.loaiDichVu === 'KHACH_SAN' ? (
-                    <div className="form-grid">
-                      <label>
-                        Giờ nhận phòng
-                        <input
-                          type="time"
-                          value={profileForm.gioNhanPhong}
-                          onChange={(event) => updateProfileField('gioNhanPhong', event.target.value)}
-                        />
-                        {profileErrors.gioNhanPhong && <small>{profileErrors.gioNhanPhong}</small>}
-                      </label>
-
-                      <label>
-                        Giờ trả phòng
-                        <input
-                          type="time"
-                          value={profileForm.gioTraPhong}
-                          onChange={(event) => updateProfileField('gioTraPhong', event.target.value)}
-                        />
-                        {profileErrors.gioTraPhong && <small>{profileErrors.gioTraPhong}</small>}
-                      </label>
-                    </div>
-                  ) : (
-                    <div className="form-grid">
-                      <label>
-                        Giờ mở cửa
-                        <input
-                          type="time"
-                          value={profileForm.gioMoCua}
-                          onChange={(event) => updateProfileField('gioMoCua', event.target.value)}
-                        />
-                        {profileErrors.gioMoCua && <small>{profileErrors.gioMoCua}</small>}
-                      </label>
-
-                      <label>
-                        Giờ đóng cửa
-                        <input
-                          type="time"
-                          value={profileForm.gioDongCua}
-                          onChange={(event) => updateProfileField('gioDongCua', event.target.value)}
-                        />
-                        {profileErrors.gioDongCua && <small>{profileErrors.gioDongCua}</small>}
-                      </label>
-                    </div>
-                  )}
-
-                  <label>
-                    Chính sách hủy
-                    <textarea
-                      value={profileForm.chinhSachHuy}
-                      onChange={(event) => updateProfileField('chinhSachHuy', event.target.value)}
-                      placeholder="Ví dụ: Miễn phí hủy trước 24h..."
-                    />
-                    {profileErrors.chinhSachHuy && <small>{profileErrors.chinhSachHuy}</small>}
-                  </label>
-
-                  <label>
-                    Chính sách trẻ em & thú cưng
-                    <textarea
-                      value={profileForm.quyDinhTreEm}
-                      onChange={(event) => updateProfileField('quyDinhTreEm', event.target.value)}
-                      placeholder="Trẻ em dưới 6 tuổi miễn phí..."
-                    />
-                    {profileErrors.quyDinhTreEm && <small>{profileErrors.quyDinhTreEm}</small>}
-                  </label>
-
-                  <label>
-                    Ghi chú khác
-                    <textarea
-                      value={profileForm.ghiChuKhac}
-                      onChange={(event) => updateProfileField('ghiChuKhac', event.target.value)}
-                      placeholder="Các quy định khác..."
-                    />
-                    {profileErrors.ghiChuKhac && <small>{profileErrors.ghiChuKhac}</small>}
-                  </label>
-                </div>
-              </>
-            )}
+            <div className="profile-relocation-note">
+              <p>
+                Ảnh cơ sở, tiện ích và chính sách đã được chuyển sang màn hình cấu hình khách sạn/nhà hàng sau khi khởi tạo hồ sơ.
+              </p>
+            </div>
           </section>
 
-          <div className="profile-actions">
-            <button className="text-btn" onClick={() => setStep(Math.max(1, step - 1))}>
-              <ArrowLeft size={18} /> Quay lại
-            </button>
-
+          <div className="profile-actions one-page-actions">
             <div>
-              <button className="secondary-btn" disabled={isSubmitting} onClick={saveDraft}>
-                Lưu bản nháp
-              </button>
-
-              {step < 5 ? (
-                <button className="primary-btn" type="button" onClick={() => setStep(step + 1)}>
-                  {step === 1
-                    ? 'Tiếp tục: Giấy tờ pháp lý'
-                    : step === 2
-                      ? 'Tiếp tục: Vị trí'
-                      : step === 3
-                        ? 'Tiếp tục: Ảnh & Tiện ích'
-                        : 'Tiếp tục: Chính sách'}
-                  <ArrowRight size={18} />
-                </button>
-              ) : (
-                <button className="primary-btn" type="button" disabled={isSubmitting} onClick={saveProfile}>
-                  {isSubmitting ? 'Đang lưu hồ sơ...' : profile ? 'Lưu cập nhật hồ sơ' : 'Kích hoạt hồ sơ'}
-                  <ArrowRight size={18} />
+              {!isEditMode && (
+                <button className="secondary-btn" disabled={isSubmitting} onClick={saveDraft} type="button">
+                  Lưu nháp
                 </button>
               )}
+
+              <button className="primary-btn" type="button" disabled={isSubmitting} onClick={saveProfile}>
+                {isSubmitting ? 'Đang lưu hồ sơ...' : profile ? 'Lưu cập nhật hồ sơ' : 'Tiếp tục'}
+                <ArrowRight size={18} />
+              </button>
             </div>
           </div>
         </section>
@@ -2684,12 +2635,38 @@ function BusinessProfileView({
 function HotelSetupView({
   profile,
   profileForm,
+  updateProfileField,
   setActiveView,
+  saveProfile,
+  isSubmitting,
+  uploadFile,
+  availableHotelAmenities,
+  selectedHotelAmenityIds,
+  onToggleHotelAmenity,
+  onSaveHotelAmenities,
 }: {
   profile: BusinessProfileResponse | null
   profileForm: ProfileFormState
+  updateProfileField: (name: keyof ProfileFormState, value: ProfileFormValue) => void
   setActiveView: (view: PartnerView) => void
+  saveProfile: () => Promise<void>
+  isSubmitting: boolean
+  uploadFile: (file: File, options?: UploadOptions) => Promise<UploadedAsset | null>
+  availableHotelAmenities: Array<{ id: string; tenTienIch: string; loaiTienIch: string; moTa: string }>
+  selectedHotelAmenityIds: string[]
+  onToggleHotelAmenity: (amenityId: string) => void
+  onSaveHotelAmenities: () => Promise<void>
 }) {
+  const [isUploadingHotelImage, setIsUploadingHotelImage] = useState(false)
+  const groupedAmenities = Object.entries(
+    availableHotelAmenities.reduce((groups, amenity) => {
+      const key = (amenity.loaiTienIch || 'KHAC').trim()
+      if (!groups[key]) groups[key] = []
+      groups[key].push(amenity)
+      return groups
+    }, {} as Record<string, Array<{ id: string; tenTienIch: string; loaiTienIch: string; moTa: string }>>),
+  )
+
   return (
     <>
       <header className="partner-page-header">
@@ -2709,6 +2686,178 @@ function HotelSetupView({
           </div>
         </div>
         <div className="panel setup-checklist">
+          <h2>Thông tin khách sạn</h2>
+          <h2>Ảnh khách sạn</h2>
+          <div className="form-grid single">
+            <label className="license-drop-zone">
+              <UploadCloud size={26} />
+              <strong>{isUploadingHotelImage ? 'Đang tải ảnh...' : 'Tải ảnh khách sạn'}</strong>
+              <span>JPG/PNG, tối đa 10MB</span>
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0]
+                  if (!file) return
+                  setIsUploadingHotelImage(true)
+                  try {
+                    const uploaded = await uploadFile(file, { allowPdf: false })
+                    if (uploaded) {
+                      updateProfileField('danhSachAnh', [
+                        ...profileForm.danhSachAnh,
+                        {
+                          url: uploaded.url,
+                          moTa: uploaded.fileName || 'Ảnh khách sạn',
+                          laAnhDaiDien: profileForm.danhSachAnh.length === 0,
+                        },
+                      ])
+                    }
+                  } finally {
+                    setIsUploadingHotelImage(false)
+                    event.target.value = ''
+                  }
+                }}
+              />
+            </label>
+            {profileForm.danhSachAnh.length > 0 && (
+              <div style={{ display: 'grid', gap: 10 }}>
+                {profileForm.danhSachAnh.map((image, index) => (
+                  <div key={`${image.url}-${index}`} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <img src={image.url} alt={image.moTa || 'Ảnh khách sạn'} style={{ width: 76, height: 56, objectFit: 'cover', borderRadius: 8 }} />
+                    <button
+                      className="secondary-btn"
+                      type="button"
+                      onClick={() =>
+                        updateProfileField(
+                          'danhSachAnh',
+                          profileForm.danhSachAnh.map((item, itemIndex) => ({ ...item, laAnhDaiDien: itemIndex === index })),
+                        )
+                      }
+                    >
+                      {image.laAnhDaiDien ? 'Ảnh đại diện' : 'Đặt làm đại diện'}
+                    </button>
+                    <button
+                      className="danger-btn"
+                      type="button"
+                      onClick={() => {
+                        const nextImages = profileForm.danhSachAnh.filter((_, itemIndex) => itemIndex !== index)
+                        if (nextImages.length > 0 && !nextImages.some((item) => item.laAnhDaiDien)) {
+                          nextImages[0] = { ...nextImages[0], laAnhDaiDien: true }
+                        }
+                        updateProfileField('danhSachAnh', nextImages)
+                      }}
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="form-grid single">
+            <label>
+              Địa chỉ
+              <input value={profileForm.diaChi} onChange={(event) => updateProfileField('diaChi', event.target.value)} />
+            </label>
+            <label>
+              Thành phố
+              <select value={profileForm.thanhPho} onChange={(event) => updateProfileField('thanhPho', event.target.value)}>
+                <option value="">Chọn thành phố</option>
+                {VIETNAM_MAJOR_CITIES.map((city) => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Loại khách sạn
+              <input value={profileForm.loaiKhachSan} onChange={(event) => updateProfileField('loaiKhachSan', event.target.value)} />
+            </label>
+            <label>
+              Hạng sao
+              <select value={profileForm.hangSao} onChange={(event) => updateProfileField('hangSao', event.target.value)}>
+                <option value="1">1 sao</option>
+                <option value="2">2 sao</option>
+                <option value="3">3 sao</option>
+                <option value="4">4 sao</option>
+                <option value="5">5 sao</option>
+              </select>
+            </label>
+            <label>
+              Số tầng
+              <input type="number" min="1" value={profileForm.soTang} onChange={(event) => updateProfileField('soTang', event.target.value)} />
+            </label>
+            <label>
+              Tổng số phòng
+              <input type="number" min="1" value={profileForm.tongSoPhong} onChange={(event) => updateProfileField('tongSoPhong', event.target.value)} />
+            </label>
+            <label>
+              Giờ nhận phòng
+              <input type="time" value={profileForm.gioNhanPhong} onChange={(event) => updateProfileField('gioNhanPhong', event.target.value)} />
+            </label>
+            <label>
+              Giờ trả phòng
+              <input type="time" value={profileForm.gioTraPhong} onChange={(event) => updateProfileField('gioTraPhong', event.target.value)} />
+            </label>
+            <label>
+              Giá cơ bản (VND)
+              <input type="number" min="1000" value={profileForm.giaCoBan} onChange={(event) => updateProfileField('giaCoBan', event.target.value)} />
+            </label>
+            <label>
+              Mô tả khách sạn
+              <textarea value={profileForm.moTa} onChange={(event) => updateProfileField('moTa', event.target.value)} />
+            </label>
+          </div>
+          <div style={{ display: 'flex', gap: 10, margin: '8px 0 14px' }}>
+            <button className="secondary-btn" type="button" onClick={() => void saveProfile()} disabled={isSubmitting}>
+              {isSubmitting ? 'Đang lưu...' : 'Lưu cấu hình khách sạn'}
+            </button>
+          </div>
+          <h2>Tiện ích khách sạn</h2>
+          {groupedAmenities.length === 0 ? (
+            <p>Chưa có tiện ích để chọn.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: 14 }}>
+              {groupedAmenities.map(([type, amenities]) => (
+                <div key={type} className="panel" style={{ padding: 12 }}>
+                  <p style={{ margin: '0 0 10px', fontWeight: 700 }}>
+                    {type.replace(/_/g, ' ')}
+                  </p>
+                  <div className="form-grid single">
+                    {amenities.map((amenity) => (
+                      <label key={amenity.id} className="amenity-compact-option" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <input
+                          className="amenity-compact-input"
+                          type="checkbox"
+                          checked={selectedHotelAmenityIds.includes(amenity.id)}
+                          onChange={() => onToggleHotelAmenity(amenity.id)}
+                        />
+                        <span>{amenity.tenTienIch}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 10, margin: '8px 0 14px' }}>
+            <button className="secondary-btn" type="button" onClick={() => void onSaveHotelAmenities()}>
+              Lưu tiện ích khách sạn
+            </button>
+          </div>
+          <h2>Vị trí cơ sở</h2>
+          <BusinessLocationMap
+            value={profileForm.toaDoGPS}
+            onChange={(coordinates) => updateProfileField('toaDoGPS', coordinates)}
+          />
+          <label style={{ display: 'block', marginTop: 12 }}>
+            <span style={{ display: 'block', marginBottom: 6 }}>Tọa độ GPS</span>
+            <input
+              value={profileForm.toaDoGPS}
+              onChange={(event) => updateProfileField('toaDoGPS', event.target.value)}
+              placeholder="10.77653,106.70098"
+            />
+          </label>
+          <hr style={{ margin: '14px 0' }} />
           <h2>Mức độ sẵn sàng</h2>
           <p><CheckCircle2 /> Hồ sơ kinh doanh đã được tạo</p>
           <p><CheckCircle2 /> Đã tải lên giấy phép kinh doanh</p>
@@ -2775,7 +2924,14 @@ function RoomManagementView({
                 <td><strong>{room.loaiPhong}</strong><span className="table-subtext">{room.tienIch.join(' · ')}</span></td>
                 <td>{room.sucChuaToiDa} Người</td>
                 <td>{room.dienTich} m²</td>
-                <td><strong>{room.phanTramGiamGia > 0 ? `-${room.phanTramGiamGia}%` : 'Giá cơ bản'}</strong></td>
+                <td>
+                  <strong>{formatMoney(room.giaCoBan ?? 0)}</strong>
+                  {room.phanTramGiamGia > 0 && (
+                    <span className="table-subtext">
+                      {`Giảm ${room.phanTramGiamGia}% · Còn ${formatMoney(((room.giaCoBan ?? 0) * (100 - room.phanTramGiamGia)) / 100)}`}
+                    </span>
+                  )}
+                </td>
                 <td><span className="badge green">Còn phòng</span></td>
                 <td className="table-actions"><button className="secondary-btn row-action-btn" type="button" onClick={() => startRoomEdit(room)}><Pencil size={16} /> Sửa</button><button className="danger-btn row-action-btn" type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); deleteRoom(room.id) }}><Trash2 size={16} /> Xóa</button></td>
               </tr>
@@ -2791,12 +2947,25 @@ function RoomManagementView({
 function RestaurantSetupView({
   profile,
   profileForm,
+  updateProfileField,
   setActiveView,
+  saveProfile,
+  isSubmitting,
+  uploadFile,
+  availableRestaurantAmenities,
+  onSaveRestaurantAmenities,
 }: {
   profile: BusinessProfileResponse | null
   profileForm: ProfileFormState
+  updateProfileField: (name: keyof ProfileFormState, value: ProfileFormValue) => void
   setActiveView: (view: PartnerView) => void
+  saveProfile: () => Promise<void>
+  isSubmitting: boolean
+  uploadFile: (file: File, options?: UploadOptions) => Promise<UploadedAsset | null>
+  availableRestaurantAmenities: string[]
+  onSaveRestaurantAmenities: () => Promise<void>
 }) {
+  const [isUploadingRestaurantImage, setIsUploadingRestaurantImage] = useState(false)
   return (
     <>
       <header className="partner-page-header">
@@ -2816,6 +2985,198 @@ function RestaurantSetupView({
           </div>
         </div>
         <div className="panel setup-checklist">
+          <h2>Thông tin nhà hàng</h2>
+          <div className="form-grid single">
+            <label>
+              Loại ẩm thực
+              <input value={profileForm.loaiAmThuc} onChange={(event) => updateProfileField('loaiAmThuc', event.target.value)} />
+            </label>
+            <label>
+              Sức chứa
+              <input type="number" min="1" value={profileForm.sucChua} onChange={(event) => updateProfileField('sucChua', event.target.value)} />
+            </label>
+            <label>
+              Thành phố
+              <select value={profileForm.thanhPho} onChange={(event) => updateProfileField('thanhPho', event.target.value)}>
+                <option value="">Chọn thành phố</option>
+                {VIETNAM_MAJOR_CITIES.map((city) => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Địa chỉ
+              <input
+                value={profileForm.diaChi}
+                onChange={(event) => updateProfileField('diaChi', event.target.value)}
+                placeholder="Ví dụ: 12 Nguyễn Huệ, Quận 1"
+              />
+            </label>
+            <label>
+              Giờ mở cửa
+              <input type="time" value={profileForm.gioMoCua} onChange={(event) => updateProfileField('gioMoCua', event.target.value)} />
+            </label>
+            <label>
+              Giờ đóng cửa
+              <input type="time" value={profileForm.gioDongCua} onChange={(event) => updateProfileField('gioDongCua', event.target.value)} />
+            </label>
+            <label>
+              Cho phép đặt bàn trước
+              <select
+                value={profileForm.tienIchNhaHang.includes('Đặt bàn online') ? 'true' : 'false'}
+                onChange={(event) => {
+                  const enabled = event.target.value === 'true'
+                  const current = profileForm.tienIchNhaHang
+                  updateProfileField(
+                    'tienIchNhaHang',
+                    enabled
+                      ? Array.from(new Set([...current, 'Đặt bàn online']))
+                      : current.filter((item) => item !== 'Đặt bàn online'),
+                  )
+                }}
+              >
+                <option value="true">Có</option>
+                <option value="false">Không</option>
+              </select>
+            </label>
+            <label>
+              Cho phép đặt món trước
+              <select
+                value={profileForm.tienIchNhaHang.includes('Đặt món trước') ? 'true' : 'false'}
+                onChange={(event) => {
+                  const enabled = event.target.value === 'true'
+                  const current = profileForm.tienIchNhaHang
+                  updateProfileField(
+                    'tienIchNhaHang',
+                    enabled
+                      ? Array.from(new Set([...current, 'Đặt món trước']))
+                      : current.filter((item) => item !== 'Đặt món trước'),
+                  )
+                }}
+              >
+                <option value="true">Có</option>
+                <option value="false">Không</option>
+              </select>
+            </label>
+            <label>
+              Giá cơ bản (VND)
+              <input type="number" min="1000" value={profileForm.giaCoBan} onChange={(event) => updateProfileField('giaCoBan', event.target.value)} />
+            </label>
+            <label className="full">
+              Mô tả nhà hàng
+              <textarea value={profileForm.moTa} onChange={(event) => updateProfileField('moTa', event.target.value)} />
+            </label>
+          </div>
+          <div style={{ display: 'flex', gap: 10, margin: '8px 0 14px' }}>
+            <button className="secondary-btn" type="button" onClick={() => void saveProfile()} disabled={isSubmitting}>
+              {isSubmitting ? 'Đang lưu...' : 'Lưu cấu hình nhà hàng'}
+            </button>
+          </div>
+          <h2>Ảnh nhà hàng</h2>
+          <label className="license-drop-zone">
+            <UploadCloud size={26} />
+            <strong>{isUploadingRestaurantImage ? 'Đang tải ảnh...' : 'Tải ảnh nhà hàng'}</strong>
+            <span>JPG/PNG, tối đa 10MB</span>
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+              onChange={async (event) => {
+                const file = event.target.files?.[0]
+                if (!file) return
+                setIsUploadingRestaurantImage(true)
+                try {
+                  const uploaded = await uploadFile(file, { allowPdf: false })
+                  if (uploaded) {
+                    updateProfileField('danhSachAnh', [
+                      ...profileForm.danhSachAnh,
+                      { url: uploaded.url, moTa: uploaded.fileName || 'Ảnh nhà hàng', laAnhDaiDien: profileForm.danhSachAnh.length === 0 },
+                    ])
+                  }
+                } finally {
+                  setIsUploadingRestaurantImage(false)
+                  event.target.value = ''
+                }
+              }}
+            />
+          </label>
+          {profileForm.danhSachAnh.length > 0 && (
+            <div className="uploaded-image-list">
+              {profileForm.danhSachAnh.map((image, index) => (
+                <div className={`uploaded-image-row ${image.laAnhDaiDien ? 'is-cover' : ''}`} key={`${image.url}-${index}`}>
+                  <img src={image.url} alt={image.moTa || `Ảnh nhà hàng ${index + 1}`} className="uploaded-image-thumb" />
+                  <div className="uploaded-image-meta">
+                    <strong>{image.moTa || `Ảnh nhà hàng ${index + 1}`}</strong>
+                    <span>{image.laAnhDaiDien ? 'Ảnh đại diện' : 'Ảnh phụ'}</span>
+                  </div>
+                  <div className="uploaded-image-actions">
+                    <button
+                      className="secondary-btn compact-btn"
+                      type="button"
+                      onClick={() =>
+                        updateProfileField(
+                          'danhSachAnh',
+                          profileForm.danhSachAnh.map((item, itemIndex) => ({ ...item, laAnhDaiDien: itemIndex === index })),
+                        )
+                      }
+                    >
+                      Chọn đại diện
+                    </button>
+                    <button
+                      className="danger-btn compact-btn"
+                      type="button"
+                      onClick={() => {
+                        const nextImages = profileForm.danhSachAnh.filter((_, itemIndex) => itemIndex !== index)
+                        if (nextImages.length > 0 && !nextImages.some((item) => item.laAnhDaiDien)) {
+                          nextImages[0] = { ...nextImages[0], laAnhDaiDien: true }
+                        }
+                        updateProfileField('danhSachAnh', nextImages)
+                      }}
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <h2>Tiện ích nhà hàng</h2>
+          <div className="form-grid single">
+            {(availableRestaurantAmenities.length > 0 ? availableRestaurantAmenities : RESTAURANT_AMENITY_OPTIONS).map((amenity) => (
+              <label key={amenity} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={profileForm.tienIchNhaHang.includes(amenity)}
+                  onChange={() => {
+                    const current = profileForm.tienIchNhaHang
+                    updateProfileField(
+                      'tienIchNhaHang',
+                      current.includes(amenity) ? current.filter((item) => item !== amenity) : [...current, amenity],
+                    )
+                  }}
+                />
+                <span>{amenity}</span>
+              </label>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 10, margin: '8px 0 14px' }}>
+            <button className="secondary-btn" type="button" onClick={() => void onSaveRestaurantAmenities()}>
+              Lưu tiện ích nhà hàng
+            </button>
+          </div>
+          <h2>Vị trí cơ sở</h2>
+          <BusinessLocationMap
+            value={profileForm.toaDoGPS}
+            onChange={(coordinates) => updateProfileField('toaDoGPS', coordinates)}
+          />
+          <label style={{ display: 'block', marginTop: 12 }}>
+            <span style={{ display: 'block', marginBottom: 6 }}>Tọa độ GPS</span>
+            <input
+              value={profileForm.toaDoGPS}
+              onChange={(event) => updateProfileField('toaDoGPS', event.target.value)}
+              placeholder="10.77653,106.70098"
+            />
+          </label>
+          <hr style={{ margin: '14px 0' }} />
           <h2>Quy trình thiết lập nhà hàng</h2>
           <p><CheckCircle2 /> Hồ sơ kinh doanh có sẵn</p>
           <p><XCircle /> Cần tạo bố cục bàn</p>
