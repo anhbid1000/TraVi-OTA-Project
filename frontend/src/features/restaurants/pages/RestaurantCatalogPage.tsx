@@ -4,7 +4,9 @@ import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Heart, Map, MapPin } from 'lucide-react'
 import { AuthActions } from '../../../components/layout/AuthActions'
+import { UserAiRecommendations } from '../../ai'
 import { CatalogSearchBar } from '../../catalog/components'
+import { useAuth } from '../../../hooks/useAuth'
 import { useQueryParams } from '../../../hooks/useQueryParams'
 import { useRestaurantSearch } from '../hooks/useRestaurantSearch'
 import { getRestaurantFilterOptions } from '../services/restaurantService'
@@ -23,6 +25,23 @@ function toggleItem(list: string[], item: string): string[] {
   return list.includes(item) ? list.filter((x) => x !== item) : [...list, item]
 }
 
+function getVisiblePageNumbers(currentPage: number, totalPages: number) {
+  const maxButtons = 7
+  if (totalPages <= maxButtons) {
+    return Array.from({ length: totalPages }, (_, i) => i)
+  }
+
+  let start = Math.max(0, currentPage - 3)
+  let end = Math.min(totalPages - 1, start + maxButtons - 1)
+  start = Math.max(0, end - maxButtons + 1)
+
+  const result: number[] = []
+  for (let i = start; i <= end; i += 1) {
+    result.push(i)
+  }
+  return result
+}
+
 type RestaurantHeaderForm = {
   city: string
   date: string
@@ -33,8 +52,10 @@ type RestaurantHeaderForm = {
 // ─── Component ───────────────────────────────────────────────
 export function RestaurantCatalogPage() {
   const { query, getString, getNumber, getCsvArray, setQuery } = useQueryParams()
+  const { isAuthenticated, user } = useAuth()
   const [cuisineOptions, setCuisineOptions] = useState<FilterOption[]>([])
   const [amenityOptions, setAmenityOptions] = useState<FilterOption[]>([])
+  const isCustomer = String(user?.role ?? '').replace(/^ROLE[_-]/, '').toUpperCase() === 'KHACH_HANG'
 
   const city = getString('city')
   const keyword = getString('keyword')
@@ -165,10 +186,6 @@ export function RestaurantCatalogPage() {
     }, { resetPage: true })
   }
 
-  const totalPages = data?.totalPages ?? 1
-  const currentPage = data?.page ?? page
-  const restaurants: RestaurantCatalog[] = data?.content ?? []
-
   const hasCatalogCriteria = Boolean(
     city ||
     keyword ||
@@ -180,6 +197,11 @@ export function RestaurantCatalogPage() {
     amenities.length > 0 ||
     rating > 0,
   )
+  const currentPage = data?.page ?? page
+  const totalPages = data?.totalPages ?? 1
+  const restaurants: RestaurantCatalog[] = data?.content ?? []
+  const pageNumbers = getVisiblePageNumbers(currentPage, totalPages)
+
   const resultsTitle = hasCatalogCriteria ? `Nhà hàng tại ${city || 'Việt Nam'}` : 'Nhà hàng phổ biến'
 
   // ─── Render ───────────────────────────────────────────────
@@ -326,6 +348,10 @@ export function RestaurantCatalogPage() {
 
         {/* ── Results ── */}
         <section className="space-y-5 lg:col-span-9">
+          {isCustomer && (
+            <UserAiRecommendations enabled={isAuthenticated && isCustomer} type="RESTAURANT" city={city} />
+          )}
+
           {/* Sort header */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -345,7 +371,7 @@ export function RestaurantCatalogPage() {
           </div>
 
           {/* Loading skeleton */}
-          {loading && (
+          {loading && restaurants.length === 0 && (
             <div className="space-y-4">
               {[1,2,3].map((i) => (
                 <div key={i} className="flex h-56 animate-pulse overflow-hidden rounded-2xl border border-outline-variant/30 bg-surface-container-lowest">
@@ -458,25 +484,36 @@ export function RestaurantCatalogPage() {
                 ))}
               </div>
 
-              {/* Pagination */}
-              <nav className="flex items-center justify-center gap-1.5 pt-2">
-                <button type="button" disabled={currentPage <= 0}
-                  onClick={() => setQuery({ page: Math.max(0, currentPage - 1), size })}
-                  className="cursor-pointer rounded-lg border border-outline-variant/50 p-2 text-on-surface-variant transition hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40">
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i).map((p) => (
-                  <button key={p} type="button" onClick={() => setQuery({ page: p, size })}
-                    className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-sm font-bold transition ${p === currentPage ? 'bg-primary text-on-primary shadow-sm' : 'border border-outline-variant/50 text-on-surface hover:bg-surface-container-low'}`}>
-                    {p + 1}
+              {totalPages > 1 && (
+                <nav className="flex items-center justify-center gap-1.5 pt-2">
+                  <button
+                    type="button"
+                    disabled={currentPage <= 0}
+                    onClick={() => setQuery({ page: Math.max(0, currentPage - 1), size })}
+                    className="cursor-pointer rounded-lg border border-outline-variant/50 p-2 text-on-surface-variant transition hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft size={16} />
                   </button>
-                ))}
-                <button type="button" disabled={currentPage >= totalPages - 1}
-                  onClick={() => setQuery({ page: Math.min(totalPages - 1, currentPage + 1), size })}
-                  className="cursor-pointer rounded-lg border border-outline-variant/50 p-2 text-on-surface-variant transition hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40">
-                  <ChevronRight size={16} />
-                </button>
-              </nav>
+                  {pageNumbers.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setQuery({ page: p, size })}
+                      className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg text-sm font-bold transition ${p === currentPage ? 'bg-primary text-on-primary shadow-sm' : 'border border-outline-variant/50 text-on-surface hover:bg-surface-container-low'}`}
+                    >
+                      {p + 1}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages - 1}
+                    onClick={() => setQuery({ page: Math.min(totalPages - 1, currentPage + 1), size })}
+                    className="cursor-pointer rounded-lg border border-outline-variant/50 p-2 text-on-surface-variant transition hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </nav>
+              )}
             </>
           )}
         </section>

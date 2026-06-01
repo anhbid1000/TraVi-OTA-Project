@@ -314,6 +314,29 @@ INSERT INTO chinh_sach (
 ON CONFLICT DO NOTHING;
 
 -- 5) BOOKINGS + ORDERS
+ALTER TABLE don_dat_cho DROP CONSTRAINT IF EXISTS don_dat_cho_trang_thai_check;
+UPDATE don_dat_cho
+SET trang_thai = CASE trang_thai
+    WHEN 'DANG_CHO' THEN 'CHO_THANH_TOAN'
+    WHEN 'DA_HUY_BO' THEN 'DA_HUY'
+    ELSE trang_thai
+END
+WHERE trang_thai IN ('DANG_CHO', 'DA_HUY_BO');
+ALTER TABLE don_dat_cho ADD CONSTRAINT don_dat_cho_trang_thai_check
+    CHECK (trang_thai IN (
+        'CHO_THANH_TOAN',
+        'DA_THANH_TOAN',
+        'DA_XAC_NHAN',
+        'DANG_PHUC_VU',
+        'DA_HOAN_THANH',
+        'DA_HUY',
+        'YEU_CAU_HOAN_TIEN',
+        'DA_HOAN_TIEN',
+        'THANH_TOAN_THAT_BAI',
+        'KHACH_KHONG_DEN'
+    ));
+ALTER TABLE don_dat_cho ALTER COLUMN trang_thai SET DEFAULT 'CHO_THANH_TOAN';
+
 INSERT INTO don_dat_cho (
     id, ma_don, khach_hang_id, ho_so_kinh_doanh_id, ngay_tao, tong_tien_goc, tien_khuyen_mai, tong_tien_thanh_toan,
     ten_nguoi_dat, sdt_nguoi_dat, email_nguoi_dat, ghi_chu, trang_thai, hold_expired_at, payment_expired_at
@@ -902,4 +925,5 @@ INSERT INTO su_kien_hanh_vi (user_id, hanh_dong, doi_tuan_id, loai_doi_tuong, th
 ('u-guest-9', 'LEAVE_PAGE', 9, 'KHACH_SAN', 17000, '{"assetId":"asset-ks-1","reason":"payment_timeout"}', '2026-06-09 09:48:00'),
 ('u-partner-5', 'CLICK_CARD', 8, 'KHACH_SAN', NULL, '{"businessCount":2}', '2026-05-23 08:00:00'),
 ('u-partner-5', 'CLICK_CARD', 8, 'NHA_HANG', NULL, '{"reviewId":"review-nh-4"}', '2026-05-23 22:10:00'),
-('u-partner-5', 'VIEW_DETAIL', 9, 'KHACH_SAN', 25000, '{"complaintId":"comp-ks-4"}', '2026-06-07 10:02:00');
+('u-partner-5', 'VIEW_DETAIL', 9, 'KHACH_SAN', 25000, '{"complaintId":"comp-ks-4"}', '2026-06-07 10:02:00')
+ON CONFLICT DO NOTHING;
