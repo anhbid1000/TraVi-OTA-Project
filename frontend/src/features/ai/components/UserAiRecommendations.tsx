@@ -2,16 +2,18 @@ import { Link } from 'react-router-dom'
 import { Bot, MapPin, Sparkles, Star } from 'lucide-react'
 import { useAiRecommendations } from '../hooks/useAiRecommendations'
 import { sendRecommendationFeedback } from '../services/aiService'
+import type { AiRecommendationType } from '../types'
 import { formatVnd } from '../../../utils/display'
 
 type UserAiRecommendationsProps = {
   enabled: boolean
+  type?: AiRecommendationType
   city?: string
 }
 
-export function UserAiRecommendations({ enabled, city }: UserAiRecommendationsProps) {
+export function UserAiRecommendations({ enabled, type = 'ALL', city }: UserAiRecommendationsProps) {
   const { data, loading, error, refetch } = useAiRecommendations(
-    { type: 'ALL', city, limit: 6 },
+    { type, city, limit: 6 },
     { enabled },
   )
 

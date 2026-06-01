@@ -336,8 +336,6 @@ ALTER TABLE don_dat_cho ADD CONSTRAINT don_dat_cho_trang_thai_check
         'KHACH_KHONG_DEN'
     ));
 ALTER TABLE don_dat_cho ALTER COLUMN trang_thai SET DEFAULT 'CHO_THANH_TOAN';
-ALTER TABLE don_dat_cho ALTER COLUMN trang_thai_don DROP NOT NULL;
-ALTER TABLE don_dat_cho ALTER COLUMN trang_thai_don SET DEFAULT 'CHO_THANH_TOAN';
 
 INSERT INTO don_dat_cho (
     id, ma_don, khach_hang_id, ho_so_kinh_doanh_id, ngay_tao, tong_tien_goc, tien_khuyen_mai, tong_tien_thanh_toan,
@@ -929,4 +927,3 @@ INSERT INTO su_kien_hanh_vi (user_id, hanh_dong, doi_tuan_id, loai_doi_tuong, th
 ('u-partner-5', 'CLICK_CARD', 8, 'NHA_HANG', NULL, '{"reviewId":"review-nh-4"}', '2026-05-23 22:10:00'),
 ('u-partner-5', 'VIEW_DETAIL', 9, 'KHACH_SAN', 25000, '{"complaintId":"comp-ks-4"}', '2026-06-07 10:02:00')
 ON CONFLICT DO NOTHING;
-

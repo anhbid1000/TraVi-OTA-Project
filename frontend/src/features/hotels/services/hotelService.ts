@@ -116,6 +116,7 @@ function normalizePage<T>(value: unknown): PageResponse<T> {
   const size = raw.size ?? DEFAULT_SIZE
   const totalElements = raw.totalElements ?? raw.total ?? content.length
   const totalPages = raw.totalPages ?? Math.max(1, Math.ceil(totalElements / Math.max(1, size)))
+  const hasNext = raw.hasNext ?? (typeof raw.last === 'boolean' ? !raw.last : page + 1 < totalPages)
 
   return {
     content,
@@ -123,7 +124,7 @@ function normalizePage<T>(value: unknown): PageResponse<T> {
     size,
     totalElements,
     totalPages,
-    hasNext: raw.hasNext ?? page + 1 < totalPages,
+    hasNext,
     hasPrevious: raw.hasPrevious ?? page > 0,
   }
 }
@@ -186,6 +187,7 @@ function hasHotelSearchCriteria(params: HotelSearchParams) {
 function pageFromItems<T>(items: T[], params: HotelSearchParams): PageResponse<T> {
   const page = Math.max(DEFAULT_PAGE, params.page ?? DEFAULT_PAGE)
   const size = clampSize(params.size)
+  const hasNext = items.length >= size && size < MAX_SIZE
 
   return {
     content: items,
@@ -193,7 +195,7 @@ function pageFromItems<T>(items: T[], params: HotelSearchParams): PageResponse<T
     size,
     totalElements: items.length,
     totalPages: Math.max(1, Math.ceil(items.length / Math.max(1, size))),
-    hasNext: false,
+    hasNext,
     hasPrevious: page > 0,
   }
 }

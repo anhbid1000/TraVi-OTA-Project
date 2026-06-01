@@ -17,16 +17,6 @@ SET
     WHEN '5fa2606d-9653-4451-b6ad-921247ffb6bd' THEN 'Da Lat'
     ELSE thanh_pho
   END,
-  quan_huyen = CASE id_ho_so
-    WHEN '6d9cd3b9-f367-4827-bc0d-77f90d10ff77' THEN 'TP Da Lat'
-    WHEN '5fa2606d-9653-4451-b6ad-921247ffb6bd' THEN 'TP Da Lat'
-    ELSE quan_huyen
-  END,
-  phuong_xa = CASE id_ho_so
-    WHEN '6d9cd3b9-f367-4827-bc0d-77f90d10ff77' THEN 'Phuong 3'
-    WHEN '5fa2606d-9653-4451-b6ad-921247ffb6bd' THEN 'Phuong 6'
-    ELSE phuong_xa
-  END,
   kinh_do = CASE id_ho_so
     WHEN '6d9cd3b9-f367-4827-bc0d-77f90d10ff77' THEN 108.4378
     WHEN '5fa2606d-9653-4451-b6ad-921247ffb6bd' THEN 108.4440
@@ -77,11 +67,11 @@ WHERE id_tai_san IN ('3968d549-0e95-4be5-bffa-d3c01f88563e','7f105953-a5ad-4e9b-
 
 INSERT INTO ho_so_kinh_doanh (
   id_ho_so, doi_tac_id, loai_dich_vu, ten_co_so, ma_so_thue, giay_phep_kinh_doanh,
-  toa_do_gps, sdt_lien_he, email_lien_he, dia_chi, thanh_pho, quan_huyen, phuong_xa,
+  toa_do_gps, sdt_lien_he, email_lien_he, dia_chi, thanh_pho,
   kinh_do, vi_do, trang_thai_kiem_duyet, trang_thai_hoat_dong, deleted, thoi_gian_dang_ky, thoi_gian_cap_nhat
 ) VALUES (
   'hsnh-demo-001','2de79fb2-9d2f-4881-9280-276863510cd8','NHA_HANG','Bep Que Da Lat','0312345678','GPKD-NH-001',
-  '11.9467,108.4410','0909123456','bepque.dalat@example.com','22 Nguyen Chi Thanh, Phuong 1','Da Lat','TP Da Lat','Phuong 1',
+  '11.9467,108.4410','0909123456','bepque.dalat@example.com','22 Nguyen Chi Thanh, Phuong 1','Da Lat',
   108.4410,11.9467,'DA_DUYET','DANG_HOAT_DONG',false,NOW(),NOW()
 )
 ON CONFLICT (id_ho_so) DO NOTHING;

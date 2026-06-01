@@ -353,24 +353,17 @@ public class PartnerAiInsightService {
             jdbcTemplate.update(
                     """
                     INSERT INTO ai_partner_insight (
-                        id, doi_tac_id, ho_so_kinh_doanh_id, partner_id, business_profile_id,
-                        insight_type, severity, priority, title, description, message,
-                        action, recommended_action, metric_name, metric_value,
-                        model_version, status, generated_at, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                        id, partner_id, business_profile_id, insight_type, severity, title, message,
+                        recommended_action, metric_name, metric_value, model_version, status, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE', CURRENT_TIMESTAMP)
                     """,
                     UUID.randomUUID().toString(),
                     partnerId,
                     businessProfileId,
-                    partnerId,
-                    businessProfileId,
                     draft.insightType(),
-                    draft.severity(),
                     draft.severity(),
                     draft.title(),
                     draft.message(),
-                    draft.message(),
-                    draft.recommendedAction(),
                     draft.recommendedAction(),
                     draft.metricName(),
                     draft.metricValue(),

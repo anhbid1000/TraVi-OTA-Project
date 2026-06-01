@@ -597,7 +597,7 @@ public class AiRecommendationService {
     private List<String> findBookingTokens(String khachHangId) {
         return jdbcTemplate.queryForList(
                 """
-                SELECT CONCAT_WS(' ', hskd.ten_co_so, hskd.thanh_pho, hskd.quan_huyen, hskd.loai_dich_vu)
+                SELECT CONCAT_WS(' ', hskd.ten_co_so, hskd.thanh_pho, hskd.dia_chi, hskd.loai_dich_vu)
                 FROM don_dat_cho ddc
                 JOIN ho_so_kinh_doanh hskd ON hskd.id_ho_so = ddc.ho_so_kinh_doanh_id
                 WHERE ddc.khach_hang_id = ? AND ddc.deleted = false
