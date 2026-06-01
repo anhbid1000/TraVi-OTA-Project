@@ -147,16 +147,6 @@
             <!-- KHÔNG ghi scope (mặc định sẽ là compile, nhưng Spring Boot sẽ xử lý) -->
         </dependency>
 
-        <!-- Flyway - Database Migration Tool -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-postgresql</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

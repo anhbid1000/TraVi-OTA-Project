@@ -41,6 +41,9 @@ import './App.css';
 
 import BookingDetailPage from './pages/user/dashboard/BookingDetailPage.tsx';
 
+import LoyaltyDashboardPage from './pages/user/loyalty/LoyaltyDashboardPage.tsx';
+import PartnerPromotionsPage from './pages/partner/promotions/PartnerPromotionsPage.tsx';
+
 
 function NotFoundPage() {
   return (
@@ -100,6 +103,7 @@ function App() {
           <Route path="/user/bookings-v2/:bookingId" element={<BookingDetailPage />} />
           <Route path="/user/complaints" element={<MyComplaintsPage />} />
           <Route path="/user/complaints/:complaintId" element={<MyComplaintDetailPage />} />
+          <Route path="/user/loyalty" element={<LoyaltyDashboardPage />} />
         </Route>
 
         <Route element={<StaffRoute redirectTo="/partner/login" />}>
@@ -118,6 +122,7 @@ function App() {
             <Route path="reviews" element={<PartnerReviewsPage />} />
             <Route path="complaints" element={<PartnerComplaintsPage />} />
             <Route path="complaints/:complaintId" element={<PartnerComplaintDetailPage />} />
+            <Route path="promotions" element={<PartnerPromotionsPage />} />
           </Route>
         </Route>
 

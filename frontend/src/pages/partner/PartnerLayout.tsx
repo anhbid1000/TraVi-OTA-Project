@@ -52,6 +52,7 @@ export function PartnerLayout() {
   const isAiInsightRoute = location.pathname.startsWith('/partner/ai-insights')
   const isReviewRoute = location.pathname.startsWith('/partner/reviews')
   const isComplaintRoute = location.pathname.startsWith('/partner/complaints')
+  const isPromotionRoute = location.pathname.startsWith('/partner/promotions')
   const isAssetManagementRoute = location.pathname.startsWith('/partner/asset-management') ||
     location.pathname.startsWith('/partner/business-profile') ||
     location.pathname.startsWith('/partner/hotels') ||
@@ -171,9 +172,9 @@ export function PartnerLayout() {
                     <CalendarIcon />
                     Đặt dịch vụ
                   </button>
-                  <button>
+                  <button className={isPromotionRoute ? 'active' : ''} onClick={() => navigate('/partner/promotions')}>
                     <AnalyticsIcon />
-                    Phân tích
+                    Ưu đãi & phân tích
                   </button>
                   <button
                     className={isAiInsightRoute ? 'active' : ''}

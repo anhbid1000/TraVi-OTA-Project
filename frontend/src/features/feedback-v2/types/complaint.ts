@@ -26,13 +26,16 @@ export type ComplaintCategory =
 export type VaiTroTinNhan = 'KHACH_HANG' | 'DOI_TAC' | 'SYSTEM';
 
 export type ComplaintResolutionActionType =
+  | 'APOLOGY'
+  | 'ROOM_CHANGE'
+  | 'TABLE_CHANGE'
+  | 'SERVICE_REDO'
   | 'FULL_REFUND'
   | 'PARTIAL_REFUND'
   | 'VOUCHER'
-  | 'DISCOUNT_NEXT_BOOKING'
-  | 'CHANGE_ROOM'
-  | 'OTHER_SOLUTION'
-  | 'REJECT_COMPLAINT';
+  | 'DISCOUNT_CODE'
+  | 'REJECT_REQUEST'
+  | 'OTHER';
 
 export type ComplaintResolutionActionStatus =
   | 'PROPOSED'

@@ -55,6 +55,9 @@ public abstract class DonDatCho {
 
     private Double tongTienThanhToan;
 
+    @Column(name = "voucher_id")
+    private Long voucherId;
+
     private String tenNguoiDat;
 
     private String sdtNguoiDat;
