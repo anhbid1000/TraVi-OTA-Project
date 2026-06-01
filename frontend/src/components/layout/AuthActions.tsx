@@ -1,46 +1,46 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Bell, LogIn, LogOut, UserRound } from 'lucide-react'
-import { useAuth } from '../../hooks/useAuth'
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Bell, Bot, LogIn, LogOut, UserRound } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 export function AuthActions() {
-  const { isAuthenticated, user, logout, isLoading } = useAuth()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const menuRef = useRef<HTMLDivElement | null>(null)
+  const { isAuthenticated, user, logout, isLoading } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isMenuOpen) {
-      return
+      return;
     }
 
     const handleOutsideClick = (event: MouseEvent) => {
       if (!menuRef.current) {
-        return
+        return;
       }
       if (!menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false)
+        setIsMenuOpen(false);
       }
-    }
+    };
 
-    window.addEventListener('mousedown', handleOutsideClick)
+    window.addEventListener('mousedown', handleOutsideClick);
     return () => {
-      window.removeEventListener('mousedown', handleOutsideClick)
-    }
-  }, [isMenuOpen])
+      window.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [isMenuOpen]);
 
   const handleLogout = async () => {
     if (isLoggingOut || isLoading) {
-      return
+      return;
     }
 
-    setIsLoggingOut(true)
-    setIsMenuOpen(false)
+    setIsLoggingOut(true);
+    setIsMenuOpen(false);
 
-    await new Promise((resolve) => setTimeout(resolve, 450))
-    await logout()
-    window.location.href = '/'
-  }
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    await logout();
+    window.location.href = '/';
+  };
 
   return (
     <div className="flex items-center gap-2">
@@ -71,6 +71,13 @@ export function AuthActions() {
 
               <div className="border-b border-outline-variant/30 py-1">
                 <Link
+                  to="/ai/travel-planner"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
+                >
+                  <Bot size={16} /> Lập lịch trình AI
+                </Link>
+                <Link
                   to="/user/bookings-v2"
                   onClick={() => setIsMenuOpen(false)}
                   className="block px-3 py-2.5 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
@@ -84,13 +91,16 @@ export function AuthActions() {
                 >
                   Khiếu nại
                 </Link>
+              </div>
+
+              <div className="py-1">
                 <button
                   type="button"
                   onClick={() => {
                     void handleLogout();
                   }}
                   disabled={isLoading || isLoggingOut}
-                  className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-error transition-colors hover:bg-surface-container-low hover:text-error disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <LogOut size={16} /> {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
                 </button>
@@ -109,4 +119,3 @@ export function AuthActions() {
     </div>
   );
 }
-

@@ -183,6 +183,35 @@ export type PartnerDashboardOverviewResponse = {
   }>
 }
 
+export type PartnerAiInsightResponse = {
+  partnerId: string
+  businessProfileId: string
+  businessName: string
+  serviceType: ServiceType | string
+  fromDate: string
+  toDate: string
+  healthScore: number
+  profileSummary: string
+  revenue: number
+  revenueGrowthPercent: number
+  bookings: number
+  bookingGrowthPercent: number
+  averageRating: number
+  reviewCount: number
+  modelVersion: string
+  insights: Array<{
+    id: string
+    insightType: string
+    severity: 'HIGH' | 'MEDIUM' | 'LOW' | string
+    title: string
+    message: string
+    recommendedAction?: string | null
+    metricName?: string | null
+    metricValue?: number | null
+    createdAt: string
+  }>
+}
+
 export type RestaurantDashboardPeriod = 'TODAY' | 'WEEK' | 'MONTH'
 
 export type PartnerRestaurantDashboardOverviewResponse = {

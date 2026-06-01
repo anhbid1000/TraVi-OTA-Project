@@ -12,6 +12,7 @@ import type {
   RoomPayload,
   RoomResponse,
   PartnerDashboardOverviewResponse,
+  PartnerAiInsightResponse,
   PartnerRestaurantDashboardOverviewResponse,
   RestaurantDashboardPeriod,
   TablePayload,
@@ -43,6 +44,14 @@ export const partnerAssetService = {
     return api
       .get<PartnerRestaurantDashboardOverviewResponse>('/v1/partner/dashboard/restaurant-overview', {
         params: { period },
+      })
+      .then((response) => response.data)
+  },
+
+  getPartnerAiInsights(days = 30) {
+    return api
+      .get<PartnerAiInsightResponse>('/v1/partner/ai/insights', {
+        params: { days },
       })
       .then((response) => response.data)
   },

@@ -1,6 +1,7 @@
 export { PartnerLayout } from './PartnerLayout'
 export { PartnerDashboardPage } from './PartnerDashboardPage'
 export { PartnerDashboardOverviewPage } from './PartnerDashboardOverviewPage'
+export { PartnerAiInsightsPage } from './PartnerAiInsightsPage'
 export { PartnerBusinessProfilePage } from './PartnerBusinessProfilePage'
 export { PartnerHotelProfilePage } from './PartnerHotelProfilePage'
 export { PartnerRestaurantProfilePage } from './PartnerRestaurantProfilePage'

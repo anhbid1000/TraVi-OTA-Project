@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Service
+@Service("coreBookingService")
 public class BookingService {
 
     @Autowired
@@ -52,7 +52,11 @@ public class BookingService {
         } else if ("restaurant".equals(queryType)) {
             bookings = donNhaHangRepository.findByKhachHang_UsernameAndDeletedFalseOrderByNgayTaoDesc(username);
         } else {
-            bookings = donDatChoRepository.findByKhachHang_UsernameAndDeletedFalseOrderByNgayTaoDesc(username);
+            List<DonDatCho> allBookings = new ArrayList<>();
+            allBookings.addAll(donKhachSanRepository.findByKhachHang_UsernameAndDeletedFalseOrderByNgayTaoDesc(username));
+            allBookings.addAll(donNhaHangRepository.findByKhachHang_UsernameAndDeletedFalseOrderByNgayTaoDesc(username));
+            allBookings.sort((left, right) -> safeCreatedAt(right).compareTo(safeCreatedAt(left)));
+            bookings = allBookings;
         }
 
         return bookings.stream()
@@ -66,7 +70,7 @@ public class BookingService {
             throw new IllegalArgumentException("Vui lòng cung cấp email hoặc số điện thoại để xác minh đơn đặt chỗ.");
         }
 
-        DonDatCho booking = donDatChoRepository.findByMaDonAndDeletedFalse(maDon)
+        DonDatCho booking = findBookingByCode(maDon)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt chỗ với mã " + maDon));
 
         boolean verified = false;
@@ -92,8 +96,23 @@ public class BookingService {
 
     @Transactional(readOnly = true)
     public List<UserBookingResponse> getCustomerBookings(String customerId) {
-        List<DonDatCho> orders = donDatChoRepository.findByKhachHang_IdAndDeletedFalseOrderByNgayTaoDesc(customerId);
+        List<DonDatCho> orders = new ArrayList<>();
+        orders.addAll(donKhachSanRepository.findByKhachHang_IdAndDeletedFalseOrderByNgayTaoDesc(customerId));
+        orders.addAll(donNhaHangRepository.findByKhachHang_IdAndDeletedFalseOrderByNgayTaoDesc(customerId));
+        orders.sort((left, right) -> safeCreatedAt(right).compareTo(safeCreatedAt(left)));
         return orders.stream().map(order -> mapToUserBookingResponse(order, customerId)).toList();
+    }
+
+    private Optional<DonDatCho> findBookingByCode(String maDon) {
+        Optional<DonKhachSan> hotelBooking = donKhachSanRepository.findByMaDonAndDeletedFalse(maDon);
+        if (hotelBooking.isPresent()) {
+            return Optional.of(hotelBooking.get());
+        }
+        return donNhaHangRepository.findByMaDonAndDeletedFalse(maDon).map(order -> order);
+    }
+
+    private LocalDateTime safeCreatedAt(DonDatCho booking) {
+        return booking.getNgayTao() == null ? LocalDateTime.MIN : booking.getNgayTao();
     }
 
     private BookingSearchResponse mapToResponse(DonDatCho booking) {

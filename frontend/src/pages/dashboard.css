@@ -2940,9 +2940,10 @@
 }
 
 .partner-dashboard-header-actions {
-  display: grid;
-  gap: 10px;
-  justify-items: end;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-end;
 }
 
 .partner-dashboard-period-switch {
@@ -3485,6 +3486,54 @@
   margin-top: 8px;
 }
 
+.partner-ai-insights-page .partner-dashboard-kpi-grid {
+  margin-bottom: 18px;
+}
+
+.partner-ai-insight-panel {
+  grid-column: span 12;
+}
+
+.partner-ai-insight-list {
+  display: grid;
+  gap: 12px;
+}
+
+.partner-ai-insight-item {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 16px;
+  border: 1px solid #dfe7e2;
+  border-radius: 8px;
+  background: #fbfdfc;
+}
+
+.partner-ai-insight-item > div:last-child {
+  display: grid;
+  gap: 6px;
+}
+
+.partner-ai-insight-item strong {
+  color: #123828;
+  font-size: 1rem;
+}
+
+.partner-ai-insight-item p,
+.partner-ai-insight-item span {
+  margin: 0;
+  color: #5f6f66;
+  line-height: 1.5;
+}
+
+.partner-ai-insight-item .partner-dashboard-status {
+  width: fit-content;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
 @media (max-width: 1200px) {
   .partner-dashboard-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3495,6 +3544,12 @@
   .partner-dashboard-availability-panel,
   .partner-dashboard-top-room-panel {
     grid-column: span 12;
+  }
+}
+
+@media (max-width: 720px) {
+  .partner-ai-insight-item {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -8,6 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface KhachHangRepository extends JpaRepository<KhachHang, String> {
-    // Có thể thêm các phương thức tìm kiếm đặc thù cho KhachHang nếu cần
-    Optional<KhachHang> findById(String id);
+    Optional<KhachHang> findByUsername(String username);
 }

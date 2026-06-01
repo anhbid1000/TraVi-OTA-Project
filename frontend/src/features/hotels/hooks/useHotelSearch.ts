@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PageResponse } from '../../../types/common'
+import { sendAiUserEvent } from '../../ai/services/aiService'
+import { tokenStorage } from '../../../services/tokenStorage'
 import { getApiErrorMessage } from '../../../utils/apiError'
 import { searchHotels } from '../services/hotelService'
 import type { HotelCatalog, HotelSearchParams } from '../types'
@@ -45,6 +47,23 @@ export function useHotelSearch(params: HotelSearchParams, options: UseHotelSearc
         return
       }
       setData(response)
+      if (tokenStorage.getAccessToken()) {
+        void sendAiUserEvent({
+          eventType: 'SEARCH',
+          assetType: 'HOTEL',
+          keyword: paramsRef.current.keyword || paramsRef.current.city || 'hotel-search',
+          city: paramsRef.current.city,
+          source: 'HOTEL_CATALOG',
+          metadata: JSON.stringify({
+            guests: paramsRef.current.guests,
+            checkIn: paramsRef.current.checkIn,
+            checkOut: paramsRef.current.checkOut,
+            resultCount: response.totalElements,
+          }),
+        }).catch(() => {
+          // AI tracking la best-effort, khong chan luong tim kiem catalog.
+        })
+      }
     } catch (fetchError) {
       if (requestId !== requestIdRef.current) {
         return
