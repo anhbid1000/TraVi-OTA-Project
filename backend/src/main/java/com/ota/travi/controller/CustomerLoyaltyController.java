@@ -1,8 +1,11 @@
 package com.ota.travi.controller;
 
 import com.ota.travi.dto.request.ExchangeVoucherRequest;
+import com.ota.travi.dto.response.CustomerVoucherResponse;
 import com.ota.travi.dto.response.ExchangeVoucherResponse;
+import com.ota.travi.dto.response.LoyaltyProgressResponse;
 import com.ota.travi.dto.response.LoyaltySummaryResponse;
+import com.ota.travi.dto.response.PointHistoryResponse;
 import com.ota.travi.dto.response.PromotionResponse;
 import com.ota.travi.security.CustomUserDetails;
 import com.ota.travi.service.CustomerLoyaltyService;
@@ -39,6 +42,31 @@ public class CustomerLoyaltyController {
         String customerId = getCurrentCustomerId(userDetails);
         LoyaltySummaryResponse response = customerLoyaltyService.getLoyaltySummary(customerId);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/progress")
+    public ResponseEntity<LoyaltyProgressResponse> getLoyaltyProgress(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String customerId = getCurrentCustomerId(userDetails);
+        return ResponseEntity.ok(customerLoyaltyService.getLoyaltyProgress(customerId));
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<PointHistoryResponse>> getPointHistory(
+            @RequestParam(name = "limit", required = false) Integer limit,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String customerId = getCurrentCustomerId(userDetails);
+        return ResponseEntity.ok(customerLoyaltyService.getPointHistory(customerId, limit));
+    }
+
+    @GetMapping("/wallet/vouchers")
+    public ResponseEntity<List<CustomerVoucherResponse>> getWalletVouchers(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String customerId = getCurrentCustomerId(userDetails);
+        return ResponseEntity.ok(customerLoyaltyService.getWalletVouchers(customerId));
     }
 
     @GetMapping("/exchangeable-vouchers")

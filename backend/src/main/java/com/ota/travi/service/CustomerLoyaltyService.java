@@ -2,10 +2,12 @@ package com.ota.travi.service;
 
 import com.ota.travi.dto.response.CustomerVoucherResponse;
 import com.ota.travi.dto.response.ExchangeVoucherResponse;
+import com.ota.travi.dto.response.LoyaltyProgressResponse;
 import com.ota.travi.dto.response.LoyaltySummaryResponse;
 import com.ota.travi.dto.response.PointHistoryResponse;
 import com.ota.travi.dto.response.PromotionResponse;
 import com.ota.travi.entity.CustomerVoucher;
+import com.ota.travi.entity.DonDatCho;
 import com.ota.travi.entity.KhachHang;
 import com.ota.travi.entity.LichSuDiem;
 import com.ota.travi.entity.LoyaltyRule;
@@ -15,7 +17,6 @@ import com.ota.travi.enums.LoaiGiaoDichDiem;
 import com.ota.travi.enums.SourceTypeVoucher;
 import com.ota.travi.enums.TrangThaiCustomerVoucher;
 import com.ota.travi.enums.TrangThaiUuDai;
-import com.ota.travi.exception.ForbiddenOperationException;
 import com.ota.travi.exception.ResourceNotFoundException;
 import com.ota.travi.exception.ValidationException;
 import com.ota.travi.repository.CustomerVoucherRepository;
@@ -29,10 +30,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -48,6 +50,8 @@ public class CustomerLoyaltyService {
     private final LichSuDiemRepository lichSuDiemRepository;
     private final LoyaltyRuleService loyaltyRuleService;
     private final PromotionService promotionService;
+    private final MilestoneRewardService milestoneRewardService;
+    private final NotificationEventService notificationEventService;
 
     // ========== LOYALTY SUMMARY ==========
 
@@ -62,31 +66,112 @@ public class CustomerLoyaltyService {
                 .orElseThrow(() -> new ResourceNotFoundException("Quy tắc tích lũy điểm không được cấu hình"));
         
         int currentPoints = customer.getDiemThanhVien() != null ? customer.getDiemThanhVien() : 0;
-        Double totalSpending = customer.getTongChiTieu() != null ? customer.getTongChiTieu() : 0.0;
-        HangThanhVien currentTier = customer.getHangThanhVien() != null ? customer.getHangThanhVien() : HangThanhVien.DONG;
-        HangThanhVien nextTier = resolveNextTier(currentTier);
-        
-        BigDecimal nextThreshold = thresholdFor(nextTier, activeRule);
-        BigDecimal remaining = nextThreshold.subtract(BigDecimal.valueOf(totalSpending));
-        double remainingAmount = Math.max(0, remaining.doubleValue());
-        
-        BigDecimal progressPercent = resolveProgressPercent(totalSpending, currentTier, activeRule);
-        
+        LoyaltyProgressResponse progress = getLoyaltyProgress(customerId);
         List<PointHistoryResponse> pointHistory = getPointHistory(customerId, 10);
-        List<CustomerVoucherResponse> customerVouchers = getCustomerVouchers(customerId);
+        List<CustomerVoucherResponse> customerVouchers = getWalletVouchers(customerId);
         
         return new LoyaltySummaryResponse(
-            Long.valueOf(customerId),
+            parseLongOrNull(customerId),
             currentPoints,
-            totalSpending,
-            currentTier.name(),
-            nextTier.name(),
-            nextThreshold.doubleValue(),
-            remainingAmount,
-            progressPercent.doubleValue(),
+            progress.totalSpending(),
+            progress.currentTier(),
+            progress.nextTier(),
+            progress.requiredSpending(),
+            progress.remainingSpending(),
+            progress.progressPercent(),
             pointHistory,
             customerVouchers
         );
+    }
+
+    @Transactional(readOnly = true)
+    public LoyaltyProgressResponse getLoyaltyProgress(String customerId) {
+        KhachHang customer = khachHangRepository.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tìm thấy"));
+        LoyaltyRule activeRule = loyaltyRuleService.requireActiveRule();
+
+        double totalSpending = normalizeMoney(customer.getTongChiTieu());
+        HangThanhVien currentTier = customer.getHangThanhVien() != null ? customer.getHangThanhVien() : HangThanhVien.DONG;
+        HangThanhVien nextTier = resolveNextTier(currentTier);
+        double nextThreshold = thresholdFor(nextTier, activeRule).doubleValue();
+        double remainingAmount = Math.max(0, nextThreshold - totalSpending);
+        double progressPercent = resolveProgressPercent(totalSpending, currentTier, activeRule).doubleValue();
+
+        return new LoyaltyProgressResponse(
+                currentTier.name(),
+                totalSpending,
+                nextTier.name(),
+                nextThreshold,
+                remainingAmount,
+                progressPercent
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<PointHistoryResponse> getPointHistory(String customerId, Integer limit) {
+        int safeLimit = (limit == null || limit <= 0) ? 20 : Math.min(limit, 100);
+        return loadPointHistory(customerId, safeLimit);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CustomerVoucherResponse> getWalletVouchers(String customerId) {
+        List<TrangThaiCustomerVoucher> statuses = Arrays.stream(TrangThaiCustomerVoucher.values()).toList();
+        List<CustomerVoucher> customerVouchers = customerVoucherRepository.findByCustomerIdAndTrangThaiIn(customerId, statuses);
+        return mapCustomerVoucherResponses(customerVouchers);
+    }
+
+    @Transactional
+    public void processBookingPaymentSuccess(DonDatCho booking) {
+        String customerId = booking.getKhachHang().getId();
+        String rewardNote = "Tích điểm cho đơn " + booking.getId();
+
+        if (lichSuDiemRepository.existsByCustomerIdAndLoaiGiaoDichDiemAndGhiChu(
+                customerId,
+                LoaiGiaoDichDiem.TICH_DIEM,
+                rewardNote)) {
+            log.debug("Booking {} already rewarded points for customer {}", booking.getId(), customerId);
+            return;
+        }
+
+        LoyaltyRule activeRule = loyaltyRuleService.requireActiveRule();
+        KhachHang customer = khachHangRepository.findById(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tìm thấy"));
+
+        int pointsBefore = customer.getDiemThanhVien() != null ? customer.getDiemThanhVien() : 0;
+        double totalSpendingBefore = normalizeMoney(customer.getTongChiTieu());
+        HangThanhVien tierBefore = customer.getHangThanhVien() != null ? customer.getHangThanhVien() : HangThanhVien.DONG;
+        double paidAmount = normalizeMoney(booking.getTongTienThanhToan());
+
+        int earnedPoints = calculateEarnedPoints(paidAmount, tierBefore, activeRule);
+        int pointsAfter = pointsBefore + earnedPoints;
+        double totalSpendingAfter = totalSpendingBefore + paidAmount;
+        HangThanhVien tierAfter = resolveTier(totalSpendingAfter, activeRule);
+
+        try {
+            customer.setDiemThanhVien(pointsAfter);
+            customer.setTongChiTieu(totalSpendingAfter);
+            customer.setHangThanhVien(tierAfter);
+            khachHangRepository.save(customer);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.warn("Optimistic lock conflict while rewarding points for booking {}", booking.getId());
+            throw new ValidationException("Cập nhật điểm thất bại do xung đột dữ liệu, vui lòng thử lại");
+        }
+
+        LichSuDiem history = new LichSuDiem();
+        history.setCustomerId(customerId);
+        history.setSoDiemThayDoi(earnedPoints);
+        history.setLoaiGiaoDichDiem(LoaiGiaoDichDiem.TICH_DIEM);
+        history.setDiemTruocGiaoDich(pointsBefore);
+        history.setDiemSauGiaoDich(pointsAfter);
+        history.setBookingId(parseLongOrNull(booking.getId()));
+        history.setGhiChu(rewardNote);
+        lichSuDiemRepository.save(history);
+
+        milestoneRewardService.incrementBookingCount(customerId);
+        notificationEventService.emitPointEarned(customerId, earnedPoints, parseLongOrNull(booking.getId()));
+        if (tierAfter != tierBefore) {
+            notificationEventService.emitTierUpgraded(customerId, tierAfter.name(), totalSpendingAfter);
+        }
     }
 
     // ========== EXCHANGEABLE VOUCHERS ==========
@@ -191,8 +276,8 @@ public class CustomerLoyaltyService {
     // ========== HELPER METHODS ==========
 
     @Transactional(readOnly = true)
-    private List<PointHistoryResponse> getPointHistory(String customerId, int limit) {
-        List<LichSuDiem> histories = lichSuDiemRepository.findByKhachHang_IdOrderByCreatedAtDesc(Long.valueOf(customerId));
+    private List<PointHistoryResponse> loadPointHistory(String customerId, int limit) {
+        List<LichSuDiem> histories = lichSuDiemRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
         
         return histories.stream()
                 .limit(limit)
@@ -200,20 +285,16 @@ public class CustomerLoyaltyService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    private List<CustomerVoucherResponse> getCustomerVouchers(String customerId) {
-        List<String> availableStatuses = Arrays.asList(
-            TrangThaiCustomerVoucher.CHUA_DUNG.name(),
-            TrangThaiCustomerVoucher.DA_DUNG.name()
-        );
-        
-        List<CustomerVoucher> customerVouchers = customerVoucherRepository.findByKhachHang_IdAndTrangThaiIn(
-            Long.valueOf(customerId),
-            availableStatuses
-        );
-        
+    private List<CustomerVoucherResponse> mapCustomerVoucherResponses(List<CustomerVoucher> customerVouchers) {
+        List<Long> voucherIds = customerVouchers.stream()
+                .map(CustomerVoucher::getVoucherId)
+                .distinct()
+                .toList();
+        Map<Long, Voucher> voucherMap = voucherRepository.findAllById(voucherIds).stream()
+                .collect(Collectors.toMap(Voucher::getId, v -> v, (left, right) -> left));
+
         return customerVouchers.stream()
-                .map(this::toCustomerVoucherResponse)
+                .map(cv -> toCustomerVoucherResponse(cv, voucherMap.get(cv.getVoucherId())))
                 .collect(Collectors.toList());
     }
 
@@ -251,7 +332,7 @@ public class CustomerLoyaltyService {
     private PointHistoryResponse toPointHistoryResponse(LichSuDiem lichSuDiem) {
         return new PointHistoryResponse(
             lichSuDiem.getId(),
-            Long.valueOf(lichSuDiem.getCustomerId()),
+            parseLongOrNull(lichSuDiem.getCustomerId()),
             lichSuDiem.getSoDiemThayDoi(),
             lichSuDiem.getLoaiGiaoDichDiem().name(),
             lichSuDiem.getDiemTruocGiaoDich(),
@@ -263,14 +344,14 @@ public class CustomerLoyaltyService {
         );
     }
 
-    private CustomerVoucherResponse toCustomerVoucherResponse(CustomerVoucher cv) {
+    private CustomerVoucherResponse toCustomerVoucherResponse(CustomerVoucher cv, Voucher voucher) {
         return new CustomerVoucherResponse(
             cv.getId(),
             cv.getVoucherId(),
             cv.getCustomerId(),
-            null,
+            voucher != null ? voucher.getMaVoucher() : null,
             cv.getMaVoucherCaNhan(),
-            null,
+            voucher != null ? voucher.getTenUuDai() : null,
             cv.getTrangThai().name(),
             cv.getSourceType() != null ? cv.getSourceType().name() : null,
             cv.getIssuedAt(),
@@ -334,7 +415,10 @@ public class CustomerLoyaltyService {
         BigDecimal progress = currentSpending.subtract(currentThreshold);
         BigDecimal range = nextThreshold.subtract(currentThreshold);
         
-        return progress.divide(range, 2, BigDecimal.ROUND_HALF_UP).multiply(BigDecimal.valueOf(100));
+        return progress.divide(range, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .max(BigDecimal.ZERO)
+                .min(BigDecimal.valueOf(100));
     }
 
     private int defaultUsedQuantity(Voucher voucher) {
@@ -343,5 +427,31 @@ public class CustomerLoyaltyService {
 
     private String generateUniqueVoucherCode() {
         return UUID.randomUUID().toString().substring(0, 12).toUpperCase();
+    }
+
+    private int calculateEarnedPoints(double paidAmount, HangThanhVien tier, LoyaltyRule rule) {
+        if (paidAmount <= 0 || rule.getMoneyPerPoint() == null || rule.getMoneyPerPoint() <= 0) {
+            return 0;
+        }
+        double basePoints = paidAmount / rule.getMoneyPerPoint();
+        double multiplier = switch (tier) {
+            case BAC -> rule.getSilverMultiplier();
+            case VANG -> rule.getGoldMultiplier();
+            case KIM_CUONG -> rule.getDiamondMultiplier();
+            default -> 1.0;
+        };
+        return (int) Math.floor(basePoints * multiplier);
+    }
+
+    private Long parseLongOrNull(String id) {
+        try {
+            return id != null ? Long.valueOf(id) : null;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private double normalizeMoney(Double value) {
+        return value == null ? 0.0 : value;
     }
 }

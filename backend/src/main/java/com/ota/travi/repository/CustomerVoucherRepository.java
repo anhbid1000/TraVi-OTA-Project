@@ -13,9 +13,7 @@ import java.util.List;
 
 @Repository
 public interface CustomerVoucherRepository extends JpaRepository<CustomerVoucher, Long> {
-    List<CustomerVoucher> findByKhachHang_IdAndTrangThaiOrderByIssuedAtDesc(Long customerId, String status);
-
-    List<CustomerVoucher> findByKhachHang_IdAndTrangThaiIn(Long customerId, List<String> statuses);
+    List<CustomerVoucher> findByCustomerIdAndTrangThaiOrderByIssuedAtDesc(String customerId, String status);
 
     @Query(value = """
             SELECT * FROM customer_voucher

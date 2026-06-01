@@ -125,7 +125,7 @@ CREATE TABLE customer_voucher (
 CREATE INDEX idx_customer_voucher_customer ON customer_voucher(customer_id);
 CREATE INDEX idx_customer_voucher_voucher ON customer_voucher(voucher_id);
 CREATE INDEX idx_customer_voucher_status ON customer_voucher(trang_thai);
-CREATE INDEX idx_customer_voucher_reserve_expires ON customer_voucher(reserve_expires_at) WHERE trang_thai = 'RESERVED';
+CREATE INDEX idx_customer_voucher_reserve_expires ON customer_voucher(reserve_expires_at)${reserved_index_filter};
 CREATE INDEX idx_customer_voucher_source ON customer_voucher(source_type);
 
 -- 7) POINT HISTORY TABLE (LICH_SU_DIEM)
@@ -202,7 +202,7 @@ CREATE TABLE notification_event (
     customer_id VARCHAR(36) NOT NULL,
     business_id VARCHAR(36),
     ref_id BIGINT,
-    metadata JSONB,
+    metadata ${json_type},
     is_processed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     processed_at TIMESTAMP,
@@ -222,7 +222,7 @@ CREATE TABLE idempotency_key (
     idempotency_key VARCHAR(100) UNIQUE NOT NULL,
     operation_type VARCHAR(100) NOT NULL,
     customer_id VARCHAR(36),
-    response_body JSONB,
+    response_body ${json_type},
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_idempotency_customer FOREIGN KEY (customer_id) REFERENCES khach_hang(id) ON DELETE CASCADE
 );
@@ -233,19 +233,11 @@ CREATE INDEX idx_idempotency_customer ON idempotency_key(customer_id);
 -- 12) ADD OPTIMISTIC LOCKING TO KHACH_HANG IF NOT EXISTS
 -- =============================================================
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name='khach_hang' AND column_name='version'
-    ) THEN
-        ALTER TABLE khach_hang ADD COLUMN version BIGINT DEFAULT 0;
-    END IF;
-END $$;
+ALTER TABLE khach_hang ADD COLUMN IF NOT EXISTS version BIGINT DEFAULT 0;
 
 -- 13) SEED DEFAULT LOYALTY RULE
 -- =============================================================
 
 INSERT INTO loyalty_rule (money_per_point, silver_threshold, gold_threshold, diamond_threshold, is_active)
 VALUES (10000, 5000000, 20000000, 50000000, TRUE)
-ON CONFLICT DO NOTHING;
+${seed_default_loyalty_suffix};

@@ -1,6 +1,7 @@
 package com.ota.travi.repository;
 
 import com.ota.travi.entity.Voucher;
+import com.ota.travi.enums.TrangThaiUuDai;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,4 +28,11 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
             SELECT * FROM voucher WHERE id = :voucherId
             """, nativeQuery = true)
     Optional<Voucher> findByIdForExchange(@Param("voucherId") Long voucherId);
+
+    @Query("""
+            SELECT v FROM Voucher v
+            WHERE v.trangThaiUuDai = :status
+            ORDER BY v.createdAt DESC
+            """)
+    List<Voucher> findByTrangThai(@Param("status") TrangThaiUuDai status);
 }

@@ -56,8 +56,10 @@ public class VoucherReserveService {
             throw new BusinessConflictException("Voucher expired");
         }
 
-        Voucher voucher = voucherRepository.findById(voucherId)
-                .orElseThrow(() -> new ResourceNotFoundException("Voucher not found with id: " + voucherId));
+        Voucher voucher = voucherRepository.findById(customerVoucher.getVoucherId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Voucher not found with id: " + customerVoucher.getVoucherId()
+                ));
 
         if (voucher.getDonHangToiThieu() != null && voucher.getDonHangToiThieu() > 0) {
             log.debug("Voucher {} has minimum order amount: {}", voucherId, voucher.getDonHangToiThieu());

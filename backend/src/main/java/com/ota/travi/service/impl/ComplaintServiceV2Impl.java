@@ -8,6 +8,7 @@ import com.ota.travi.entity.*;
 import com.ota.travi.enums.*;
 import com.ota.travi.repository.*;
 import com.ota.travi.service.ComplaintServiceV2;
+import com.ota.travi.service.ComplaintCompensationVoucherService;
 import com.ota.travi.service.ProfanityFilterService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -37,6 +38,7 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
     private final DonNhaHangRepository donNhaHangRepository;
     private final ProfanityFilterService filterService;
     private final AttachmentService attachmentService;
+    private final ComplaintCompensationVoucherService complaintCompensationVoucherService;
 
     public ComplaintServiceV2Impl(
             ComplaintRepository complaintRepository,
@@ -49,7 +51,8 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
             DonKhachSanRepository donKhachSanRepository,
             DonNhaHangRepository donNhaHangRepository,
             ProfanityFilterService filterService,
-            AttachmentService attachmentService
+            AttachmentService attachmentService,
+            ComplaintCompensationVoucherService complaintCompensationVoucherService
     ) {
         this.complaintRepository = complaintRepository;
         this.messageRepository = messageRepository;
@@ -62,6 +65,7 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
         this.donNhaHangRepository = donNhaHangRepository;
         this.filterService = filterService;
         this.attachmentService = attachmentService;
+        this.complaintCompensationVoucherService = complaintCompensationVoucherService;
     }
 
     // --- Helpers cho Activity & Message ---
@@ -391,6 +395,12 @@ public class ComplaintServiceV2Impl implements ComplaintServiceV2 {
         if (files != null && !files.isEmpty()) {
             attachmentService.saveResolutionActionAttachments(action.getId(), partnerId, "DOI_TAC", files);
         }
+
+        complaintCompensationVoucherService.handleComplaintResolutionVoucher(
+                action,
+                complaint.getKhachHang().getId(),
+                complaint.getId()
+        );
 
         complaint.setTrangThai(TrangThaiKhieuNai.DA_GIAI_QUYET);
         complaintRepository.save(complaint);

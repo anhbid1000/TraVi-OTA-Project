@@ -9,10 +9,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PromotionAnalyticsDailyRepository extends JpaRepository<PromotionAnalyticsDaily, Long> {
     List<PromotionAnalyticsDaily> findByCampaignIdAndNgayBetween(Long campaignId, LocalDate startDate, LocalDate endDate);
+
+    Optional<PromotionAnalyticsDaily> findByCampaignIdAndNgay(Long campaignId, LocalDate ngay);
 
     @Modifying
     @Query(value = """
