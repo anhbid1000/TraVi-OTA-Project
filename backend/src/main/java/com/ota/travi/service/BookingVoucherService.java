@@ -139,7 +139,7 @@ public class BookingVoucherService {
             throw new BusinessConflictException("Customer does not own this booking");
         }
 
-        List<Voucher> activeVouchers = voucherRepository.findByTrangThai(TrangThaiUuDai.DANG_CO_HIEU_LUC);
+        List<Voucher> activeVouchers = voucherRepository.findByDeletedFalseOrderByCreatedAtDesc();
         Double originalAmount = normalizeMoney(booking.getTongTienGoc());
 
         return activeVouchers.stream()
@@ -177,11 +177,15 @@ public class BookingVoucherService {
     }
 
     @Transactional(readOnly = true)
-    public VoucherPreviewResponse previewVoucherDiscount(String bookingId, String maVoucher) {
-        log.debug("Previewing voucher {} for booking {}", maVoucher, bookingId);
+    public VoucherPreviewResponse previewVoucherDiscount(String bookingId, String customerId, String maVoucher) {
+        log.debug("Previewing voucher {} for booking {} and customer {}", maVoucher, bookingId, customerId);
 
         DonDatCho booking = donDatChoRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));     
+
+        if (!booking.getKhachHang().getId().equals(customerId)) {
+            throw new BusinessConflictException("Customer does not own this booking");
+        }
 
         Voucher voucher = voucherRepository.findByMaVoucher(maVoucher)
                 .orElseThrow(() -> new ResourceNotFoundException("Voucher not found with code: " + maVoucher));   
@@ -237,9 +241,10 @@ public class BookingVoucherService {
         }
 
         if (voucher.getUsageLimitPerUser() != null) {
-            List<CustomerVoucher> customerUsages = customerVoucherRepository.findByCustomerIdAndTrangThai(        
-                    customerId, TrangThaiCustomerVoucher.DA_DUNG
-            );
+            List<CustomerVoucher> customerUsages = customerVoucherRepository.findByCustomerIdOrderByIssuedAtDesc(customerId)
+                    .stream()
+                    .filter(cv -> cv.getTrangThai() == TrangThaiCustomerVoucher.DA_DUNG)
+                    .toList();
             long usageCount = customerUsages.stream()
                     .filter(cv -> cv.getVoucherId().equals(voucher.getId()))
                     .count();
@@ -254,11 +259,9 @@ public class BookingVoucherService {
 
     private CustomerVoucher findAvailableCustomerVoucher(String customerId, Long voucherId) {
         LocalDate today = LocalDate.now();
-        return customerVoucherRepository.findByCustomerIdAndTrangThaiIn(
-                customerId,
-                List.of(TrangThaiCustomerVoucher.CHUA_DUNG)
-        )
+        return customerVoucherRepository.findByCustomerIdOrderByIssuedAtDesc(customerId)
         .stream()
+        .filter(cv -> cv.getTrangThai() == TrangThaiCustomerVoucher.CHUA_DUNG)
         .filter(cv -> cv.getVoucherId().equals(voucherId))
         .filter(cv -> cv.getExpiredAt() == null || !cv.getExpiredAt().toLocalDate().isBefore(today))
         .findFirst()

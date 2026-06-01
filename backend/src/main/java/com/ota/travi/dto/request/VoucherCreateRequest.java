@@ -10,8 +10,8 @@ public record VoucherCreateRequest(
 
         String moTa,
 
-        @NotNull(message = "ID hồ sơ kinh doanh không được để trống")
-        Long businessProfileId,
+        @NotBlank(message = "ID hồ sơ kinh doanh không được để trống")
+        String businessProfileId,
 
         @NotNull(message = "Mức giảm không được để trống")
         Double mucGiam,
@@ -41,6 +41,7 @@ public record VoucherCreateRequest(
 
         Boolean choPhepDoiBangDiem,
 
+        @NotBlank(message = "Phạm vi áp dụng không được để trống")
         String phamViApDung
 ) {
 }

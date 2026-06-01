@@ -10,7 +10,7 @@ import com.ota.travi.enums.TargetType;
 
 @Entity
 @Table(name = "khuyen_mai_truc_tiep")
-@PrimaryKeyJoinColumn(name = "id")
+@PrimaryKeyJoinColumn(name = "uu_dai_id")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,5 +21,5 @@ public class KhuyenMaiTrucTiep extends UuDai {
     private TargetType targetType;
 
     @Column(name = "target_id")
-    private Long targetId;
+    private String targetId;
 }

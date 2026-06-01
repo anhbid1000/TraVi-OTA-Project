@@ -27,7 +27,7 @@ public class NotificationEvent {
     private String customerId;
 
     @Column(name = "business_id")
-    private Long businessId;
+    private String businessId;
 
     @Column(name = "ref_id")
     private Long refId;

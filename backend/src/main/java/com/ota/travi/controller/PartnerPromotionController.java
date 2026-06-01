@@ -72,6 +72,17 @@ public class PartnerPromotionController {
         return new ResponseEntity<>(responses, HttpStatus.OK);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<PromotionResponse> getPromotionDetail(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String partnerId = getCurrentPartnerId(userDetails);
+        requirePartnerOwnsCampaign(partnerId, id);
+        PromotionResponse response = promotionService.getPromotionById(id);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @PatchMapping("/{id}/pause")
     public ResponseEntity<PromotionResponse> pausePromotion(
             @PathVariable Long id,
@@ -92,6 +103,16 @@ public class PartnerPromotionController {
         String partnerId = getCurrentPartnerId(userDetails);
         PromotionResponse response = promotionService.resumePromotion(id, partnerId, false);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePromotion(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String partnerId = getCurrentPartnerId(userDetails);
+        promotionService.softDeletePromotion(id, partnerId, false);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/{id}/analytics")

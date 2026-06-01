@@ -25,14 +25,13 @@ import com.ota.travi.repository.LichSuDiemRepository;
 import com.ota.travi.repository.VoucherRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,45 +48,37 @@ public class CustomerLoyaltyService {
     private final VoucherRepository voucherRepository;
     private final LichSuDiemRepository lichSuDiemRepository;
     private final LoyaltyRuleService loyaltyRuleService;
-    private final PromotionService promotionService;
     private final MilestoneRewardService milestoneRewardService;
     private final NotificationEventService notificationEventService;
 
-    // ========== LOYALTY SUMMARY ==========
-
     @Transactional(readOnly = true)
     public LoyaltySummaryResponse getLoyaltySummary(String customerId) {
-        log.info("Fetching loyalty summary for customer: {}", customerId);
-        
         KhachHang customer = khachHangRepository.findById(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tìm thấy"));
-        
-        var activeRule = loyaltyRuleService.getActiveRule()
-                .orElseThrow(() -> new ResourceNotFoundException("Quy tắc tích lũy điểm không được cấu hình"));
-        
+                .orElseThrow(() -> new ResourceNotFoundException("Khach hang khong tim thay"));
+
         int currentPoints = customer.getDiemThanhVien() != null ? customer.getDiemThanhVien() : 0;
         LoyaltyProgressResponse progress = getLoyaltyProgress(customerId);
         List<PointHistoryResponse> pointHistory = getPointHistory(customerId, 10);
         List<CustomerVoucherResponse> customerVouchers = getWalletVouchers(customerId);
-        
+
         return new LoyaltySummaryResponse(
-            parseLongOrNull(customerId),
-            currentPoints,
-            progress.totalSpending(),
-            progress.currentTier(),
-            progress.nextTier(),
-            progress.requiredSpending(),
-            progress.remainingSpending(),
-            progress.progressPercent(),
-            pointHistory,
-            customerVouchers
+                parseLongOrNull(customerId),
+                currentPoints,
+                progress.totalSpending(),
+                progress.currentTier(),
+                progress.nextTier(),
+                progress.requiredSpending(),
+                progress.remainingSpending(),
+                progress.progressPercent(),
+                pointHistory,
+                customerVouchers
         );
     }
 
     @Transactional(readOnly = true)
     public LoyaltyProgressResponse getLoyaltyProgress(String customerId) {
         KhachHang customer = khachHangRepository.findById(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tìm thấy"));
+                .orElseThrow(() -> new ResourceNotFoundException("Khach hang khong tim thay"));
         LoyaltyRule activeRule = loyaltyRuleService.requireActiveRule();
 
         double totalSpending = normalizeMoney(customer.getTongChiTieu());
@@ -115,27 +106,25 @@ public class CustomerLoyaltyService {
 
     @Transactional(readOnly = true)
     public List<CustomerVoucherResponse> getWalletVouchers(String customerId) {
-        List<TrangThaiCustomerVoucher> statuses = Arrays.stream(TrangThaiCustomerVoucher.values()).toList();
-        List<CustomerVoucher> customerVouchers = customerVoucherRepository.findByCustomerIdAndTrangThaiIn(customerId, statuses);
+        List<CustomerVoucher> customerVouchers = customerVoucherRepository.findByCustomerIdOrderByIssuedAtDesc(customerId);
         return mapCustomerVoucherResponses(customerVouchers);
     }
 
     @Transactional
     public void processBookingPaymentSuccess(DonDatCho booking) {
         String customerId = booking.getKhachHang().getId();
-        String rewardNote = "Tích điểm cho đơn " + booking.getId();
+        String rewardNote = "Tich diem cho don " + booking.getId();
 
         if (lichSuDiemRepository.existsByCustomerIdAndLoaiGiaoDichDiemAndGhiChu(
                 customerId,
                 LoaiGiaoDichDiem.TICH_DIEM,
                 rewardNote)) {
-            log.debug("Booking {} already rewarded points for customer {}", booking.getId(), customerId);
             return;
         }
 
         LoyaltyRule activeRule = loyaltyRuleService.requireActiveRule();
-        KhachHang customer = khachHangRepository.findById(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tìm thấy"));
+        KhachHang customer = khachHangRepository.findByIdForUpdate(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khach hang khong tim thay"));
 
         int pointsBefore = customer.getDiemThanhVien() != null ? customer.getDiemThanhVien() : 0;
         double totalSpendingBefore = normalizeMoney(customer.getTongChiTieu());
@@ -147,15 +136,10 @@ public class CustomerLoyaltyService {
         double totalSpendingAfter = totalSpendingBefore + paidAmount;
         HangThanhVien tierAfter = resolveTier(totalSpendingAfter, activeRule);
 
-        try {
-            customer.setDiemThanhVien(pointsAfter);
-            customer.setTongChiTieu(totalSpendingAfter);
-            customer.setHangThanhVien(tierAfter);
-            khachHangRepository.save(customer);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Optimistic lock conflict while rewarding points for booking {}", booking.getId());
-            throw new ValidationException("Cập nhật điểm thất bại do xung đột dữ liệu, vui lòng thử lại");
-        }
+        customer.setDiemThanhVien(pointsAfter);
+        customer.setTongChiTieu(totalSpendingAfter);
+        customer.setHangThanhVien(tierAfter);
+        khachHangRepository.save(customer);
 
         LichSuDiem history = new LichSuDiem();
         history.setCustomerId(customerId);
@@ -174,70 +158,55 @@ public class CustomerLoyaltyService {
         }
     }
 
-    // ========== EXCHANGEABLE VOUCHERS ==========
-
     @Transactional(readOnly = true)
     public List<PromotionResponse> getExchangeableVouchers() {
-        log.info("Fetching exchangeable vouchers");
-        
-        List<String> activeStatuses = Arrays.asList(
-            TrangThaiUuDai.DANG_CO_HIEU_LUC.name(),
-            TrangThaiUuDai.DA_LEN_LICH.name()
-        );
-        
-        List<Voucher> vouchers = voucherRepository.findExchangeableVouchers(activeStatuses.get(0));
-        
-        return vouchers.stream()
-                .map(this::toPromotionResponse)
-                .collect(Collectors.toList());
+        LocalDate today = LocalDate.now();
+        List<Voucher> vouchers = voucherRepository.findExchangeableVouchers().stream()
+                .filter(voucher -> voucher.getTrangThaiUuDai() == TrangThaiUuDai.DANG_CO_HIEU_LUC)
+                .filter(voucher -> voucher.getNgayBatDau() == null || !voucher.getNgayBatDau().isAfter(today))
+                .filter(voucher -> voucher.getNgayKetThuc() == null || !voucher.getNgayKetThuc().isBefore(today))
+                .toList();
+        return vouchers.stream().map(this::toPromotionResponse).collect(Collectors.toList());
     }
-
-    // ========== VOUCHER EXCHANGE ==========
 
     @Transactional
     public ExchangeVoucherResponse exchangeVoucher(String customerId, Long voucherId) {
-        log.info("Exchanging voucher {} for customer: {}", voucherId, customerId);
-        
-        KhachHang customer = khachHangRepository.findById(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tìm thấy"));
-        
+        KhachHang customer = khachHangRepository.findByIdForUpdate(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Khach hang khong tim thay"));
+
         Voucher voucher = voucherRepository.findById(voucherId)
-                .orElseThrow(() -> new ResourceNotFoundException("Voucher không tìm thấy"));
-        
-        var activeRule = loyaltyRuleService.requireActiveRule();
-        
-        if (!voucher.getChoPhepDoiBangDiem()) {
-            throw new ValidationException("Voucher này không hỗ trợ đổi bằng điểm");
+                .orElseThrow(() -> new ResourceNotFoundException("Voucher khong tim thay"));
+
+        if (voucher.getDeleted() || voucher.getTrangThaiUuDai() != TrangThaiUuDai.DANG_CO_HIEU_LUC) {
+            throw new ValidationException("Voucher khong kha dung");
         }
-        
+        if (voucher.getNgayBatDau() != null && voucher.getNgayBatDau().isAfter(LocalDate.now())) {
+            throw new ValidationException("Voucher chua den thoi gian ap dung");
+        }
+        if (voucher.getNgayKetThuc() != null && voucher.getNgayKetThuc().isBefore(LocalDate.now())) {
+            throw new ValidationException("Voucher da het han");
+        }
+        if (!Boolean.TRUE.equals(voucher.getChoPhepDoiBangDiem())) {
+            throw new ValidationException("Voucher nay khong ho tro doi bang diem");
+        }
+        if (defaultUsedQuantity(voucher) >= voucher.getSoLuongPhatHanh()) {
+            throw new ValidationException("Voucher da het");
+        }
+
         int requiredPoints = voucher.getDiemCanDoi() != null ? voucher.getDiemCanDoi() : 0;
         int currentPoints = customer.getDiemThanhVien() != null ? customer.getDiemThanhVien() : 0;
-        
         if (currentPoints < requiredPoints) {
-            throw new ValidationException(
-                String.format("Không đủ điểm. Yêu cầu: %d, Hiện tại: %d", requiredPoints, currentPoints)
-            );
+            throw new ValidationException("Khong du diem de doi voucher");
         }
-        
-        if (voucher.getSoLuongDaDung() >= voucher.getSoLuongPhatHanh()) {
-            throw new ValidationException("Voucher đã hết");
-        }
-        
-        int pointsBeforeExchange = currentPoints;
+
         int pointsAfterExchange = currentPoints - requiredPoints;
-        
-        try {
-            customer.setDiemThanhVien(pointsAfterExchange);
-            customer.setHangThanhVien(resolveTier(customer.getTongChiTieu() != null ? customer.getTongChiTieu() : 0.0, activeRule));
-            khachHangRepository.save(customer);
-        } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Optimistic lock conflict during point exchange for customer: {}", customerId);
-            throw new ValidationException("Giao dịch bị xung đột. Vui lòng thử lại");
-        }
-        
+        customer.setDiemThanhVien(pointsAfterExchange);
+        customer.setHangThanhVien(resolveTier(normalizeMoney(customer.getTongChiTieu()), loyaltyRuleService.requireActiveRule()));
+        khachHangRepository.save(customer);
+
         voucher.setSoLuongDaDung(defaultUsedQuantity(voucher) + 1);
         voucherRepository.save(voucher);
-        
+
         CustomerVoucher customerVoucher = new CustomerVoucher();
         customerVoucher.setCustomerId(customerId);
         customerVoucher.setVoucherId(voucherId);
@@ -245,41 +214,35 @@ public class CustomerLoyaltyService {
         customerVoucher.setTrangThai(TrangThaiCustomerVoucher.CHUA_DUNG);
         customerVoucher.setSourceType(SourceTypeVoucher.POINT_REDEEM);
         customerVoucher.setIssuedAt(LocalDateTime.now());
-        customerVoucher.setExpiredAt(voucher.getNgayKetThuc().atTime(23, 59, 59));
-        
+        customerVoucher.setExpiredAt(voucher.getNgayKetThuc() != null ? voucher.getNgayKetThuc().atTime(23, 59, 59) : null);
         CustomerVoucher saved = customerVoucherRepository.save(customerVoucher);
-        
+
         LichSuDiem history = new LichSuDiem();
         history.setCustomerId(customerId);
         history.setSoDiemThayDoi(-requiredPoints);
         history.setLoaiGiaoDichDiem(LoaiGiaoDichDiem.DOI_VOUCHER);
-        history.setDiemTruocGiaoDich(pointsBeforeExchange);
+        history.setDiemTruocGiaoDich(currentPoints);
         history.setDiemSauGiaoDich(pointsAfterExchange);
         history.setVoucherId(voucherId);
-        history.setGhiChu("Đổi voucher: " + voucher.getMaVoucher());
-        
+        history.setGhiChu("Doi voucher: " + voucher.getMaVoucher());
         lichSuDiemRepository.save(history);
-        
-        log.info("Voucher exchanged successfully for customer {}: {}", customerId, voucherId);
-        
+
+        notificationEventService.emitVoucherReceived(customerId, voucherId, SourceTypeVoucher.POINT_REDEEM.name());
+
         return new ExchangeVoucherResponse(
-            saved.getId(),
-            voucherId,
-            voucher.getMaVoucher(),
-            saved.getMaVoucherCaNhan(),
-            requiredPoints,
-            pointsAfterExchange,
-            "Đổi voucher thành công"
+                saved.getId(),
+                voucherId,
+                voucher.getMaVoucher(),
+                saved.getMaVoucherCaNhan(),
+                requiredPoints,
+                pointsAfterExchange,
+                "Doi voucher thanh cong"
         );
     }
 
-    // ========== HELPER METHODS ==========
-
     @Transactional(readOnly = true)
     private List<PointHistoryResponse> loadPointHistory(String customerId, int limit) {
-        List<LichSuDiem> histories = lichSuDiemRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
-        
-        return histories.stream()
+        return lichSuDiemRepository.findByCustomerIdOrderByCreatedAtDesc(customerId).stream()
                 .limit(limit)
                 .map(this::toPointHistoryResponse)
                 .collect(Collectors.toList());
@@ -300,84 +263,81 @@ public class CustomerLoyaltyService {
 
     private PromotionResponse toPromotionResponse(Voucher voucher) {
         return new PromotionResponse(
-            voucher.getId(),
-            voucher.getTenUuDai(),
-            normalizeNullable(voucher.getMoTa()),
-            voucher.getCreatedByUserId(),
-            voucher.getCreatedByRole() != null ? voucher.getCreatedByRole().name() : null,
-            voucher.getBusinessProfileId(),
-            voucher.getMucGiam(),
-            voucher.getLoaiGiamGia().name(),
-            voucher.getGiaTriGiamToiDa(),
-            voucher.getNgayBatDau().atStartOfDay(),
-            voucher.getNgayKetThuc().atTime(23, 59, 59),
-            voucher.getTrangThaiUuDai().name(),
-            voucher.getDeleted(),
-            "VOUCHER",
-            voucher.getMaVoucher(),
-            voucher.getSoLuongPhatHanh(),
-            voucher.getSoLuongDaDung(),
-            voucher.getDonHangToiThieu(),
-            voucher.getUsageLimitPerUser(),
-            voucher.getDiemCanDoi(),
-            voucher.getChoPhepDoiBangDiem(),
-            voucher.getPhamViApDung() != null ? voucher.getPhamViApDung().name() : null,
-            null,
-            null,
-            voucher.getCreatedAt(),
-            voucher.getUpdatedAt()
+                voucher.getId(),
+                voucher.getTenUuDai(),
+                voucher.getMoTa(),
+                voucher.getCreatedByUserId(),
+                voucher.getCreatedByRole() != null ? voucher.getCreatedByRole().name() : null,
+                voucher.getBusinessProfileId(),
+                voucher.getMucGiam(),
+                voucher.getLoaiGiamGia().name(),
+                voucher.getGiaTriGiamToiDa(),
+                voucher.getNgayBatDau().atStartOfDay(),
+                voucher.getNgayKetThuc().atTime(23, 59, 59),
+                voucher.getTrangThaiUuDai().name(),
+                voucher.getDeleted(),
+                "VOUCHER",
+                voucher.getMaVoucher(),
+                voucher.getSoLuongPhatHanh(),
+                voucher.getSoLuongDaDung(),
+                voucher.getDonHangToiThieu(),
+                voucher.getUsageLimitPerUser(),
+                voucher.getDiemCanDoi(),
+                voucher.getChoPhepDoiBangDiem(),
+                voucher.getPhamViApDung() != null ? voucher.getPhamViApDung().name() : null,
+                null,
+                null,
+                voucher.getCreatedAt(),
+                voucher.getUpdatedAt()
         );
     }
 
     private PointHistoryResponse toPointHistoryResponse(LichSuDiem lichSuDiem) {
         return new PointHistoryResponse(
-            lichSuDiem.getId(),
-            parseLongOrNull(lichSuDiem.getCustomerId()),
-            lichSuDiem.getSoDiemThayDoi(),
-            lichSuDiem.getLoaiGiaoDichDiem().name(),
-            lichSuDiem.getDiemTruocGiaoDich(),
-            lichSuDiem.getDiemSauGiaoDich(),
-            lichSuDiem.getBookingId(),
-            lichSuDiem.getVoucherId(),
-            normalizeNullable(lichSuDiem.getGhiChu()),
-            lichSuDiem.getCreatedAt()
+                lichSuDiem.getId(),
+                parseLongOrNull(lichSuDiem.getCustomerId()),
+                lichSuDiem.getSoDiemThayDoi(),
+                lichSuDiem.getLoaiGiaoDichDiem().name(),
+                lichSuDiem.getDiemTruocGiaoDich(),
+                lichSuDiem.getDiemSauGiaoDich(),
+                lichSuDiem.getBookingId(),
+                lichSuDiem.getVoucherId(),
+                lichSuDiem.getGhiChu(),
+                lichSuDiem.getCreatedAt()
         );
     }
 
     private CustomerVoucherResponse toCustomerVoucherResponse(CustomerVoucher cv, Voucher voucher) {
         return new CustomerVoucherResponse(
-            cv.getId(),
-            cv.getVoucherId(),
-            cv.getCustomerId(),
-            voucher != null ? voucher.getMaVoucher() : null,
-            cv.getMaVoucherCaNhan(),
-            voucher != null ? voucher.getTenUuDai() : null,
-            cv.getTrangThai().name(),
-            cv.getSourceType() != null ? cv.getSourceType().name() : null,
-            cv.getIssuedAt(),
-            cv.getReservedAt(),
-            cv.getReserveExpiresAt(),
-            cv.getUsedAt(),
-            cv.getExpiredAt(),
-            cv.getBookingId(),
-            CustomerVoucherResponse.calculateIsReserveExpired(cv.getReserveExpiresAt())
+                cv.getId(),
+                cv.getVoucherId(),
+                cv.getCustomerId(),
+                voucher != null ? voucher.getMaVoucher() : null,
+                cv.getMaVoucherCaNhan(),
+                voucher != null ? voucher.getTenUuDai() : null,
+                cv.getTrangThai().name(),
+                cv.getSourceType() != null ? cv.getSourceType().name() : null,
+                cv.getIssuedAt(),
+                cv.getReservedAt(),
+                cv.getReserveExpiresAt(),
+                cv.getUsedAt(),
+                cv.getExpiredAt(),
+                cv.getBookingId(),
+                CustomerVoucherResponse.calculateIsReserveExpired(cv.getReserveExpiresAt())
         );
-    }
-
-    private String normalizeNullable(String value) {
-        return value != null ? value : "";
     }
 
     private HangThanhVien resolveTier(Double totalSpending, LoyaltyRule rule) {
         if (totalSpending >= rule.getDiamondThreshold()) {
             return HangThanhVien.KIM_CUONG;
-        } else if (totalSpending >= rule.getGoldThreshold()) {
-            return HangThanhVien.VANG;
-        } else if (totalSpending >= rule.getSilverThreshold()) {
-            return HangThanhVien.BAC;
-        } else {
-            return HangThanhVien.DONG;
         }
+        if (totalSpending >= rule.getGoldThreshold()) {
+            return HangThanhVien.VANG;
+        }
+        if (totalSpending >= rule.getSilverThreshold()) {
+            return HangThanhVien.BAC;
+        }
+        return HangThanhVien.DONG;
     }
 
     private HangThanhVien resolveNextTier(HangThanhVien currentTier) {
@@ -398,23 +358,18 @@ public class CustomerLoyaltyService {
         };
     }
 
-    private BigDecimal resolveProgressPercent(
-            Double spending,
-            HangThanhVien currentTier,
-            LoyaltyRule rule) {
-        
+    private BigDecimal resolveProgressPercent(Double spending, HangThanhVien currentTier, LoyaltyRule rule) {
         BigDecimal currentSpending = BigDecimal.valueOf(spending != null ? spending : 0.0);
         BigDecimal currentThreshold = thresholdFor(currentTier, rule);
         HangThanhVien nextTier = resolveNextTier(currentTier);
         BigDecimal nextThreshold = thresholdFor(nextTier, rule);
-        
+
         if (nextThreshold.equals(currentThreshold)) {
             return BigDecimal.valueOf(100);
         }
-        
+
         BigDecimal progress = currentSpending.subtract(currentThreshold);
         BigDecimal range = nextThreshold.subtract(currentThreshold);
-        
         return progress.divide(range, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100))
                 .max(BigDecimal.ZERO)

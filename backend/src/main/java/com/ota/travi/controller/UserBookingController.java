@@ -74,10 +74,12 @@ public class UserBookingController {
     @GetMapping("/{bookingId}/voucher-preview")
     public ResponseEntity<BookingVoucherService.VoucherPreviewResponse> previewVoucher(
             @PathVariable String bookingId,
-            @RequestParam("maVoucher") String maVoucher
+            @RequestParam("maVoucher") String maVoucher,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        String customerId = resolveCustomerId(userDetails);
         BookingVoucherService.VoucherPreviewResponse response =
-                bookingVoucherService.previewVoucherDiscount(bookingId, maVoucher);
+                bookingVoucherService.previewVoucherDiscount(bookingId, customerId, maVoucher);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

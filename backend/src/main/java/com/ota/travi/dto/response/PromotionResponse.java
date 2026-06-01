@@ -9,7 +9,7 @@ public record PromotionResponse(
         String moTa,
         String createdByUserId,
         String createdByRole,
-        Long businessProfileId,
+        String businessProfileId,
         Double mucGiam,
         String loaiGiamGia,
         Double giaTriGiamToiDa,

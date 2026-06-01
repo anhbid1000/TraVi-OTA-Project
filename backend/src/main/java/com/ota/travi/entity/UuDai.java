@@ -24,7 +24,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class UuDai {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "uu_dai_seq")
+    @SequenceGenerator(name = "uu_dai_seq", sequenceName = "uu_dai_id_seq", allocationSize = 1)
     private Long id;
 
     @Column(nullable = false)
@@ -41,7 +42,7 @@ public class UuDai {
     private CreatedByRole createdByRole;
 
     @Column(name = "business_profile_id")
-    private Long businessProfileId;
+    private String businessProfileId;
 
     @Column(nullable = false)
     private Double mucGiam;

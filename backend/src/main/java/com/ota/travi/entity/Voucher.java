@@ -10,7 +10,7 @@ import com.ota.travi.enums.PhamViApDung;
 
 @Entity
 @Table(name = "voucher")
-@PrimaryKeyJoinColumn(name = "id")
+@PrimaryKeyJoinColumn(name = "uu_dai_id")
 @Getter
 @Setter
 @NoArgsConstructor

@@ -16,9 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -128,8 +126,8 @@ public class VoucherReserveService {
     public void cleanupExpiredReserves() {
         log.info("Running cleanup task for expired voucher reserves");
 
-        Instant expirationTime = Instant.now();
-        List<CustomerVoucher> expiredReserves = customerVoucherRepository.findReservedVouchersExpiredBefore(expirationTime);
+        LocalDateTime now = LocalDateTime.now();
+        List<CustomerVoucher> expiredReserves = customerVoucherRepository.findReservedVouchersExpiredBefore(now);
 
         if (expiredReserves.isEmpty()) {
             log.debug("No expired reserves found");
@@ -141,7 +139,7 @@ public class VoucherReserveService {
         for (CustomerVoucher voucher : expiredReserves) {
             if (voucher.getTrangThai() == TrangThaiCustomerVoucher.RESERVED && 
                 voucher.getReserveExpiresAt() != null && 
-                voucher.getReserveExpiresAt().isBefore(LocalDateTime.now())) {
+                voucher.getReserveExpiresAt().isBefore(now)) {
                 
                 voucher.setTrangThai(TrangThaiCustomerVoucher.CHUA_DUNG);
                 voucher.setReservedAt(null);
@@ -158,7 +156,10 @@ public class VoucherReserveService {
     @Transactional(readOnly = true)
     public List<CustomerVoucher> getCustomerVouchersWithStatus(String customerId, TrangThaiCustomerVoucher status) {
         log.debug("Fetching customer vouchers for customer {} with status {}", customerId, status);
-        return customerVoucherRepository.findByCustomerIdAndStatus(customerId, status);
+        return customerVoucherRepository.findByCustomerIdOrderByIssuedAtDesc(customerId)
+                .stream()
+                .filter(voucher -> voucher.getTrangThai() == status)
+                .toList();
     }
 
     @Transactional(readOnly = true)

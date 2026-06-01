@@ -37,13 +37,16 @@ const categoryMap: Record<ComplaintCategory, string> = {
 };
 
 const actionTypeMap: Record<ComplaintResolutionActionType, string> = {
+  APOLOGY: 'Xin lỗi chính thức',
+  ROOM_CHANGE: 'Đổi phòng',
+  TABLE_CHANGE: 'Đổi bàn',
+  SERVICE_REDO: 'Thực hiện lại dịch vụ',
   FULL_REFUND: 'Hoàn tiền toàn bộ',
   PARTIAL_REFUND: 'Hoàn tiền một phần',
   VOUCHER: 'Voucher',
-  DISCOUNT_NEXT_BOOKING: 'Giảm giá lần đặt sau',
-  CHANGE_ROOM: 'Đổi phòng',
-  OTHER_SOLUTION: 'Phương án khác',
-  REJECT_COMPLAINT: 'Từ chối khiếu nại',
+  DISCOUNT_CODE: 'Mã giảm giá',
+  REJECT_REQUEST: 'Từ chối yêu cầu',
+  OTHER: 'Phương án khác',
 };
 
 function severityLabel(severity: ComplaintResponse['severity']) {

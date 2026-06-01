@@ -4,6 +4,9 @@ import com.ota.travi.entity.ComplaintResolutionAction;
 import com.ota.travi.entity.CustomerVoucher;
 import com.ota.travi.entity.Voucher;
 import com.ota.travi.enums.ComplaintResolutionActionType;
+import com.ota.travi.enums.CreatedByRole;
+import com.ota.travi.enums.LoaiGiamGia;
+import com.ota.travi.enums.PhamViApDung;
 import com.ota.travi.enums.SourceTypeVoucher;
 import com.ota.travi.enums.TrangThaiCustomerVoucher;
 import com.ota.travi.enums.TrangThaiUuDai;
@@ -106,6 +109,7 @@ public class ComplaintCompensationVoucherService {
      */
     private Voucher createFixedAmountVoucher(ComplaintResolutionAction action) {
         Voucher voucher = new Voucher();
+        populateCompensationVoucherBase(voucher, action);
         
         Double voucherAmount = DEFAULT_VOUCHER_VALUE;
         if (action.getAmount() != null) {
@@ -116,8 +120,9 @@ public class ComplaintCompensationVoucherService {
         voucher.setMoTa("Voucher issued as compensation for complaint resolution");
         voucher.setMaVoucher("COMP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         voucher.setSoLuongPhatHanh(1);
+        voucher.setSoLuongDaDung(0);
         voucher.setUsageLimitPerUser(1);
-        voucher.setLoaiGiamGia(com.ota.travi.enums.LoaiGiamGia.SO_TIEN_CO_DINH);
+        voucher.setLoaiGiamGia(LoaiGiamGia.SO_TIEN_CO_DINH);
         voucher.setMucGiam(voucherAmount);
         voucher.setTrangThaiUuDai(TrangThaiUuDai.DANG_CO_HIEU_LUC);
         voucher.setNgayBatDau(java.time.LocalDate.now());
@@ -131,6 +136,7 @@ public class ComplaintCompensationVoucherService {
      */
     private Voucher createPercentageVoucher(ComplaintResolutionAction action) {
         Voucher voucher = new Voucher();
+        populateCompensationVoucherBase(voucher, action);
         
         Integer discountPercent = DEFAULT_DISCOUNT_PERCENT;
         if (action.getDiscountPercent() != null) {
@@ -141,8 +147,9 @@ public class ComplaintCompensationVoucherService {
         voucher.setMoTa("Discount code issued as compensation for complaint resolution");
         voucher.setMaVoucher("DISC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         voucher.setSoLuongPhatHanh(1);
+        voucher.setSoLuongDaDung(0);
         voucher.setUsageLimitPerUser(1);
-        voucher.setLoaiGiamGia(com.ota.travi.enums.LoaiGiamGia.PHAN_TRAM);
+        voucher.setLoaiGiamGia(LoaiGiamGia.PHAN_TRAM);
         voucher.setMucGiam(discountPercent.doubleValue());
         voucher.setGiaTriGiamToiDa(500000.0);
         voucher.setTrangThaiUuDai(TrangThaiUuDai.DANG_CO_HIEU_LUC);
@@ -150,6 +157,20 @@ public class ComplaintCompensationVoucherService {
         voucher.setNgayKetThuc(java.time.LocalDate.now().plusDays(VOUCHER_VALIDITY_DAYS));
 
         return voucher;
+    }
+
+    private void populateCompensationVoucherBase(Voucher voucher, ComplaintResolutionAction action) {
+        String createdByUserId = action.getComplaint().getHoSoKinhDoanh().getDoiTac().getId();
+        String businessProfileId = action.getComplaint().getHoSoKinhDoanh().getIdHoSo();
+
+        voucher.setCreatedByUserId(createdByUserId);
+        voucher.setCreatedByRole(CreatedByRole.DOI_TAC);
+        voucher.setBusinessProfileId(businessProfileId);
+        voucher.setDonHangToiThieu(0.0);
+        voucher.setChoPhepDoiBangDiem(false);
+        voucher.setDiemCanDoi(0);
+        voucher.setPhamViApDung(PhamViApDung.CO_SO_CU_THE);
+        voucher.setDeleted(false);
     }
 
     /**

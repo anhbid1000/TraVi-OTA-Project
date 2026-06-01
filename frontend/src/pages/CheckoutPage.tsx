@@ -206,9 +206,8 @@ export function CheckoutPage() {
 
               <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-sm">
                 <h2 className="font-display text-xl font-bold text-on-surface">Mã ưu đãi</h2>
-                <div className="mt-4 flex gap-3">
-                  <input className="w-full rounded-xl border border-outline-variant/50 bg-surface px-4 py-3 text-sm outline-none transition focus:border-primary" placeholder="Nhập mã giảm giá" type="text" />
-                  <button type="button" className="rounded-xl bg-secondary px-5 py-3 text-sm font-bold text-on-secondary">Áp dụng</button>
+                <div className="mt-4 rounded-xl border border-outline-variant/40 bg-white p-4 text-sm text-on-surface-variant">
+                  Voucher hiện được áp dụng theo đơn đặt chỗ đã tạo. Bạn có thể nhập / xem trước / áp dụng / gỡ voucher ở bước thanh toán ngay sau khi tạo đơn.
                 </div>
               </section>
 

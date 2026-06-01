@@ -1,7 +1,6 @@
 package com.ota.travi.service;
 
 import com.ota.travi.entity.PromotionAnalyticsDaily;
-import com.ota.travi.exception.ResourceNotFoundException;
 import com.ota.travi.repository.PromotionAnalyticsDailyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,10 +57,6 @@ public class PromotionAnalyticsService {
                         LocalDate.of(1970, 1, 1), 
                         LocalDate.now()
                 );
-
-        if (dailyMetrics.isEmpty()) {
-            throw new ResourceNotFoundException("No analytics found for campaign: " + campaignId);
-        }
 
         long totalUsages = dailyMetrics.stream()
                 .mapToLong(d -> d.getUsageCount() != null ? d.getUsageCount() : 0)

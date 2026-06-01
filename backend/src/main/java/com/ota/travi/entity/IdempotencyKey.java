@@ -33,7 +33,7 @@ public class IdempotencyKey {
     @Column(name = "operation_type", nullable = false, length = 100)
     private String operationType;
 
-    @Column(name = "response_json", columnDefinition = "LONGTEXT")
+    @Column(name = "response_json", columnDefinition = "TEXT")
     private String responseJson;
 
     @Column(name = "status", nullable = false, length = 50)

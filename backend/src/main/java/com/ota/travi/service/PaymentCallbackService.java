@@ -93,30 +93,28 @@ public class PaymentCallbackService {
                 throw new ResourceNotFoundException("Booking does not belong to customer");
             }
 
-            if (booking.getVoucherId() == null) {
-                log.debug("Booking {} has no associated voucher", bookingId);
-                return;
-            }
+            if (booking.getVoucherId() != null) {
+                Optional<CustomerVoucher> customerVoucherOpt = customerVoucherRepository.findById(booking.getVoucherId());
+                if (customerVoucherOpt.isEmpty()) {
+                    log.warn("Customer voucher not found with id: {}", booking.getVoucherId());
+                } else {
+                    CustomerVoucher customerVoucher = customerVoucherOpt.get();
 
-            Optional<CustomerVoucher> customerVoucherOpt = customerVoucherRepository.findById(booking.getVoucherId());
-            if (customerVoucherOpt.isEmpty()) {
-                log.warn("Customer voucher not found with id: {}", booking.getVoucherId());
-                return;
-            }
-
-            CustomerVoucher customerVoucher = customerVoucherOpt.get();
-
-            if (customerVoucher.getTrangThai() == TrangThaiCustomerVoucher.RESERVED) {
-                voucherReserveService.releaseVoucher(booking.getVoucherId());
-                notificationEventService.emitVoucherReleased(customerId, customerVoucher.getVoucherId());
-                log.info("Successfully released voucher {} for failed booking {}", booking.getVoucherId(), bookingId);
-            } else {
-                log.debug("Voucher {} is not reserved. Current status: {}. Skipping release.", 
-                        booking.getVoucherId(), customerVoucher.getTrangThai());
+                    if (customerVoucher.getTrangThai() == TrangThaiCustomerVoucher.RESERVED) {
+                        voucherReserveService.releaseVoucher(booking.getVoucherId());
+                        notificationEventService.emitVoucherReleased(customerId, customerVoucher.getVoucherId());
+                        log.info("Successfully released voucher {} for failed booking {}", booking.getVoucherId(), bookingId);
+                    } else {
+                        log.debug("Voucher {} is not reserved. Current status: {}. Skipping release.",
+                                booking.getVoucherId(), customerVoucher.getTrangThai());
+                    }
+                }
             }
 
             booking.setVoucherId(null);
-            booking.setTrangThai(TrangThaiDon.THANH_TOAN_THAT_BAI);
+            if (booking.getTrangThai() != TrangThaiDon.DA_THANH_TOAN) {
+                booking.setTrangThai(TrangThaiDon.THANH_TOAN_THAT_BAI);
+            }
             booking.setTienKhuyenMai(0.0);
             booking.setTongTienThanhToan(booking.getTongTienGoc());
             donDatChoRepository.save(booking);

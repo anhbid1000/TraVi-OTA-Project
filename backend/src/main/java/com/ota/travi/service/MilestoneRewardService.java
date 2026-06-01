@@ -2,10 +2,14 @@ package com.ota.travi.service;
 
 import com.ota.travi.entity.CustomerVoucher;
 import com.ota.travi.entity.MilestoneProgress;
+import com.ota.travi.entity.Voucher;
+import com.ota.travi.enums.CreatedByRole;
+import com.ota.travi.enums.LoaiGiamGia;
+import com.ota.travi.enums.PhamViApDung;
 import com.ota.travi.enums.SourceTypeVoucher;
 import com.ota.travi.enums.TrangThaiCustomerVoucher;
+import com.ota.travi.enums.TrangThaiUuDai;
 import com.ota.travi.exception.BusinessConflictException;
-import com.ota.travi.exception.ResourceNotFoundException;
 import com.ota.travi.repository.CustomerVoucherRepository;
 import com.ota.travi.repository.MilestoneProgressRepository;
 import com.ota.travi.repository.VoucherRepository;
@@ -18,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -70,7 +73,7 @@ public class MilestoneRewardService {
 
         // Create customer voucher for the milestone reward
         try {
-            com.ota.travi.entity.Voucher voucherEntity = createOrGetMilestoneVoucher(milestone);
+            Voucher voucherEntity = createOrGetMilestoneVoucher(milestone, customerId);
             
             CustomerVoucher voucher = new CustomerVoucher();
             voucher.setCustomerId(customerId);
@@ -105,11 +108,46 @@ public class MilestoneRewardService {
         }
     }
 
-    private com.ota.travi.entity.Voucher createOrGetMilestoneVoucher(Integer milestone) {
+    private Voucher createOrGetMilestoneVoucher(Integer milestone, String customerId) {
         String voucherCode = "MILESTONE_" + milestone;
         return voucherRepository.findByMaVoucher(voucherCode)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Milestone voucher not found: " + voucherCode));
+                .orElseGet(() -> createMilestoneVoucherTemplate(voucherCode, milestone, customerId));
+    }
+
+    private Voucher createMilestoneVoucherTemplate(String voucherCode, Integer milestone, String customerId) {
+        Voucher voucher = new Voucher();
+        voucher.setMaVoucher(voucherCode);
+        voucher.setTenUuDai("Milestone Reward #" + milestone);
+        voucher.setMoTa("Voucher thuong milestone tu he thong loyalty");
+        voucher.setCreatedByUserId(customerId);
+        voucher.setCreatedByRole(CreatedByRole.QUAN_TRI_VIEN);
+        voucher.setBusinessProfileId(null);
+        voucher.setSoLuongPhatHanh(Integer.MAX_VALUE);
+        voucher.setSoLuongDaDung(0);
+        voucher.setUsageLimitPerUser(1);
+        voucher.setDonHangToiThieu(0.0);
+        voucher.setDiemCanDoi(0);
+        voucher.setChoPhepDoiBangDiem(false);
+        voucher.setPhamViApDung(PhamViApDung.TOAN_SAN);
+        voucher.setTrangThaiUuDai(TrangThaiUuDai.DANG_CO_HIEU_LUC);
+        voucher.setNgayBatDau(LocalDateTime.now().toLocalDate());
+        voucher.setNgayKetThuc(LocalDateTime.now().plusYears(10).toLocalDate());
+
+        if (milestone >= 20) {
+            voucher.setLoaiGiamGia(LoaiGiamGia.PHAN_TRAM);
+            voucher.setMucGiam(20.0);
+            voucher.setGiaTriGiamToiDa(500000.0);
+        } else if (milestone >= 10) {
+            voucher.setLoaiGiamGia(LoaiGiamGia.SO_TIEN_CO_DINH);
+            voucher.setMucGiam(200000.0);
+            voucher.setGiaTriGiamToiDa(null);
+        } else {
+            voucher.setLoaiGiamGia(LoaiGiamGia.SO_TIEN_CO_DINH);
+            voucher.setMucGiam(50000.0);
+            voucher.setGiaTriGiamToiDa(null);
+        }
+
+        return voucherRepository.save(voucher);
     }
 
     @Transactional(readOnly = true)
