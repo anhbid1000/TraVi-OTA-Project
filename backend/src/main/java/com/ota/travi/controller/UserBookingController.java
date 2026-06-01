@@ -7,6 +7,8 @@ import com.ota.travi.service.CancelBookingService;
 import com.ota.travi.service.BookingVoucherService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,22 +33,14 @@ import static com.ota.travi.constant.ApiEndpoints.USER_BOOKINGS;
  * Endpoint: /api/v1/user/bookings
  */
 @RestController
+@RequiredArgsConstructor
 @RequestMapping(USER_BOOKINGS)
 public class UserBookingController {
 
     private final BookingService bookingService;
     private final CancelBookingService cancelBookingService;
-
-    public UserBookingController(BookingService bookingService, CancelBookingService cancelBookingService) {
-        this.bookingService = bookingService;
-        this.cancelBookingService = cancelBookingService;
-    }
     private final BookingVoucherService bookingVoucherService;
 
-    public UserBookingController(BookingService bookingService, BookingVoucherService bookingVoucherService) {
-        this.bookingService = bookingService;
-        this.bookingVoucherService = bookingVoucherService;
-    }
 
     @GetMapping
     public ResponseEntity<?> getMyBookings() {
@@ -79,6 +73,9 @@ public class UserBookingController {
         } catch (RuntimeException ex) {
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
         }
+
+    }
+
     @PostMapping("/{bookingId}/apply-voucher")
     public ResponseEntity<BookingVoucherService.VoucherCheckoutResponse> applyVoucherToBooking(
             @PathVariable String bookingId,
