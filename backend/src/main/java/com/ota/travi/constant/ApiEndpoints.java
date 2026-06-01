@@ -27,6 +27,8 @@ public final class ApiEndpoints {
     public static final String PUBLIC_ROOMS_SEARCH = PUBLIC_PREFIX + "/rooms/search"; // planned
     public static final String PUBLIC_CULTURE_SPOTS = PUBLIC_PREFIX + "/culture-spots"; // planned
     public static final String PUBLIC_BOOKING_SEARCH = PUBLIC_PREFIX + "/bookings/search";
+    public static final String PUBLIC_ASSET_REVIEWS = PUBLIC_PREFIX + "/assets/{assetId}/reviews";
+    public static final String PUBLIC_PROMOTIONS_ACTIVE = PUBLIC_PREFIX + "/promotions/active";
 
     // 1.a Authentication (public) - keep under versioned auth prefix
     public static final String AUTH_PREFIX = BASE_PREFIX + "/auth";
@@ -53,6 +55,13 @@ public final class ApiEndpoints {
     public static final String USER_FEEDBACK_REVIEWS = USER_FEEDBACK_PREFIX + "/reviews";
     public static final String USER_FEEDBACK_COMPLAINTS = USER_FEEDBACK_PREFIX + "/complaints";
     public static final String USER_FEEDBACK_REPORTS = USER_FEEDBACK_PREFIX + "/reports";
+    public static final String USER_RECOMMENDATION_FEEDBACK = USER_RECOMMENDATIONS + "/feedback";
+    public static final String USER_AI_EVENTS = USER_PREFIX + "/ai-events";
+    public static final String USER_PREFERENCES_CATEGORIES = USER_PREFIX + "/preferences/categories";
+    public static final String USER_PREFERENCES = USER_PREFIX + "/preferences";
+    public static final String USER_ITINERARY_PLANNER = USER_PREFIX + "/itinerary-planner";
+    public static final String USER_NOTIFICATIONS = USER_PREFIX + "/notifications/smart";
+    public static final String USER_PROMOTIONS_RECOMMENDED = USER_PREFIX + "/promotions/recommended";
 
     // 3. PARTNER - Partner / Vendor endpoints (ROLE: PARTNER)
     public static final String PARTNER_LEGACY_PREFIX = API_PREFIX + "/partner";
@@ -65,6 +74,7 @@ public final class ApiEndpoints {
     public static final String PARTNER_RESTAURANTS = PARTNER_PREFIX + "/restaurants";
     public static final String PARTNER_PROMOTIONS = PARTNER_PREFIX + "/promotions";
     public static final String PARTNER_ANALYTICS = PARTNER_PREFIX + "/analytics";
+    public static final String PARTNER_AI_INSIGHTS = PARTNER_PREFIX + "/ai/insights";
     // PARTNER FEEDBACK
     public static final String PARTNER_REVIEWS = PARTNER_PREFIX + "/reviews";
     public static final String PARTNER_REVIEW_REPLY = PARTNER_REVIEWS + "/{id}/reply";

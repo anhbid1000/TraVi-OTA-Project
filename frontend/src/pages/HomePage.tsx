@@ -13,7 +13,9 @@ import {
   Users,
 } from 'lucide-react'
 import { Navbar } from '../components/layout/Navbar'
+import { useAuth } from '../hooks/useAuth'
 import { CityAutocomplete, CuisineSelect } from '../features/catalog/components'
+import { SmartNotificationWidget, UserAiRecommendations } from '../features/ai'
 import heroImage from "../assets/hero.png"
 import { getFeaturedHotels } from '../features/hotels/services/hotelService'
 import { getFeaturedRestaurants, getRestaurantFilterOptions } from '../features/restaurants/services/restaurantService'
@@ -110,6 +112,7 @@ function getSavedNumber(criteria: ReturnType<typeof readSearchCriteria>, key: st
 // ─── Component ────────────────────────────────────────────────
 export function HomePage() {
   const navigate = useNavigate()
+  const { isAuthenticated, user } = useAuth()
 
   // derived values
   const today = useMemo(() => { const d = new Date(); d.setHours(0,0,0,0); return d }, [])
@@ -136,6 +139,7 @@ export function HomePage() {
   const [featuredRestaurants, setFeaturedRestaurants] = useState<RestaurantCatalog[]>([])
   const [featuredHotelsError, setFeaturedHotelsError] = useState<string | null>(null)
   const [featuredRestaurantsError, setFeaturedRestaurantsError] = useState<string | null>(null)
+  const isCustomer = String(user?.role ?? '').replace(/^ROLE[_-]/, '').toUpperCase() === 'KHACH_HANG'
 
   useEffect(() => {
     let active = true
@@ -456,6 +460,16 @@ export function HomePage() {
 
       {/* ── Main ── */}
       <main className="mx-auto w-full max-w-7xl space-y-24 px-5 py-20 md:px-12">
+        {isCustomer && (
+          <div className="space-y-6">
+            <SmartNotificationWidget enabled={isAuthenticated && isCustomer} />
+            <UserAiRecommendations
+              enabled={isAuthenticated && isCustomer}
+              city={activeTab === 'luutru' ? hotelCity : rstCity}
+            />
+          </div>
+        )}
+
         {/* Featured Hotels */}
         <section>
           <div className="mb-8 flex items-end justify-between">

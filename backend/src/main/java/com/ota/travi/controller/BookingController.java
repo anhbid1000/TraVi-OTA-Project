@@ -16,7 +16,7 @@ import java.util.List;
 import static com.ota.travi.constant.ApiEndpoints.USER_BOOKING_HISTORY;
 import static com.ota.travi.constant.ApiEndpoints.PUBLIC_BOOKING_SEARCH;
 
-@RestController
+@RestController("publicBookingController")
 public class BookingController {
 
     @Autowired

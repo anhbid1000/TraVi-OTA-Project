@@ -64,7 +64,13 @@ public interface DonNhaHangRepository extends JpaRepository<DonNhaHang, String> 
 
     java.util.Optional<DonNhaHang> findByIdAndKhachHang_Username(String id, String username);
 
+    java.util.Optional<DonNhaHang> findByMaDonAndDeletedFalse(String maDon);
+
     List<DonNhaHang> findByKhachHang_UsernameAndDeletedFalseOrderByNgayTaoDesc(String username);
+
+    List<DonNhaHang> findByKhachHang_IdAndDeletedFalseOrderByNgayTaoDesc(String khachHangId);
+
+    List<DonNhaHang> findByKhachHang_UsernameAndDeletedFalse(String username);
 
     List<DonNhaHang> findByTrangThaiAndPaymentExpiredAtBeforeAndDeletedFalse(
             TrangThaiDon trangThai,

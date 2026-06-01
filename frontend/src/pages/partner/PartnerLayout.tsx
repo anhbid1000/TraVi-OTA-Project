@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { BriefcaseBusiness, Bed, DoorOpen, Utensils, Grid2X2, BookOpen, CircleHelp, LogOut, LayoutGrid, ChevronDown, ChevronUp, MessageSquare, ShieldAlert } from 'lucide-react'
+import { BriefcaseBusiness, Bed, DoorOpen, Utensils, Grid2X2, BookOpen, CircleHelp, LogOut, LayoutGrid, ChevronDown, ChevronUp, MessageSquare, ShieldAlert, BrainCircuit } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { partnerAssetService } from '../../services/partnerAssetService'
 import type { AuthUser } from '../../types/auth'
@@ -49,6 +49,7 @@ export function PartnerLayout() {
 
   const isDashboardRoute = location.pathname === '/partner' || location.pathname === '/partner/dashboard'
   const isBookingRoute = location.pathname.startsWith('/partner/bookings')
+  const isAiInsightRoute = location.pathname.startsWith('/partner/ai-insights')
   const isReviewRoute = location.pathname.startsWith('/partner/reviews')
   const isComplaintRoute = location.pathname.startsWith('/partner/complaints')
   const isAssetManagementRoute = location.pathname.startsWith('/partner/asset-management') ||
@@ -173,6 +174,13 @@ export function PartnerLayout() {
                   <button>
                     <AnalyticsIcon />
                     Phân tích
+                  </button>
+                  <button
+                    className={isAiInsightRoute ? 'active' : ''}
+                    onClick={() => navigate('/partner/ai-insights')}
+                  >
+                    <BrainCircuit size={20} />
+                    AI insight
                   </button>
                   <button
                     className={isReviewRoute ? 'active' : ''}

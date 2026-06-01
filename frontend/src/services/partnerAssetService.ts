@@ -50,6 +50,7 @@ export const partnerAssetService = {
       .then((response) => response.data)
   },
 
+
   getPartnerBookings(params: {
     status?: PartnerBookingStatus[]
     fromDate?: string
@@ -95,6 +96,15 @@ export const partnerAssetService = {
       .post<BusinessProfileResponse>('/v1/partner/business-profiles', payload)
       .then((response) => response.data)
   },
+
+  getPartnerAiInsights(days = 30) {
+    return api
+      .get<PartnerAiInsightResponse>('/v1/partner/ai/insights', {
+        params: { days },
+      })
+      .then((response) => response.data)
+  },
+
 
   updateBusinessProfile(id: string, payload: BusinessProfilePayload) {
     return api

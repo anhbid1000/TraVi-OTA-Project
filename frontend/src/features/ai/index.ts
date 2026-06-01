@@ -1,0 +1,6 @@
+export * from './hooks/useAiRecommendations'
+export * from './hooks/useAiFeatures'
+export * from './services/aiService'
+export * from './types'
+export * from './components/UserAiRecommendations'
+export * from './components/SmartNotificationWidget'

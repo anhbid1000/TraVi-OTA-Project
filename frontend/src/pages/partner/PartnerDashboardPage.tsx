@@ -350,7 +350,7 @@ function getMapPosition(value: string): [number, number] {
 
 function MapClickHandler({ onChange }: { onChange: (value: string) => void }) {
   useMapEvents({
-    click(event) {
+    click(event: L.LeafletMouseEvent) {
       onChange(`${event.latlng.lat.toFixed(5)},${event.latlng.lng.toFixed(5)}`)
     },
   })

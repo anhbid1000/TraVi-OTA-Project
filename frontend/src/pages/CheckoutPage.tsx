@@ -59,6 +59,8 @@ export function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
+  const isValidPhoneNumber = (value: string) => /^(0|\+84)\d{9,10}$/.test(value.trim())
+
   useEffect(() => {
     setForm(initialForm)
   }, [initialForm])
@@ -121,6 +123,11 @@ export function CheckoutPage() {
       return
     }
 
+    if (!isValidPhoneNumber(form.phone)) {
+      setErrorMessage('Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam hợp lệ.')
+      return
+    }
+
     try {
       setIsSubmitting(true)
       if (isHotel) {
@@ -152,7 +159,8 @@ export function CheckoutPage() {
       }
     } catch (error) {
       console.error('Failed to create booking:', error)
-      setErrorMessage('Tạo đơn đặt chỗ thất bại. Vui lòng kiểm tra lại thông tin và thử lại.')
+      const err = error as Error
+      setErrorMessage(`Tạo đơn đặt chỗ thất bại: ${err.message || 'Vui lòng kiểm tra lại thông tin và thử lại.'}`)
     } finally {
       setIsSubmitting(false)
     }

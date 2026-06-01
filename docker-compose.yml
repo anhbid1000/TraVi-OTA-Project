@@ -65,7 +65,6 @@ services:
 
     volumes:
       - ./backend:/app
-      - /app/target
 
     stdin_open: true
     tty: true

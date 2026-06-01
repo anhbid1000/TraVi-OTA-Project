@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PageResponse } from '../../../types/common'
+import { sendAiUserEvent } from '../../ai/services/aiService'
+import { tokenStorage } from '../../../services/tokenStorage'
 import { getApiErrorMessage } from '../../../utils/apiError'
 import { searchRestaurants } from '../services/restaurantService'
 import type { RestaurantCatalog, RestaurantSearchParams } from '../types'
@@ -48,6 +50,23 @@ export function useRestaurantSearch(
         return
       }
       setData(response)
+      if (tokenStorage.getAccessToken()) {
+        void sendAiUserEvent({
+          eventType: 'SEARCH',
+          assetType: 'RESTAURANT',
+          keyword: paramsRef.current.keyword || paramsRef.current.city || 'restaurant-search',
+          city: paramsRef.current.city,
+          source: 'RESTAURANT_CATALOG',
+          metadata: JSON.stringify({
+            guests: paramsRef.current.guests,
+            date: paramsRef.current.date,
+            time: paramsRef.current.time,
+            resultCount: response.totalElements,
+          }),
+        }).catch(() => {
+          // AI tracking la best-effort, khong chan luong tim kiem catalog.
+        })
+      }
     } catch (fetchError) {
       if (requestId !== requestIdRef.current) {
         return

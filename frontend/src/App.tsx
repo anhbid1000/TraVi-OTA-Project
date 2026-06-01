@@ -9,12 +9,14 @@ import {
 } from './pages/auth';
 import { ForbiddenPage } from './pages/ForbiddenPage';
 import { HomePage } from './pages/HomePage';
+import { AiTravelPlannerPage } from './pages/AiTravelPlannerPage';
 import { CheckoutPage } from './pages/CheckoutPage';
-import { PaymentPage } from './pages/PaymentPage'
+import { PaymentPage } from './pages/PaymentPage';
 import { ProtectedRoute, StaffRoute } from './routes';
 import {
   PartnerBusinessProfilePage,
   PartnerBookingsPage,
+  PartnerAiInsightsPage,
   PartnerDashboardOverviewPage,
   PartnerHotelProfilePage,
   PartnerLayout,
@@ -24,20 +26,20 @@ import {
   PartnerTableLayoutPage,
 } from './pages/partner';
 import { SearchPage } from './pages/search';
-// import { useAuth } from './hooks/useAuth';
 import { HotelCatalogPage } from './features/hotels/pages/HotelCatalogPage';
 import { RestaurantCatalogPage } from './features/restaurants/pages/RestaurantCatalogPage';
 import { HotelDetailPage } from './features/hotels/pages/HotelDetailPage';
 import { RestaurantDetailPage } from './features/restaurants/pages/RestaurantDetailPage';
 import MyBookings from './pages/user/dashboard/MyBookings';
+import MyBookingsV2 from './pages/user/dashboard/MyBookingsV2.tsx';
+import MyComplaintsPage from './pages/user/complaints/MyComplaintsPage.tsx';
+import MyComplaintDetailPage from './pages/user/complaints/MyComplaintDetailPage.tsx';
 import PartnerReviewsPage from './pages/partner/PartnerReviewsPage';
 import PartnerComplaintsPage from './pages/partner/complaints/PartnerComplaintsPage.tsx';
 import PartnerComplaintDetailPage from './pages/partner/complaints/PartnerComplaintDetailPage.tsx';
 import './App.css';
-import MyBookingsV2 from './pages/user/dashboard/MyBookingsV2.tsx';
+
 import BookingDetailPage from './pages/user/dashboard/BookingDetailPage.tsx';
-import MyComplaintsPage from './pages/user/complaints/MyComplaintsPage.tsx';
-import MyComplaintDetailPage from './pages/user/complaints/MyComplaintDetailPage.tsx';
 
 
 function NotFoundPage() {
@@ -49,24 +51,6 @@ function NotFoundPage() {
   );
 }
 
-/**
- * Component App - Routing chính của ứng dụng TraVi OTA
- * Cấu trúc route:
- * /                             - Trang chủ
- * /hotels                       - Danh sách khách sạn (catalog)
- * /hotels/:id                   - Chi tiết khách sạn
- * /restaurants                  - Danh sách nhà hàng (catalog)
- * /restaurants/:id              - Chi tiết nhà hàng
- * /search                       - Trang tra cứu đơn đặt chỗ
- * /login, /register, ...        - Auth flow cho khách
- * /partner/login, ...           - Auth flow cho đối tác
- * /admin/login                  - Auth flow cho admin
- * /payment                      - Trang thanh toán (protected)
- * /admin                        - Dashboard admin (protected)
- * /partner                      - Dashboard đối tác (protected)
- * /403                          - Trang lỗi 403 Forbidden
- * *                             - Trang 404 Not Found
- */
 function App() {
   return (
     <BrowserRouter>
@@ -111,16 +95,19 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/ai/travel-planner" element={<AiTravelPlannerPage />} />
           <Route path="/user/bookings-v2" element={<MyBookingsV2 />} />
           <Route path="/user/bookings-v2/:bookingId" element={<BookingDetailPage />} />
           <Route path="/user/complaints" element={<MyComplaintsPage />} />
           <Route path="/user/complaints/:complaintId" element={<MyComplaintDetailPage />} />
         </Route>
+
         <Route element={<StaffRoute redirectTo="/partner/login" />}>
           <Route path="/partner" element={<PartnerLayout />}>
             <Route index element={<PartnerDashboardOverviewPage />} />
             <Route path="dashboard" element={<PartnerDashboardOverviewPage />} />
             <Route path="bookings" element={<PartnerBookingsPage />} />
+            <Route path="ai-insights" element={<PartnerAiInsightsPage />} />
             <Route path="business-profile" element={<PartnerBusinessProfilePage />} />
             <Route path="hotels" element={<Navigate to="/partner/hotel" replace />} />
             <Route path="hotel" element={<PartnerHotelProfilePage />} />
@@ -135,7 +122,6 @@ function App() {
         </Route>
 
         <Route path="/user/bookings" element={<MyBookings />} />
-
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
