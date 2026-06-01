@@ -230,6 +230,88 @@ export type PartnerRestaurantDashboardOverviewResponse = {
   }>
 }
 
+export type PartnerBookingStatus =
+  | 'CHO_THANH_TOAN'
+  | 'DA_THANH_TOAN'
+  | 'DA_XAC_NHAN'
+  | 'DANG_PHUC_VU'
+  | 'DA_HOAN_THANH'
+  | 'DA_HUY'
+  | 'YEU_CAU_HOAN_TIEN'
+  | 'DA_HOAN_TIEN'
+  | 'THANH_TOAN_THAT_BAI'
+  | 'KHACH_KHONG_DEN'
+
+export type PartnerBookingServiceType = 'KHACH_SAN' | 'NHA_HANG'
+
+export type PartnerBookingListItem = {
+  id: string
+  maDon: string
+  serviceType: PartnerBookingServiceType
+  tenTaiSan?: string | null
+  tenNguoiDat?: string | null
+  sdtNguoiDat?: string | null
+  ngayTao?: string | null
+  ngayBatDau?: string | null
+  ngayKetThuc?: string | null
+  ngayCheckIn?: string | null
+  ngayCheckOut?: string | null
+  soKhach?: number | null
+  tongTienThanhToan?: number | null
+  tienCoc?: number | null
+  trangThai: PartnerBookingStatus
+}
+
+export type PartnerBookingDetail = {
+  id: string
+  maDon: string
+  serviceType: PartnerBookingServiceType
+  trangThai: PartnerBookingStatus
+  ngayTao?: string | null
+  paymentExpiredAt?: string | null
+  cancelledAt?: string | null
+  cancelReason?: string | null
+  tenTaiSan?: string | null
+  diaChiTaiSan?: string | null
+  tenNguoiDat?: string | null
+  sdtNguoiDat?: string | null
+  emailNguoiDat?: string | null
+  ghiChu?: string | null
+  soKhach?: number | null
+  tongTienGoc?: number | null
+  tienKhuyenMai?: number | null
+  tongTienThanhToan?: number | null
+  tienCoc?: number | null
+  ngayCheckIn?: string | null
+  ngayCheckOut?: string | null
+  gioNhanPhongDuKien?: string | null
+  ngayGioBatDau?: string | null
+  ngayGioKetThuc?: string | null
+  rooms: Array<{
+    roomId?: string | null
+    tenPhong?: string | null
+    soLuong?: number | null
+    donGia?: number | null
+    soDem?: number | null
+    thanhTien?: number | null
+  }>
+  tables: Array<{
+    tableId?: string | null
+    tenBan?: string | null
+    soChoNgoi?: number | null
+    viTriSanh?: string | null
+  }>
+  allowedActions: string[]
+}
+
+export type PartnerBookingPageResponse = {
+  content: PartnerBookingListItem[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+}
+
 export type RoomPayload = {
   phong: {
     soPhong: string

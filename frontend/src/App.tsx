@@ -14,6 +14,7 @@ import { PaymentPage } from './pages/PaymentPage'
 import { ProtectedRoute, StaffRoute } from './routes';
 import {
   PartnerBusinessProfilePage,
+  PartnerBookingsPage,
   PartnerDashboardOverviewPage,
   PartnerHotelProfilePage,
   PartnerLayout,
@@ -34,6 +35,7 @@ import PartnerComplaintsPage from './pages/partner/complaints/PartnerComplaintsP
 import PartnerComplaintDetailPage from './pages/partner/complaints/PartnerComplaintDetailPage.tsx';
 import './App.css';
 import MyBookingsV2 from './pages/user/dashboard/MyBookingsV2.tsx';
+import BookingDetailPage from './pages/user/dashboard/BookingDetailPage.tsx';
 import MyComplaintsPage from './pages/user/complaints/MyComplaintsPage.tsx';
 import MyComplaintDetailPage from './pages/user/complaints/MyComplaintDetailPage.tsx';
 
@@ -110,6 +112,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/user/bookings-v2" element={<MyBookingsV2 />} />
+          <Route path="/user/bookings-v2/:bookingId" element={<BookingDetailPage />} />
           <Route path="/user/complaints" element={<MyComplaintsPage />} />
           <Route path="/user/complaints/:complaintId" element={<MyComplaintDetailPage />} />
         </Route>
@@ -117,6 +120,7 @@ function App() {
           <Route path="/partner" element={<PartnerLayout />}>
             <Route index element={<PartnerDashboardOverviewPage />} />
             <Route path="dashboard" element={<PartnerDashboardOverviewPage />} />
+            <Route path="bookings" element={<PartnerBookingsPage />} />
             <Route path="business-profile" element={<PartnerBusinessProfilePage />} />
             <Route path="hotels" element={<Navigate to="/partner/hotel" replace />} />
             <Route path="hotel" element={<PartnerHotelProfilePage />} />

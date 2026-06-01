@@ -59,6 +59,7 @@ public final class ApiEndpoints {
     public static final String PARTNER_LEGACY_BUSINESS_PROFILES = PARTNER_LEGACY_PREFIX + "/business-profiles";
     public static final String PARTNER_PREFIX = BASE_PREFIX + "/partner";
     public static final String PARTNER_DASHBOARD = PARTNER_PREFIX + "/dashboard";
+    public static final String PARTNER_BOOKINGS = PARTNER_PREFIX + "/bookings";
     public static final String PARTNER_BUSINESS_PROFILES = PARTNER_PREFIX + "/business-profiles";
     public static final String PARTNER_HOTELS = PARTNER_PREFIX + "/hotels"; // manage partner hotels
     public static final String PARTNER_RESTAURANTS = PARTNER_PREFIX + "/restaurants";

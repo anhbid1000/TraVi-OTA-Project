@@ -1,6 +1,7 @@
 package com.ota.travi.service;
 
 import com.ota.travi.dto.response.BookingSearchResponse;
+import com.ota.travi.dto.response.ChinhSachResponse;
 import com.ota.travi.dto.response.UserBookingResponse;
 import com.ota.travi.entity.*;
 import com.ota.travi.enums.LoaiDichVu;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,6 +98,22 @@ public class BookingService {
         return orders.stream().map(order -> mapToUserBookingResponse(order, customerId)).toList();
     }
 
+    @Transactional(readOnly = true)
+    public BookingSearchResponse getCustomerBookingDetail(String customerId, String bookingId) {
+        DonDatCho booking = donDatChoRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt chỗ"));
+
+        if (Boolean.TRUE.equals(booking.getDeleted())) {
+            throw new RuntimeException("Không tìm thấy đơn đặt chỗ");
+        }
+
+        if (booking.getKhachHang() == null || !customerId.equals(booking.getKhachHang().getId())) {
+            throw new RuntimeException("Bạn không có quyền xem đơn đặt chỗ này");
+        }
+
+        return mapToResponse(booking);
+    }
+
     private BookingSearchResponse mapToResponse(DonDatCho booking) {
         String id = booking.getId();
         String maDon = booking.getMaDon();
@@ -108,9 +126,12 @@ public class BookingService {
 
         String tenTaiSan = "";
         String anhTaiSan = "";
+        String diaChiTaiSan = "";
         String loaiTaiSan = "";
         LocalDateTime ngayBatDau = null;
         LocalDateTime ngayKetThuc = null;
+        LocalDate ngayNhanPhong = null;
+        LocalDate ngayTraPhong = null;
         Integer soKhach = 0;
         List<BookingSearchResponse.RoomInfo> rooms = new ArrayList<>();
         List<BookingSearchResponse.TableInfo> tables = new ArrayList<>();
@@ -119,6 +140,8 @@ public class BookingService {
             loaiTaiSan = "HOTEL";
             ngayBatDau = hotelBooking.getNgayCheckIn() != null ? hotelBooking.getNgayCheckIn().atStartOfDay() : null;
             ngayKetThuc = hotelBooking.getNgayCheckOut() != null ? hotelBooking.getNgayCheckOut().atStartOfDay() : null;
+            ngayNhanPhong = hotelBooking.getNgayCheckIn();
+            ngayTraPhong = hotelBooking.getNgayCheckOut();
             soKhach = hotelBooking.getSoKhach();
 
             KhachSan khachSan = null;
@@ -154,6 +177,10 @@ public class BookingService {
                             .map(AnhKhachSan::getDuongDanUrl)
                             .orElse(khachSan.getDanhSachAnh().get(0).getDuongDanUrl());
                 }
+            }
+
+            if (booking.getHoSoKinhDoanh() != null && booking.getHoSoKinhDoanh().getDiaChi() != null) {
+                diaChiTaiSan = booking.getHoSoKinhDoanh().getDiaChi();
             }
 
         } else if (booking instanceof DonNhaHang restaurantBooking) {
@@ -197,6 +224,10 @@ public class BookingService {
                             .orElse(nhaHang.getDanhSachAnh().get(0).getDuongDanUrl());
                 }
             }
+
+            if (booking.getHoSoKinhDoanh() != null && booking.getHoSoKinhDoanh().getDiaChi() != null) {
+                diaChiTaiSan = booking.getHoSoKinhDoanh().getDiaChi();
+            }
         }
 
         return new BookingSearchResponse(
@@ -204,16 +235,22 @@ public class BookingService {
                 maDon,
                 tenTaiSan,
                 anhTaiSan,
+                diaChiTaiSan,
                 ngayTao,
                 tongTienThanhToan,
                 trangThai,
                 loaiTaiSan,
                 ngayBatDau,
                 ngayKetThuc,
+                ngayNhanPhong,
+                ngayTraPhong,
                 tenNguoiDat,
                 sdtNguoiDat,
                 emailNguoiDat,
                 soKhach,
+                booking instanceof DonNhaHang dnh ? dnh.getTienCoc() : null,
+                booking.getGhiChu(),
+                toChinhSachResponse(booking.getHoSoKinhDoanh() == null ? null : booking.getHoSoKinhDoanh().getChinhSach()),
                 rooms,
                 tables
         );
@@ -259,6 +296,31 @@ public class BookingService {
                 order.getTrangThai().name(),
                 reviewed,
                 thumbnailUrl
+        );
+    }
+
+    private ChinhSachResponse toChinhSachResponse(ChinhSach policy) {
+        if (policy == null) {
+            return null;
+        }
+
+        return new ChinhSachResponse(
+                policy.getId(),
+                policy.getHoSoKinhDoanh() == null ? null : policy.getHoSoKinhDoanh().getIdHoSo(),
+                policy.getLoaiChinhSach(),
+                policy.getNoiDung(),
+                policy.getNgayApDung(),
+                policy.getGioNhanPhong(),
+                policy.getGioTraPhong(),
+                policy.getGioMoCua(),
+                policy.getGioDongCua(),
+                policy.getChinhSachHuy(),
+                policy.getChinhSachHoanTien(),
+                policy.getQuyDinhTreEm(),
+                policy.getQuyDinhVatNuoi(),
+                policy.getGhiChuKhac(),
+                policy.getCreatedAt(),
+                policy.getUpdatedAt()
         );
     }
 

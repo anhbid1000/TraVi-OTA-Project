@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomerFeedbackLayout } from '../../../features/feedback-v2/components/CustomerFeedbackLayout';
 import { ComplaintCreateModal } from '../../../features/feedback-v2/components/ComplaintCreateModal';
@@ -205,6 +206,12 @@ export default function MyBookingsV2() {
                       <p className="font-display text-2xl font-semibold text-primary">{formatPrice(booking.totalPrice)}</p>
                     </div>
                     <div className="flex flex-wrap justify-end gap-2">
+                      <Link
+                        to={`/user/bookings-v2/${booking.bookingId || booking.reservationId || booking.id}`}
+                        className="rounded-lg border border-primary px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-container-low"
+                      >
+                        Xem chi tiết
+                      </Link>
                       {completed && <button className="rounded-lg border border-outline px-4 py-2 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low" onClick={() => openComplaint(booking)} type="button">Khiếu nại</button>}
                       {completed && !booking.reviewed && <button className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-secondary" onClick={() => openReview(booking)} type="button">Viết đánh giá</button>}
                       {completed && booking.reviewed && <span className="flex items-center gap-1 px-5 py-2 text-sm font-semibold italic text-on-surface-variant"><span className="material-symbols-outlined text-lg">verified</span>Đã đánh giá</span>}

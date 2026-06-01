@@ -194,13 +194,6 @@ export function RestaurantDetailPage() {
             reviewCount={restaurant.reviewCount}
             category={restaurant.cuisine}
           />
-          <WeatherAlertCard
-            latitude={restaurant.latitude}
-            longitude={restaurant.longitude}
-            date={date || new Date().toISOString().split('T')[0]}
-            endDate={date || new Date().toISOString().split('T')[0]}
-            locationName={restaurant.location}
-          />
         </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">

@@ -81,21 +81,45 @@ export type RestaurantBookingResponse = {
   }>
 }
 
+export type BookingPolicy = {
+  id: string
+  hoSoKinhDoanhId: string
+  loaiChinhSach?: string
+  noiDung?: string
+  ngayApDung?: string
+  gioNhanPhong?: string
+  gioTraPhong?: string
+  gioMoCua?: string
+  gioDongCua?: string
+  chinhSachHuy?: string
+  chinhSachHoanTien?: string
+  quyDinhTreEm?: string
+  quyDinhVatNuoi?: string
+  ghiChuKhac?: string
+  createdAt?: string
+  updatedAt?: string
+}
 export type BookingSearchResponse = {
   id: string
   maDon: string
   tenTaiSan: string
   anhTaiSan: string
+  diaChiTaiSan?: string
   ngayTao: string
   tongTienThanhToan: number
   trangThai: string
   loaiTaiSan: 'HOTEL' | 'RESTAURANT'
   ngayBatDau?: string
   ngayKetThuc?: string
+  ngayNhanPhong?: string
+  ngayTraPhong?: string
   tenNguoiDat: string
   sdtNguoiDat: string
   emailNguoiDat: string
   soKhach: number
+  tienCoc?: number
+  ghiChu?: string
+  chinhSach?: BookingPolicy | null
   rooms?: Array<{
     tenPhong: string
     soLuong: number
@@ -107,6 +131,31 @@ export type BookingSearchResponse = {
     soChoNgoi: number
     viTri?: string
   }>
+}
+
+export type UserBookingResponse = {
+  id: string
+  serviceName: string
+  serviceType: string
+  bookingId?: string
+  reservationId?: string
+  dateLabel: string
+  totalPrice: number
+  status: string
+  reviewed: boolean
+  thumbnailUrl: string
+}
+
+export type CancelBookingRequest = {
+  reason?: string
+}
+
+export type CancelBookingResponse = {
+  success: boolean
+  message: string
+  refundAmount: number
+  bookingId: string
+  maDon: string
 }
 
 export const userService = {
@@ -141,9 +190,20 @@ export const userService = {
     return response.data
   },
 
+  async getMyBookings(): Promise<UserBookingResponse[]> {
+    const response = await api.get('v1/user/bookings')
+    return response.data
+  },
+
+  async getMyBookingDetail(bookingId: string): Promise<BookingSearchResponse> {
+    const response = await api.get(`v1/user/bookings/${bookingId}`)
+    return response.data
+  },
+
+  // Legacy endpoint kept for old search UI compatibility during migration
   async getBookingHistory(type: 'all' | 'hotel' | 'restaurant' = 'all'): Promise<BookingSearchResponse[]> {
     const response = await api.get('v1/user/bookings/history', {
-      params: { type }
+      params: { type },
     })
     return response.data
   },
@@ -152,6 +212,11 @@ export const userService = {
     const response = await api.get('v1/public/bookings/search', {
       params: { maDon, email, phone }
     })
+    return response.data
+  },
+
+  async cancelMyBooking(bookingId: string, payload: CancelBookingRequest = {}): Promise<CancelBookingResponse> {
+    const response = await api.patch(`v1/user/bookings/${bookingId}/cancel`, payload)
     return response.data
   },
 }

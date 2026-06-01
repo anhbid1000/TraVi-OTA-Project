@@ -22,6 +22,7 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
+    // Legacy endpoint retained for backward compatibility with old search page.
     @GetMapping(USER_BOOKING_HISTORY)
     public ResponseEntity<?> getBookingHistory(
             @AuthenticationPrincipal CustomUserDetails userDetails,

@@ -12,6 +12,9 @@ import type {
   RoomPayload,
   RoomResponse,
   PartnerDashboardOverviewResponse,
+  PartnerBookingDetail,
+  PartnerBookingPageResponse,
+  PartnerBookingStatus,
   PartnerRestaurantDashboardOverviewResponse,
   RestaurantDashboardPeriod,
   TablePayload,
@@ -47,11 +50,51 @@ export const partnerAssetService = {
       .then((response) => response.data)
   },
 
-createBusinessProfile(payload: BusinessProfilePayload) {
-  return api
-    .post<BusinessProfileResponse>('/v1/partner/business-profiles', payload)
-    .then((response) => response.data)
-},
+  getPartnerBookings(params: {
+    status?: PartnerBookingStatus[]
+    fromDate?: string
+    toDate?: string
+    keyword?: string
+    page?: number
+    size?: number
+    sort?: string
+  }) {
+    const query = new URLSearchParams()
+    if (params.status && params.status.length > 0) {
+      params.status.forEach((status) => query.append('status', status))
+    }
+    if (params.fromDate) query.set('fromDate', params.fromDate)
+    if (params.toDate) query.set('toDate', params.toDate)
+    if (params.keyword) query.set('keyword', params.keyword)
+    if (typeof params.page === 'number') query.set('page', String(params.page))
+    if (typeof params.size === 'number') query.set('size', String(params.size))
+    if (params.sort) query.set('sort', params.sort)
+
+    return api
+      .get<PartnerBookingPageResponse>('/v1/partner/bookings', { params: query })
+      .then((response) => response.data)
+  },
+
+  getPartnerBookingDetail(bookingId: string) {
+    return api
+      .get<PartnerBookingDetail>(`/v1/partner/bookings/${bookingId}`)
+      .then((response) => response.data)
+  },
+
+  updatePartnerBookingStatus(
+    bookingId: string,
+    payload: { targetStatus: PartnerBookingStatus; reason?: string },
+  ) {
+    return api
+      .patch<PartnerBookingDetail>(`/v1/partner/bookings/${bookingId}/status`, payload)
+      .then((response) => response.data)
+  },
+
+  createBusinessProfile(payload: BusinessProfilePayload) {
+    return api
+      .post<BusinessProfileResponse>('/v1/partner/business-profiles', payload)
+      .then((response) => response.data)
+  },
 
   updateBusinessProfile(id: string, payload: BusinessProfilePayload) {
     return api

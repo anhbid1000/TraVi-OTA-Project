@@ -48,6 +48,7 @@ export function PartnerLayout() {
   const location = useLocation()
 
   const isDashboardRoute = location.pathname === '/partner' || location.pathname === '/partner/dashboard'
+  const isBookingRoute = location.pathname.startsWith('/partner/bookings')
   const isReviewRoute = location.pathname.startsWith('/partner/reviews')
   const isComplaintRoute = location.pathname.startsWith('/partner/complaints')
   const isAssetManagementRoute = location.pathname.startsWith('/partner/asset-management') ||
@@ -162,7 +163,10 @@ export function PartnerLayout() {
 
               {hasBusinessProfile && (
                 <>
-                  <button>
+                  <button
+                    className={isBookingRoute ? 'active' : ''}
+                    onClick={() => navigate('/partner/bookings')}
+                  >
                     <CalendarIcon />
                     Đặt dịch vụ
                   </button>

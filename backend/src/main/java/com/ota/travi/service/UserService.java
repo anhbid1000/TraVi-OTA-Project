@@ -276,7 +276,7 @@ public class UserService {
         }
 
         int totalSeats = assignedTables.stream().map(Ban::getSoChoNgoi).reduce(0, Integer::sum);
-        double tienCoc = 0.0;
+        double tienCoc = Math.max(request.soNguoi() * 100_000d, 200_000d);
         double tongTien = tienCoc;
 
         DonNhaHang don = new DonNhaHang();

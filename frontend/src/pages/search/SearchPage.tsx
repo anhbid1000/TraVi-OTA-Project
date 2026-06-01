@@ -16,7 +16,7 @@ import {
 import { Navbar } from '../../components/layout/Navbar'
 import { useAuth } from '../../hooks/useAuth'
 import type { AuthUser } from '../../types/auth'
-import { userService, type BookingSearchResponse } from '../../services/userService'
+import { userService, type BookingSearchResponse, type UserBookingResponse } from '../../services/userService'
 
 function getUserDisplayName(user: AuthUser | null) {
   if (!user) return 'bạn'
@@ -77,16 +77,16 @@ export function SearchPage() {
   const displayName = getUserDisplayName(user)
 
   // State for Booking History (Authenticated)
-  const [bookings, setBookings] = useState<BookingSearchResponse[]>([])
+  const [bookings, setBookings] = useState<UserBookingResponse[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'all' | 'hotel' | 'restaurant'>('all')
 
   // Search Filters in Booking History (Authenticated)
   const [quickMaDon, setQuickMaDon] = useState('')
-  const [quickPhone, setQuickPhone] = useState('')
   const [filterMaDon, setFilterMaDon] = useState('')
-  const [filterPhone, setFilterPhone] = useState('')
+
+  const [detailLoading, setDetailLoading] = useState(false)
 
   // State for Unauthenticated Guest Search Form
   const [guestMaDon, setGuestMaDon] = useState('')
@@ -98,38 +98,67 @@ export function SearchPage() {
   // Unified Details Modal State
   const [selectedBooking, setSelectedBooking] = useState<BookingSearchResponse | null>(null)
 
-  // Fetch Booking History when Authenticated
+  // Fetch bookings list when Authenticated (new contract)
   useEffect(() => {
-    if (isAuthenticated) {
-      const fetchHistory = async () => {
-        setLoading(true)
-        setError(null)
-        try {
-          const res = await userService.getBookingHistory(activeTab)
-          setBookings(res)
-        } catch (err: any) {
-          console.error(err)
-          setError(err.response?.data || 'Không thể tải lịch sử đặt chỗ. Vui lòng thử lại sau.')
-        } finally {
-          setLoading(false)
-        }
-      }
-      fetchHistory()
+    if (!isAuthenticated) {
+      return
     }
-  }, [isAuthenticated, activeTab])
 
-  // Filter history bookings in memory
-  const filteredBookings = bookings.filter(b => {
-    const matchCode = filterMaDon ? b.maDon.toLowerCase().includes(filterMaDon.toLowerCase()) : true
-    const matchPhone = filterPhone ? b.sdtNguoiDat.includes(filterPhone) : true
-    return matchCode && matchPhone
+    const fetchBookings = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const res = await userService.getMyBookings()
+        setBookings(res)
+      } catch (err: any) {
+        console.error(err)
+        setError(err.response?.data || 'Không thể tải lịch sử đặt chỗ. Vui lòng thử lại sau.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void fetchBookings()
+  }, [isAuthenticated])
+
+  const filteredBookings = bookings.filter((b) => {
+    const matchCode = filterMaDon ? b.id.toLowerCase().includes(filterMaDon.toLowerCase()) : true
+
+    const matchTab =
+      activeTab === 'all'
+        ? true
+        : activeTab === 'hotel'
+          ? b.serviceType === 'KHACH_SAN'
+          : b.serviceType === 'NHA_HANG'
+
+    return matchCode && matchTab
   })
 
   // Handle Quick Search filter trigger
   const handleQuickSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setFilterMaDon(quickMaDon)
-    setFilterPhone(quickPhone)
+  }
+
+  const handleOpenBookingDetail = async (booking: UserBookingResponse) => {
+    try {
+      setDetailLoading(true)
+      setError(null)
+
+      const bookingId = booking.bookingId || booking.reservationId || ''
+      if (!bookingId) {
+        setError('Không tìm thấy mã booking để tải chi tiết.')
+        return
+      }
+
+      const detail = await userService.getMyBookingDetail(bookingId)
+      setSelectedBooking(detail)
+    } catch (err: any) {
+      console.error(err)
+      setError(err.response?.data || 'Không thể tải chi tiết đơn đặt chỗ. Vui lòng thử lại sau.')
+    } finally {
+      setDetailLoading(false)
+    }
   }
 
   // Handle Public Guest Lookup Submit
@@ -196,16 +225,6 @@ export function SearchPage() {
                     onChange={(e) => setQuickMaDon(e.target.value)}
                   />
                 </div>
-                <div className="relative flex-1">
-                  <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-outline" size={20} />
-                  <input 
-                    className="w-full rounded-lg border border-outline-variant bg-white py-3 pl-10 pr-4 text-sm outline-none transition-all focus:border-secondary focus:ring-2 focus:ring-secondary" 
-                    placeholder="Số điện thoại người đặt" 
-                    type="tel" 
-                    value={quickPhone}
-                    onChange={(e) => setQuickPhone(e.target.value)}
-                  />
-                </div>
                 <div className="flex gap-2">
                   <button 
                     type="submit" 
@@ -213,14 +232,12 @@ export function SearchPage() {
                   >
                     Tra cứu
                   </button>
-                  {(filterMaDon || filterPhone) && (
+                  {filterMaDon && (
                     <button 
                       type="button" 
                       onClick={() => {
                         setQuickMaDon('')
-                        setQuickPhone('')
                         setFilterMaDon('')
-                        setFilterPhone('')
                       }}
                       className="rounded-lg border border-outline px-4 py-3 text-sm font-semibold text-on-surface hover:bg-surface-container active:scale-95 whitespace-nowrap"
                     >
@@ -297,11 +314,11 @@ export function SearchPage() {
                     className="group flex flex-col overflow-hidden rounded-xl border border-surface-variant bg-white transition-all hover:shadow-lg sm:flex-row"
                   >
                     <div className="h-48 overflow-hidden sm:h-auto sm:w-48 shrink-0">
-                      <img 
-                        alt={booking.tenTaiSan} 
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                        src={booking.anhTaiSan || (
-                          booking.loaiTaiSan === 'HOTEL'
+                      <img
+                        alt={booking.serviceName}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        src={booking.thumbnailUrl || (
+                          booking.serviceType === 'KHACH_SAN'
                             ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=500&q=80'
                             : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=500&q=80'
                         )}
@@ -311,27 +328,19 @@ export function SearchPage() {
                       <div>
                         <div className="mb-2 flex items-start justify-between gap-2">
                           <h3 className="font-display text-xl font-semibold text-primary line-clamp-1">
-                            {booking.tenTaiSan}
+                            {booking.serviceName}
                           </h3>
                           <div className="shrink-0">
-                            {getStatusBadge(booking.trangThai)}
+                            {getStatusBadge(booking.status)}
                           </div>
                         </div>
                         <div className="mb-4 space-y-1">
                           <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-                            <CalendarDays size={16} /> 
-                            {booking.loaiTaiSan === 'HOTEL' ? (
-                              <>
-                                {new Date(booking.ngayBatDau!).toLocaleDateString('vi-VN')} - {new Date(booking.ngayKetThuc!).toLocaleDateString('vi-VN')}
-                              </>
-                            ) : (
-                              <>
-                                {new Date(booking.ngayBatDau!).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
-                              </>
-                            )}
+                            <CalendarDays size={16} />
+                            {booking.dateLabel}
                           </p>
                           <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-                            <Ticket size={16} /> ID: {booking.maDon}
+                            <Ticket size={16} /> Mã đơn: {booking.id}
                           </p>
                         </div>
                       </div>
@@ -339,14 +348,15 @@ export function SearchPage() {
                         <div>
                           <p className="text-xs text-outline">Tổng thanh toán</p>
                           <p className="font-display text-xl font-semibold text-secondary">
-                            {formatVND(booking.tongTienThanhToan)}
+                            {formatVND(booking.totalPrice)}
                           </p>
                         </div>
-                        <button 
-                          onClick={() => setSelectedBooking(booking)}
-                          className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline active:scale-95 transition-all"
+                        <button
+                          onClick={() => void handleOpenBookingDetail(booking)}
+                          disabled={detailLoading}
+                          className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline active:scale-95 transition-all disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          Chi tiết <ChevronRightIcon size={16} />
+                          {detailLoading ? 'Đang tải...' : 'Chi tiết'} <ChevronRightIcon size={16} />
                         </button>
                       </div>
                     </div>
