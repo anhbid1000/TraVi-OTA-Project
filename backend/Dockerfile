@@ -21,4 +21,4 @@ COPY src ./src
 EXPOSE 8080
 
 # Command để chạy với hot-reload (dev)
-CMD ["./mvnw", "spring-boot:run", "-Dspring-boot.run.profiles=dev"]
+CMD ["./mvnw", "clean", "spring-boot:run", "-Dspring-boot.run.profiles=dev"]
