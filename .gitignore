@@ -1,15 +1,21 @@
 # Environment variables
 .env
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.dev
+frontend/.env.prod
 
 # Maven / Gradle
 backend/target/
 backend/.mvn/wrapper/maven-wrapper.jar
 
+
 # Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
-frontend/.env.local
+
 
 # IDE files
 .idea/

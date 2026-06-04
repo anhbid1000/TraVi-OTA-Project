@@ -1,0 +1,55 @@
+package com.ota.travi.constant;
+
+public final class ApiEndpoints {
+
+    private ApiEndpoints() {
+    }
+
+    // Base & Versioning
+    public static final String API_PREFIX = "/api";
+    public static final String API_VERSION = "/v1";
+    public static final String BASE_PREFIX = API_PREFIX + API_VERSION; // => /api/v1
+
+    // 1. GUEST - Public routes (no auth required)
+    public static final String PUBLIC_PREFIX = BASE_PREFIX + "/public";
+    public static final String PUBLIC_ROOMS_SEARCH = PUBLIC_PREFIX + "/rooms/search"; // planned
+    public static final String PUBLIC_CULTURE_SPOTS = PUBLIC_PREFIX + "/culture-spots"; // planned
+
+    // 1.a Authentication (public) - keep under versioned auth prefix
+    public static final String AUTH_PREFIX = BASE_PREFIX + "/auth";
+    public static final String AUTH_REGISTER = AUTH_PREFIX + "/register";
+    public static final String AUTH_VERIFY_EMAIL = AUTH_PREFIX + "/verify-email";
+    public static final String AUTH_RESEND_OTP = AUTH_PREFIX + "/resend-otp";
+    public static final String AUTH_LOGIN = AUTH_PREFIX + "/login";
+    public static final String AUTH_GOOGLE = AUTH_PREFIX + "/google";
+    public static final String AUTH_LOGOUT = AUTH_PREFIX + "/logout";
+    public static final String AUTH_REFRESH = AUTH_PREFIX + "/refresh";
+    public static final String AUTH_FORGOT_PASSWORD_REQUEST_OTP = AUTH_PREFIX + "/forgot-password/request-otp";
+    public static final String AUTH_FORGOT_PASSWORD_VERIFY_OTP = AUTH_PREFIX + "/forgot-password/verify-otp";
+    public static final String AUTH_FORGOT_PASSWORD_RESET = AUTH_PREFIX + "/forgot-password/reset";
+
+    // 2. USER - Authenticated user endpoints (ROLE: USER)
+    public static final String USER_PREFIX = BASE_PREFIX + "/user";
+    public static final String USER_ME = USER_PREFIX + "/me";
+    public static final String USER_BOOKINGS = USER_PREFIX + "/bookings";
+    public static final String USER_REVIEWS = USER_PREFIX + "/reviews";
+    public static final String USER_RECOMMENDATIONS = USER_PREFIX + "/recommendations"; // AI hints
+
+    // 3. PARTNER - Partner / Vendor endpoints (ROLE: PARTNER)
+    public static final String PARTNER_PREFIX = BASE_PREFIX + "/partner";
+    public static final String PARTNER_HOTELS = PARTNER_PREFIX + "/hotels"; // manage partner hotels
+    public static final String PARTNER_PROMOTIONS = PARTNER_PREFIX + "/promotions";
+    public static final String PARTNER_ANALYTICS = PARTNER_PREFIX + "/analytics";
+
+    // 4. ADMIN - Admin dashboard & management (ROLE: ADMIN)
+    public static final String ADMIN_PREFIX = BASE_PREFIX + "/admin";
+    public static final String ADMIN_USERS = ADMIN_PREFIX + "/users";
+    public static final String ADMIN_CONFIGS = ADMIN_PREFIX + "/configs";
+    public static final String ADMIN_MONITORING = ADMIN_PREFIX + "/activities";
+
+    // 5. EXTERNAL SYSTEMS - Integrations (Payment, Map, Notification, etc.)
+    public static final String SYSTEMS_PREFIX = BASE_PREFIX + "/systems";
+    public static final String SYS_PAYMENT_CALLBACK = SYSTEMS_PREFIX + "/payment-callback";
+    public static final String SYS_MAP_INTEGRATION = SYSTEMS_PREFIX + "/map-integration";
+    public static final String SYS_NOTIFY = SYSTEMS_PREFIX + "/notification-trigger";
+}
