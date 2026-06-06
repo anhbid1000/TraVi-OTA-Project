@@ -11,7 +11,7 @@ import java.util.List;
 public interface LichSuDiemRepository extends JpaRepository<LichSuDiem, Long> {
     List<LichSuDiem> findByCustomerIdOrderByCreatedAtDesc(String customerId);
 
-    List<LichSuDiem> findByLoaiGiaoDichDiem(String loaiGiaoDichDiem);
+    List<LichSuDiem> findByLoaiGiaoDichDiem(LoaiGiaoDichDiem loaiGiaoDichDiem);
 
     boolean existsByCustomerIdAndLoaiGiaoDichDiemAndGhiChu(
             String customerId,

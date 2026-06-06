@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { userService, type HotelBookingResponse, type RestaurantBookingResponse } from '../services/userService'
 import { bookingVoucherService, type VoucherCheckoutResponse, type VoucherPreviewResponse } from '../services/bookingVoucherService'
 import { formatVnd } from '../utils/display'
+import { getApiErrorMessage } from '../utils/apiError'
 
 type PaymentState = {
   bookingType?: 'hotel' | 'restaurant'
@@ -191,7 +192,10 @@ export function PaymentPage() {
       setSuccessMessage('Thanh toán thành công. Đơn đặt chỗ của quý khách đã được ghi nhận.')
     } catch (error) {
       console.error('Failed to process payment:', error)
-      setErrorMessage('Không thể xử lý thanh toán. Vui lòng kiểm tra trạng thái đơn hoặc thử lại sau.')
+      setErrorMessage(getApiErrorMessage(
+        error,
+        'Không thể xử lý thanh toán. Vui lòng kiểm tra trạng thái đơn hoặc thử lại sau.',
+      ))
     } finally {
       setIsPaying(false)
     }

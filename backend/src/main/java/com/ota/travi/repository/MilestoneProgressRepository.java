@@ -1,7 +1,9 @@
 package com.ota.travi.repository;
 
 import com.ota.travi.entity.MilestoneProgress;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,6 +19,13 @@ public interface MilestoneProgressRepository extends JpaRepository<MilestoneProg
             WHERE mp.customerId = :customerId
             """)
     Optional<MilestoneProgress> findByCustomerId(@Param("customerId") String customerId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT mp FROM MilestoneProgress mp
+            WHERE mp.customerId = :customerId
+            """)
+    Optional<MilestoneProgress> findByCustomerIdForUpdate(@Param("customerId") String customerId);
 
     Optional<MilestoneProgress> findByCustomerIdAndMilestone5Granted(String customerId, boolean granted);
 }

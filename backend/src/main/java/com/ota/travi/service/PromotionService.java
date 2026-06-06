@@ -273,7 +273,7 @@ public class PromotionService {
         history.setLoaiGiaoDichDiem(LoaiGiaoDichDiem.TICH_DIEM);
         history.setDiemTruocGiaoDich(previousPoints);
         history.setDiemSauGiaoDich(newPoints);
-        history.setBookingId(bookingId);
+        history.setBookingId(bookingId != null ? bookingId.toString() : null);
         history.setGhiChu("Tích điểm từ đơn đặt có giá trị: " + bookingAmount);
         lichSuDiemRepository.save(history);
     }

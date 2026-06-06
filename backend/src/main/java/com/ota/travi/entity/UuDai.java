@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import com.ota.travi.enums.TrangThaiUuDai;
 import com.ota.travi.enums.LoaiGiamGia;
@@ -38,7 +40,8 @@ public class UuDai {
     private String createdByUserId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "created_by_role")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "created_by_role", columnDefinition = "created_by_role")
     private CreatedByRole createdByRole;
 
     @Column(name = "business_profile_id")
@@ -48,7 +51,8 @@ public class UuDai {
     private Double mucGiam;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false, columnDefinition = "loai_giam_gia")
     private LoaiGiamGia loaiGiamGia;
 
     @Column(name = "gia_tri_giam_toi_da")
@@ -61,7 +65,8 @@ public class UuDai {
     private LocalDate ngayKetThuc;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false, columnDefinition = "trang_thai_uu_dai")
     private TrangThaiUuDai trangThaiUuDai = TrangThaiUuDai.DA_LEN_LICH;
 
     @CreationTimestamp

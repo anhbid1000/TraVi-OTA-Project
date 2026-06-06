@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.ota.travi.enums.PhamViApDung;
 
@@ -38,6 +40,7 @@ public class Voucher extends UuDai {
     private Boolean choPhepDoiBangDiem = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "pham_vi_ap_dung")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "pham_vi_ap_dung", columnDefinition = "pham_vi_ap_dung")
     private PhamViApDung phamViApDung;
 }

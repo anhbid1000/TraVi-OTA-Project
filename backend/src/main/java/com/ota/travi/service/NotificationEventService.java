@@ -74,7 +74,7 @@ public class NotificationEventService {
     }
 
     @Transactional
-    public NotificationEvent emitPointEarned(String customerId, Integer points, Long bookingId) {
+    public NotificationEvent emitPointEarned(String customerId, Integer points, String bookingId) {
         log.debug("Emitting POINT_EARNED event for customer: {}", customerId);
 
         Map<String, Object> metadata = new HashMap<>();

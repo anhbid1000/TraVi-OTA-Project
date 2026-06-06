@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.ota.travi.enums.LoaiGiaoDichDiem;
 
@@ -29,7 +31,8 @@ public class LichSuDiem {
     private Integer soDiemThayDoi;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "loai_giao_dich_diem", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "loai_giao_dich_diem", nullable = false, columnDefinition = "loai_giao_dich_diem")
     private LoaiGiaoDichDiem loaiGiaoDichDiem;
 
     @Column(name = "diem_truoc_giao_dich")
@@ -38,8 +41,8 @@ public class LichSuDiem {
     @Column(name = "diem_sau_giao_dich")
     private Integer diemSauGiaoDich;
 
-    @Column(name = "booking_id")
-    private Long bookingId;
+    @Column(name = "booking_id", length = 36)
+    private String bookingId;
 
     @Column(name = "voucher_id")
     private Long voucherId;

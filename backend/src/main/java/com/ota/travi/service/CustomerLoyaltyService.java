@@ -16,6 +16,7 @@ import com.ota.travi.enums.HangThanhVien;
 import com.ota.travi.enums.LoaiGiaoDichDiem;
 import com.ota.travi.enums.SourceTypeVoucher;
 import com.ota.travi.enums.TrangThaiCustomerVoucher;
+import com.ota.travi.enums.TrangThaiDon;
 import com.ota.travi.enums.TrangThaiUuDai;
 import com.ota.travi.exception.ResourceNotFoundException;
 import com.ota.travi.exception.ValidationException;
@@ -62,7 +63,7 @@ public class CustomerLoyaltyService {
         List<CustomerVoucherResponse> customerVouchers = getWalletVouchers(customerId);
 
         return new LoyaltySummaryResponse(
-                parseLongOrNull(customerId),
+                customerId,
                 currentPoints,
                 progress.totalSpending(),
                 progress.currentTier(),
@@ -111,7 +112,11 @@ public class CustomerLoyaltyService {
     }
 
     @Transactional
-    public void processBookingPaymentSuccess(DonDatCho booking) {
+    public void processBookingCompletionReward(DonDatCho booking) {
+        if (booking == null || booking.getTrangThai() != TrangThaiDon.DA_HOAN_THANH) {
+            return;
+        }
+
         String customerId = booking.getKhachHang().getId();
         String rewardNote = "Tich diem cho don " + booking.getId();
 
@@ -147,12 +152,12 @@ public class CustomerLoyaltyService {
         history.setLoaiGiaoDichDiem(LoaiGiaoDichDiem.TICH_DIEM);
         history.setDiemTruocGiaoDich(pointsBefore);
         history.setDiemSauGiaoDich(pointsAfter);
-        history.setBookingId(parseLongOrNull(booking.getId()));
+        history.setBookingId(booking.getId());
         history.setGhiChu(rewardNote);
         lichSuDiemRepository.save(history);
 
         milestoneRewardService.incrementBookingCount(customerId);
-        notificationEventService.emitPointEarned(customerId, earnedPoints, parseLongOrNull(booking.getId()));
+        notificationEventService.emitPointEarned(customerId, earnedPoints, booking.getId());
         if (tierAfter != tierBefore) {
             notificationEventService.emitTierUpgraded(customerId, tierAfter.name(), totalSpendingAfter);
         }
@@ -165,6 +170,7 @@ public class CustomerLoyaltyService {
                 .filter(voucher -> voucher.getTrangThaiUuDai() == TrangThaiUuDai.DANG_CO_HIEU_LUC)
                 .filter(voucher -> voucher.getNgayBatDau() == null || !voucher.getNgayBatDau().isAfter(today))
                 .filter(voucher -> voucher.getNgayKetThuc() == null || !voucher.getNgayKetThuc().isBefore(today))
+                .filter(voucher -> customerVoucherRepository.countByVoucherId(voucher.getId()) < safeIssuedQuantityLimit(voucher))
                 .toList();
         return vouchers.stream().map(this::toPromotionResponse).collect(Collectors.toList());
     }
@@ -189,7 +195,7 @@ public class CustomerLoyaltyService {
         if (!Boolean.TRUE.equals(voucher.getChoPhepDoiBangDiem())) {
             throw new ValidationException("Voucher nay khong ho tro doi bang diem");
         }
-        if (defaultUsedQuantity(voucher) >= voucher.getSoLuongPhatHanh()) {
+        if (customerVoucherRepository.countByVoucherId(voucherId) >= safeIssuedQuantityLimit(voucher)) {
             throw new ValidationException("Voucher da het");
         }
 
@@ -203,9 +209,6 @@ public class CustomerLoyaltyService {
         customer.setDiemThanhVien(pointsAfterExchange);
         customer.setHangThanhVien(resolveTier(normalizeMoney(customer.getTongChiTieu()), loyaltyRuleService.requireActiveRule()));
         khachHangRepository.save(customer);
-
-        voucher.setSoLuongDaDung(defaultUsedQuantity(voucher) + 1);
-        voucherRepository.save(voucher);
 
         CustomerVoucher customerVoucher = new CustomerVoucher();
         customerVoucher.setCustomerId(customerId);
@@ -295,7 +298,7 @@ public class CustomerLoyaltyService {
     private PointHistoryResponse toPointHistoryResponse(LichSuDiem lichSuDiem) {
         return new PointHistoryResponse(
                 lichSuDiem.getId(),
-                parseLongOrNull(lichSuDiem.getCustomerId()),
+                lichSuDiem.getCustomerId(),
                 lichSuDiem.getSoDiemThayDoi(),
                 lichSuDiem.getLoaiGiaoDichDiem().name(),
                 lichSuDiem.getDiemTruocGiaoDich(),
@@ -376,8 +379,8 @@ public class CustomerLoyaltyService {
                 .min(BigDecimal.valueOf(100));
     }
 
-    private int defaultUsedQuantity(Voucher voucher) {
-        return voucher.getSoLuongDaDung() != null ? voucher.getSoLuongDaDung() : 0;
+    private int safeIssuedQuantityLimit(Voucher voucher) {
+        return voucher.getSoLuongPhatHanh() != null ? voucher.getSoLuongPhatHanh() : 0;
     }
 
     private String generateUniqueVoucherCode() {
@@ -396,14 +399,6 @@ public class CustomerLoyaltyService {
             default -> 1.0;
         };
         return (int) Math.floor(basePoints * multiplier);
-    }
-
-    private Long parseLongOrNull(String id) {
-        try {
-            return id != null ? Long.valueOf(id) : null;
-        } catch (NumberFormatException ex) {
-            return null;
-        }
     }
 
     private double normalizeMoney(Double value) {

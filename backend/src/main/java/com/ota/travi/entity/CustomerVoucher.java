@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import com.ota.travi.enums.TrangThaiCustomerVoucher;
 import com.ota.travi.enums.SourceTypeVoucher;
@@ -34,11 +36,13 @@ public class CustomerVoucher {
     private String maVoucherCaNhan;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false, columnDefinition = "trang_thai_customer_voucher")
     private TrangThaiCustomerVoucher trangThai = TrangThaiCustomerVoucher.CHUA_DUNG;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "source_type")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "source_type", columnDefinition = "source_type_voucher")
     private SourceTypeVoucher sourceType;
 
     @Column(name = "issued_at")

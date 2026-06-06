@@ -23,7 +23,6 @@ public class PaymentCallbackService {
     private final CustomerVoucherRepository customerVoucherRepository;
     private final DonDatChoRepository donDatChoRepository;
     private final VoucherReserveService voucherReserveService;
-    private final CustomerLoyaltyService customerLoyaltyService;
     private final PromotionAnalyticsService promotionAnalyticsService;
     private final NotificationEventService notificationEventService;
 
@@ -74,7 +73,6 @@ public class PaymentCallbackService {
                 booking.setTrangThai(TrangThaiDon.DA_THANH_TOAN);
             }
             donDatChoRepository.save(booking);
-            customerLoyaltyService.processBookingPaymentSuccess(booking);
 
         } catch (Exception e) {
             log.error("Error processing payment success callback for booking {}. Reason: {}", bookingId, e.getMessage(), e);

@@ -2,7 +2,7 @@ import { api } from './api'
 import { getApiErrorMessage } from '../utils/apiError'
 
 export type LoyaltySummary = {
-  customerId: number
+  customerId: string
   currentPoints: number
   totalSpending: number
   currentTier: string
@@ -23,12 +23,12 @@ export type LoyaltyProgress = {
 
 export type PointHistory = {
   id: number
-  customerId: number
+  customerId: string
   soDiemThayDoi: number
   loaiGiaoDichDiem: string
   diemTruocGiaoDich: number
   diemSauGiaoDich: number
-  bookingId?: number | null
+  bookingId?: string | null
   voucherId?: number | null
   ghiChu?: string | null
   createdAt: string

@@ -47,6 +47,18 @@ export const partnerAssetService = {
       .then((response) => response.data)
   },
 
+  completeBooking(bookingId: string) {
+    return api
+      .post<{
+        bookingId: string
+        maDon: string
+        trangThai: string
+        loyaltyRewardProcessed: boolean
+        message: string
+      }>(`/v1/partner/bookings/${bookingId}/complete`)
+      .then((response) => response.data)
+  },
+
 createBusinessProfile(payload: BusinessProfilePayload) {
   return api
     .post<BusinessProfileResponse>('/v1/partner/business-profiles', payload)

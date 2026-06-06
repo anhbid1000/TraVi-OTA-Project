@@ -3,7 +3,7 @@ package com.ota.travi.dto.response;
 import java.util.List;
 
 public record LoyaltySummaryResponse(
-        Long customerId,
+        String customerId,
         Integer currentPoints,
         Double totalSpending,
         String currentTier,

@@ -10,8 +10,16 @@ import {
 } from '../../../services/loyaltyService'
 import { formatVnd } from '../../../utils/display'
 
+const VIETNAM_TIME_ZONE = 'Asia/Ho_Chi_Minh'
+
 function pointTypeLabel(type: string) {
   const map: Record<string, string> = {
+    TICH_DIEM: 'Tích điểm từ đặt chỗ',
+    DOI_VOUCHER: 'Đổi voucher',
+    HOAN_DIEM: 'Hoàn điểm',
+    DIEU_CHINH_ADMIN: 'Điều chỉnh điểm',
+    MILESTONE_REWARD: 'Thưởng mốc',
+    COMPENSATION: 'Bồi thường',
     EARNED_FROM_BOOKING: 'Tích điểm từ đặt chỗ',
     EXCHANGE_VOUCHER: 'Đổi voucher',
     MILESTONE_BONUS: 'Thưởng mốc',
@@ -28,6 +36,22 @@ function voucherStatusLabel(status: string) {
     CANCELLED: 'Đã hủy',
   }
   return map[status] ?? status
+}
+
+function parseBackendDateTime(value?: string | null) {
+  if (!value) return null
+  const hasExplicitTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value)
+  const date = new Date(hasExplicitTimezone ? value : `${value}Z`)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function formatVietnamDateTime(value?: string | null) {
+  const date = parseBackendDateTime(value)
+  if (!date) return '--'
+  return date.toLocaleString('vi-VN', {
+    timeZone: VIETNAM_TIME_ZONE,
+    hour12: false,
+  })
 }
 
 export default function LoyaltyDashboardPage() {
@@ -148,7 +172,7 @@ export default function LoyaltyDashboardPage() {
                         {item.soDiemThayDoi > 0 ? '+' : ''}{item.soDiemThayDoi}
                       </p>
                     </div>
-                    <p className="mt-1 text-xs text-on-surface-variant">{new Date(item.createdAt).toLocaleString('vi-VN')}</p>
+                    <p className="mt-1 text-xs text-on-surface-variant">{formatVietnamDateTime(item.createdAt)}</p>
                     {item.ghiChu && <p className="mt-1 text-sm text-on-surface-variant">{item.ghiChu}</p>}
                   </div>
                 ))}

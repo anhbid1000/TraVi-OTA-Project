@@ -21,4 +21,6 @@ public interface CustomerVoucherRepository extends JpaRepository<CustomerVoucher
     List<CustomerVoucher> findReservedVouchersExpiredBefore(@Param("expiresAt") LocalDateTime expiresAt);
 
     List<CustomerVoucher> findByVoucherId(Long voucherId);
+
+    long countByVoucherId(Long voucherId);
 }

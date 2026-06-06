@@ -191,6 +191,7 @@ public class BookingVoucherService {
                 .orElseThrow(() -> new ResourceNotFoundException("Voucher not found with code: " + maVoucher));   
 
         try {
+            validateVoucherEligibility(voucher, customerId, booking);
             Double originalAmount = normalizeMoney(booking.getTongTienGoc());
             Double discount = calculateDiscount(voucher, originalAmount);
 

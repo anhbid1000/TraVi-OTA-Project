@@ -3380,6 +3380,32 @@
   color: #4f5f56;
 }
 
+.partner-dashboard-complete-btn {
+  border: 1px solid #006d45;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #005236;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.partner-dashboard-complete-btn:hover:not(:disabled) {
+  background: #e5f8ee;
+}
+
+.partner-dashboard-complete-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.partner-dashboard-muted-action {
+  color: #8b9a90;
+  font-weight: 700;
+}
+
 .partner-dashboard-top-room-panel {
   grid-column: span 4;
 }

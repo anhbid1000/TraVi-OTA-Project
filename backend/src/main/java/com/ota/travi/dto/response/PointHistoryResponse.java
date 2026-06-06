@@ -4,12 +4,12 @@ import java.time.LocalDateTime;
 
 public record PointHistoryResponse(
         Long id,
-        Long customerId,
+        String customerId,
         Integer soDiemThayDoi,
         String loaiGiaoDichDiem,
         Integer diemTruocGiaoDich,
         Integer diemSauGiaoDich,
-        Long bookingId,
+        String bookingId,
         Long voucherId,
         String ghiChu,
         LocalDateTime createdAt

@@ -1,16 +1,21 @@
 package com.ota.travi.service;
 
 import com.ota.travi.entity.CustomerVoucher;
+import com.ota.travi.entity.KhachHang;
+import com.ota.travi.entity.LichSuDiem;
 import com.ota.travi.entity.MilestoneProgress;
 import com.ota.travi.entity.Voucher;
 import com.ota.travi.enums.CreatedByRole;
 import com.ota.travi.enums.LoaiGiamGia;
+import com.ota.travi.enums.LoaiGiaoDichDiem;
 import com.ota.travi.enums.PhamViApDung;
 import com.ota.travi.enums.SourceTypeVoucher;
 import com.ota.travi.enums.TrangThaiCustomerVoucher;
 import com.ota.travi.enums.TrangThaiUuDai;
 import com.ota.travi.exception.BusinessConflictException;
 import com.ota.travi.repository.CustomerVoucherRepository;
+import com.ota.travi.repository.KhachHangRepository;
+import com.ota.travi.repository.LichSuDiemRepository;
 import com.ota.travi.repository.MilestoneProgressRepository;
 import com.ota.travi.repository.VoucherRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +38,8 @@ public class MilestoneRewardService {
     private final CustomerVoucherRepository customerVoucherRepository;
     private final VoucherRepository voucherRepository;
     private final NotificationEventService notificationEventService;
+    private final KhachHangRepository khachHangRepository;
+    private final LichSuDiemRepository lichSuDiemRepository;
 
     @Value("${milestone.5.points:100}")
     private Integer milestone5Points;
@@ -47,43 +54,47 @@ public class MilestoneRewardService {
         log.info("Checking milestone rewards for customer {} with {} completed bookings", 
                 customerId, completedBookingsCount);
 
-        MilestoneProgress progress = getMilestoneProgress(customerId);
+        MilestoneProgress progress = getMilestoneProgressForUpdate(customerId);
 
         // Check milestone 5
         if (!progress.getMilestone5Granted() && completedBookingsCount >= 5) {
-            grantMilestone(progress, 5, milestone5Points, "Milestone 5 Reached");
+            grantMilestone(progress, 5, milestone5Points, true);
         }
 
         // Check milestone 10
         if (!progress.getMilestone10Granted() && completedBookingsCount >= 10) {
-            grantMilestone(progress, 10, milestone10Points, "Milestone 10 Reached");
+            grantMilestone(progress, 10, 0, false);
         }
 
         // Check milestone 20
         if (!progress.getMilestone20Granted() && completedBookingsCount >= 20) {
-            grantMilestone(progress, 20, milestone20Points, "Milestone 20 Reached");
+            grantMilestone(progress, 20, 0, false);
         }
 
         milestoneProgressRepository.save(progress);
     }
 
-    private void grantMilestone(MilestoneProgress progress, Integer milestone, Integer points, String description) {
+    private void grantMilestone(MilestoneProgress progress, Integer milestone, Integer points, boolean awardPoints) {
         String customerId = progress.getCustomerId();
         log.info("Granting milestone {} reward ({} points) to customer {}", milestone, points, customerId);
 
         // Create customer voucher for the milestone reward
         try {
-            Voucher voucherEntity = createOrGetMilestoneVoucher(milestone, customerId);
-            
-            CustomerVoucher voucher = new CustomerVoucher();
-            voucher.setCustomerId(customerId);
-            voucher.setVoucherId(voucherEntity.getId());
-            voucher.setTrangThai(TrangThaiCustomerVoucher.CHUA_DUNG);
-            voucher.setSourceType(SourceTypeVoucher.MILESTONE_REWARD);
-            voucher.setIssuedAt(LocalDateTime.now());
-            voucher.setExpiredAt(LocalDateTime.now().plusDays(30));
+            if (awardPoints && points != null && points > 0) {
+                awardMilestonePoints(customerId, milestone, points);
+            } else {
+                Voucher voucherEntity = createOrGetMilestoneVoucher(milestone, customerId);
 
-            customerVoucherRepository.save(voucher);
+                CustomerVoucher voucher = new CustomerVoucher();
+                voucher.setCustomerId(customerId);
+                voucher.setVoucherId(voucherEntity.getId());
+                voucher.setTrangThai(TrangThaiCustomerVoucher.CHUA_DUNG);
+                voucher.setSourceType(SourceTypeVoucher.MILESTONE_REWARD);
+                voucher.setIssuedAt(LocalDateTime.now());
+                voucher.setExpiredAt(LocalDateTime.now().plusDays(30));
+
+                customerVoucherRepository.save(voucher);
+            }
 
             // Update milestone progress
             LocalDateTime now = LocalDateTime.now();
@@ -99,13 +110,40 @@ public class MilestoneRewardService {
             }
 
             // Emit event
-            notificationEventService.emitMilestoneRewardGranted(customerId, milestone, points);
+            notificationEventService.emitMilestoneRewardGranted(customerId, milestone, points != null ? points : 0);
 
             log.info("Successfully granted milestone {} reward to customer {}", milestone, customerId);
         } catch (Exception e) {
             log.error("Error granting milestone reward for customer {}: {}", customerId, e.getMessage(), e);
             throw new BusinessConflictException("Failed to grant milestone reward: " + e.getMessage());
         }
+    }
+
+    private void awardMilestonePoints(String customerId, Integer milestone, Integer points) {
+        String note = "Thuong moc booking #" + milestone;
+        if (lichSuDiemRepository.existsByCustomerIdAndLoaiGiaoDichDiemAndGhiChu(
+                customerId,
+                LoaiGiaoDichDiem.MILESTONE_REWARD,
+                note)) {
+            return;
+        }
+
+        KhachHang customer = khachHangRepository.findByIdForUpdate(customerId)
+                .orElseThrow(() -> new BusinessConflictException("Customer not found for milestone reward"));
+
+        int pointsBefore = customer.getDiemThanhVien() != null ? customer.getDiemThanhVien() : 0;
+        int pointsAfter = pointsBefore + points;
+        customer.setDiemThanhVien(pointsAfter);
+        khachHangRepository.save(customer);
+
+        LichSuDiem history = new LichSuDiem();
+        history.setCustomerId(customerId);
+        history.setSoDiemThayDoi(points);
+        history.setLoaiGiaoDichDiem(LoaiGiaoDichDiem.MILESTONE_REWARD);
+        history.setDiemTruocGiaoDich(pointsBefore);
+        history.setDiemSauGiaoDich(pointsAfter);
+        history.setGhiChu(note);
+        lichSuDiemRepository.save(history);
     }
 
     private Voucher createOrGetMilestoneVoucher(Integer milestone, String customerId) {
@@ -150,28 +188,34 @@ public class MilestoneRewardService {
         return voucherRepository.save(voucher);
     }
 
-    @Transactional(readOnly = true)
     public MilestoneProgress getMilestoneProgress(String customerId) {
         log.debug("Fetching milestone progress for customer {}", customerId);
 
         return milestoneProgressRepository.findByCustomerId(customerId)
-                .orElseGet(() -> {
-                    log.debug("No milestone progress found for customer {}, creating new", customerId);
-                    MilestoneProgress newProgress = new MilestoneProgress();
-                    newProgress.setCustomerId(customerId);
-                    newProgress.setCompletedBookings(0);
-                    newProgress.setMilestone5Granted(false);
-                    newProgress.setMilestone10Granted(false);
-                    newProgress.setMilestone20Granted(false);
-                    return milestoneProgressRepository.save(newProgress);
-                });
+                .orElseGet(() -> createMilestoneProgress(customerId));
+    }
+
+    private MilestoneProgress getMilestoneProgressForUpdate(String customerId) {
+        return milestoneProgressRepository.findByCustomerIdForUpdate(customerId)
+                .orElseGet(() -> createMilestoneProgress(customerId));
+    }
+
+    private MilestoneProgress createMilestoneProgress(String customerId) {
+        log.debug("No milestone progress found for customer {}, creating new", customerId);
+        MilestoneProgress newProgress = new MilestoneProgress();
+        newProgress.setCustomerId(customerId);
+        newProgress.setCompletedBookings(0);
+        newProgress.setMilestone5Granted(false);
+        newProgress.setMilestone10Granted(false);
+        newProgress.setMilestone20Granted(false);
+        return milestoneProgressRepository.save(newProgress);
     }
 
     @Transactional
     public void incrementBookingCount(String customerId) {
         log.info("Incrementing booking count for customer {}", customerId);
 
-        MilestoneProgress progress = getMilestoneProgress(customerId);
+        MilestoneProgress progress = getMilestoneProgressForUpdate(customerId);
         progress.setCompletedBookings(progress.getCompletedBookings() + 1);
         milestoneProgressRepository.save(progress);
 
