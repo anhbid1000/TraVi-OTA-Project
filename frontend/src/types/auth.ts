@@ -2,6 +2,7 @@ export type AuthUser = {
   username?: string
   email?: string
   role?: string
+  vaiTro?: string
   exp?: number
   iat?: number
   [key: string]: unknown

@@ -1,0 +1,292 @@
+/* ==========================================================================
+   1. FONT CHỮ & CORE LAYOUT
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap');
+
+.feedback-glass-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(20px) cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px 16px;
+}
+
+.feedback-modal-container {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(20, 83, 45, 0.05), 0 10px 10px -5px rgba(20, 83, 45, 0.03); /* Đổ bóng rêu tự nhiên */
+  border: 1px solid rgba(192, 201, 190, 0.4);
+  width: 100%;
+  max-width: 600px;
+  overflow: hidden;
+  display: flex;
+  flex-col: column;
+  flex-direction: column;
+  animation: modalFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalFadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   2. HEADER & TABS (Tạo độ thoáng)
+   ========================================================================== */
+.feedback-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid #edeef0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.feedback-header h2 {
+  font-family: 'Montserrat', sans-serif;
+  color: #003b1b;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.feedback-header p {
+  font-family: 'Inter', sans-serif;
+  color: #404941;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* Nút close */
+.btn-close-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #717970;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+  transition: color 0.2s;
+}
+.btn-close-modal:hover { color: #ba1a1a; }
+
+.feedback-tabs-bar {
+  display: flex;
+  background: #f8f9fb;
+  border-bottom: 1px solid #e1e2e4;
+}
+
+.feedback-tab-btn {
+  flex: 1;
+  padding: 16px;
+  background: none;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #404941;
+  cursor: pointer;
+  text-align: center;
+  border-b: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.feedback-tab-btn.active {
+  color: #003b1b;
+  background: #ffffff;
+  border-bottom: 2px solid #003b1b !important;
+}
+
+/* ==========================================================================
+   3. CONTENT AREA
+   ========================================================================== */
+.feedback-content {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section-label {
+  display: block;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #404941;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+/* Bộ chọn Sao thủ công */
+.star-rating-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+.star-rating-box p {
+  font-size: 14px;
+  font-weight: 600;
+  color: #191c1e;
+}
+.stars-wrapper {
+  display: flex;
+  gap: 12px;
+}
+.star-item {
+  font-size: 36px;
+  cursor: pointer;
+  color: #c0c9be;
+  transition: transform 0.1s, color 0.1s;
+  user-select: none;
+}
+.star-item.active {
+  color: #f9bd22;
+}
+.star-item:hover {
+  transform: scale(1.15);
+}
+
+/* Tags cảm xúc */
+.tags-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag-btn {
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: 1px solid #c0c9be;
+  background: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #404941;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tag-btn:hover {
+  background: #f3f4f6;
+}
+.tag-btn.selected {
+  border-color: #003b1b;
+  color: #003b1b;
+  background: rgba(209, 250, 229, 0.4);
+  font-weight: 600;
+}
+
+/* Textarea xịn sò */
+.feedback-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #f8f9fb;
+  border: 1px solid #c0c9be;
+  border-radius: 8px;
+  padding: 14px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #191c1e;
+  resize: none;
+  outline: none;
+  transition: all 0.2s;
+}
+.feedback-textarea:focus {
+  background: #ffffff;
+  border-color: #003b1b;
+  box-shadow: 0 0 0 3px rgba(0, 59, 27, 0.1);
+}
+
+/* Vùng Dropzone Upload Ảnh */
+.feedback-upload-zone {
+  border: 2px dashed #c0c9be;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  background: #f8f9fb;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.feedback-upload-zone:hover {
+  border-color: #003b1b;
+  background: #f3f4f6;
+}
+.feedback-upload-zone.active {
+  border-color: #003b1b;
+  background: rgba(209, 250, 229, 0.2);
+}
+.upload-icon-box {
+  width: 44px;
+  height: 44px;
+  background: #e7e8ea;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.feedback-upload-zone p {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #003b1b;
+  margin: 0;
+}
+.feedback-upload-zone span {
+  font-size: 12px;
+  color: #717970;
+  font-weight: 400;
+}
+
+/* ==========================================================================
+   4. FOOTER & BUTTONS
+   ========================================================================== */
+.feedback-footer {
+  padding: 20px 28px;
+  border-t: 1px solid #edeef0;
+  background: rgba(248, 249, 251, 0.5);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-feedback-cancel {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 1px solid #c0c9be;
+  background: #ffffff;
+  color: #003b1b;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-feedback-cancel:hover { background: #f3f4f6; }
+
+.btn-feedback-submit {
+  padding: 12px 28px;
+  border-radius: 8px;
+  border: none;
+  background: #003b1b;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 59, 27, 0.1);
+  transition: background 0.2s, opacity 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-feedback-submit:hover { background: #14532d; }
+.btn-feedback-submit:disabled { opacity: 0.6; cursor: not-allowed; }

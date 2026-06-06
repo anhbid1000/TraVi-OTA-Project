@@ -1,6 +1,5 @@
 package com.ota.travi.config;
 
-
 import com.ota.travi.security.CustomUserDetailsService;
 import com.ota.travi.security.JwtAuthenticationFilter;
 import com.ota.travi.security.RateLimitFilter;
@@ -74,20 +73,29 @@ public class SecurityConfig {
         return source;
     }
 
-
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF vì chúng ta dùng Token Stateless
-                .cors(cors -> cors.configure(http)) // Bật CORS để cho phép Frontend React gọi API
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Bật CORS để cho phép Frontend React gọi API
                 .authorizeHttpRequests(auth -> auth
                         // 1. CÁC API MỞ TỰ DO (Không cần đăng nhập)
                         .requestMatchers(AUTH_PREFIX + "/**").permitAll()
                         .requestMatchers(PUBLIC_PREFIX + "/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers(BASE_PREFIX + "/attachments/**").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
 
                         // 2. CÁC API PHÂN QUYỀN (Roles theo Seed Data DB)
                         .requestMatchers(ADMIN_PREFIX +"/**").hasRole("QUAN_TRI_VIEN")
+                        .requestMatchers(PARTNER_PREFIX + "/**", PARTNER_LEGACY_PREFIX + "/**").hasRole("DOI_TAC")
                         .requestMatchers(PARTNER_PREFIX + "/**").hasRole("DOI_TAC")
+                        .requestMatchers(USER_FEEDBACK_PREFIX + "/**").hasRole("USER")
 
                         // 3. TẤT CẢ CÁC API KHÁC ĐỀU PHẢI QUẸT THẺ (Có JWT hợp lệ mới được vào)
                         .anyRequest().authenticated()

@@ -1,0 +1,2 @@
+-- H2 no-op.
+-- Legacy PostgreSQL schema used `trang_thai_don`; H2 test schema already uses `trang_thai`.

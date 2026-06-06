@@ -1,6 +1,6 @@
 package com.ota.travi.service;
 
-import com.ota.travi.Enum.OtpPurpose;
+import com.ota.travi.enums.OtpPurpose;
 import com.ota.travi.entity.User;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +28,7 @@ public class OTPService {
     @Autowired
     private JavaMailSender mailSender;
 
+    // --- 1. TẠO VÀ KIỂM TRA OTP ---
     // Tạo mã OTP ngẫu nhiên và thêm vào redis
     public String createOtp(String email, OtpPurpose purpose) {
         String otp = String.format("%06d", RANDOM.nextInt(1_000_000));
@@ -40,6 +41,7 @@ public class OTPService {
         return otp;
     }
 
+    // Xác thực mã OTP được cung cấp so với mã lưu trữ trong Redis
     public void checkOtp(String email, String confirmOTP, OtpPurpose purpose) {
         String otpKey = getOtpKey(email, purpose);
         String redisOtp = redisTemplate.opsForValue().get(otpKey);
@@ -55,6 +57,8 @@ public class OTPService {
         redisTemplate.delete(otpKey);
     }
 
+    // --- 2. QUẢN LÝ XÁC THỰC ĐẶT LẠI MẬT KHẨU ---
+    // Đánh dấu rằng mật khẩu đã được xác thực và có thể đặt lại
     public void markPasswordResetVerified(String email) {
         redisTemplate.opsForValue().set(getPasswordResetVerifiedKey(email), "true", PASSWORD_RESET_VERIFIED_TTL);
     }
@@ -68,6 +72,8 @@ public class OTPService {
         redisTemplate.delete(getPasswordResetVerifiedKey(email));
     }
 
+    // --- 3. GỬI EMAIL OTP ---
+    // Gửi email xác minh OTP cho người dùng đăng ký mới
     @Async
     public void sendVerificationRegister(User user) {
         if (user == null) {
@@ -93,6 +99,7 @@ public class OTPService {
         sendEmail(email, subject, content);
     }
 
+    // Gửi email OTP cho người dùng muốn đặt lại mật khẩu
     @Async
     public void sendPasswordResetOtp(User user) {
         if (user == null) {
@@ -117,6 +124,8 @@ public class OTPService {
         sendEmail(email, subject, content);
     }
 
+    // --- UTILITY METHODS ---
+    // Gửi email sử dụng JavaMailSender
     private void sendEmail(String email, String subject, String content) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

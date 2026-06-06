@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { cn } from '../../utils/cn'
 import { authService } from '../../services/authService'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { AuthTextField, LoginTemplate } from '../../features/auth/components'
@@ -325,7 +326,7 @@ export function ForgotPasswordPage({ loginPath, tone, title, subtitle }: ForgotP
           <button
             type="submit"
             disabled={loading || resendLoading}
-            className={`${authButtonBaseClass} ${styles.button}`}
+            className={cn(authButtonBaseClass, styles.button)}
           >
             {loading ? (
               <span className="inline-flex items-center justify-center gap-2">

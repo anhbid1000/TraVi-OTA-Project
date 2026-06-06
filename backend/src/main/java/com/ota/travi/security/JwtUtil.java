@@ -22,19 +22,32 @@ public class JwtUtil {
     @Value("${SECRET_KEY}")
     private String secretKey;
 
-    @Value("${JWT_EXPIRATION}")
+    @Value("${JWT_EXPIRATION:3600000}")
     private Long expirationTime;
+
+    private static final long DEFAULT_ACCESS_TOKEN_EXPIRATION_MS = 60 * 60 * 1000L;
+    private static final long MIN_ACCESS_TOKEN_EXPIRATION_MS = 15 * 60 * 1000L;
+
+    private long getSafeAccessTokenExpirationMs() {
+        if (expirationTime == null || expirationTime < MIN_ACCESS_TOKEN_EXPIRATION_MS) {
+            return DEFAULT_ACCESS_TOKEN_EXPIRATION_MS;
+        }
+        return expirationTime;
+    }
 
     // 1. Hàm sinh ra Thẻ từ (Token) khi User đăng nhập thành công
     public String generateToken(String username, String role) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("role", role); // Nhét thêm quyền (Guest, Partner...) vào thẻ
 
+        long now = System.currentTimeMillis();
+        long safeExpirationTime = getSafeAccessTokenExpirationMs();
+
         return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(username) // Tên người dùng sở hữu thẻ
-                .setIssuedAt(new Date(System.currentTimeMillis())) // Thời gian phát thẻ
-                .setExpiration(new Date(System.currentTimeMillis() + expirationTime)) // Thời gian hết hạn
+                .setIssuedAt(new Date(now)) // Thời gian phát thẻ
+                .setExpiration(new Date(now + safeExpirationTime)) // Thời gian hết hạn
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256) // Đóng dấu mộc
                 .compact();
     }

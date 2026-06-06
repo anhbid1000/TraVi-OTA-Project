@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { cn } from '../../utils/cn'
 import { useAuth } from '../../hooks/useAuth'
 import { authService } from '../../services/authService'
 import { tokenStorage } from '../../services/tokenStorage'
+import { partnerAssetService } from '../../services/partnerAssetService'
 import type { RegisterRequest } from '../../types/auth'
-import { normalizeRole } from '../../routes/routeGuards'
+import { getUserRole, normalizeRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
 import { AuthTextField, GoogleAuthButton, LoginTemplate } from '../../features/auth/components'
 import {
@@ -160,7 +162,7 @@ export function PartnerRegister() {
       })
 
       const user = tokenStorage.getUserFromToken()
-      const role = normalizeRole(user?.role)
+      const role = normalizeRole(getUserRole(user))
 
       if (role !== 'DOI_TAC') {
         await logout()
@@ -168,7 +170,9 @@ export function PartnerRegister() {
         return
       }
 
-      navigate('/partner', { replace: true })
+      const profiles = await partnerAssetService.getBusinessProfiles().catch(() => [])
+      const targetPath = profiles.length > 0 ? '/partner/dashboard' : '/partner/business-profile'
+      navigate(targetPath, { replace: true })
     } catch (error) {
       setSubmitError(getApiErrorMessage(error, 'Đăng ký Google thất bại.'))
     } finally {
@@ -284,7 +288,10 @@ export function PartnerRegister() {
           <button
             type="submit"
             disabled={loading}
-            className={`${authButtonBaseClass} bg-emerald-600 shadow-lg shadow-emerald-200 hover:bg-emerald-700`}
+            className={cn(
+              authButtonBaseClass,
+              'bg-emerald-600 shadow-lg shadow-emerald-200 hover:bg-emerald-700',
+            )}
           >
             {loading ? 'Đang đăng ký...' : 'Đăng ký đối tác'}
           </button>
