@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { complaintServiceV2 } from '../../../features/feedback-v2/services/complaintServiceV2';
 import { api } from '../../../services/api';
@@ -68,7 +68,7 @@ export default function PartnerComplaintDetailPage() {
     currency: 'VND',
   });
 
-  const loadDetail = async () => {
+  const loadDetail = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -78,11 +78,11 @@ export default function PartnerComplaintDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [complaintId]);
 
   useEffect(() => {
     if (complaintId) void loadDetail();
-  }, [complaintId]);
+  }, [complaintId, loadDetail]);
 
   const closed = complaint?.status === 'DA_DONG';
   const canProposeAction = !!complaint && !closed && (complaint.status === 'CHO_PHAN_HOI' || complaint.status === 'DANG_XU_LY');

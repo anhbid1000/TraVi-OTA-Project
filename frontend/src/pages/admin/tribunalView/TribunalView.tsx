@@ -32,8 +32,8 @@ export default function TribunalView() {
       if (!caseId) return;
       try {
         setIsLoading(true);
-        const response = await disputeService.getPartnerDisputes(); 
-        const currentCase = response?.find((c: any) => c.id === caseId);
+        const response = await disputeService.getPartnerDisputes() as DisputeCase[];
+        const currentCase = response?.find((c) => c.id === caseId);
         if (currentCase) {
           setActiveCase(currentCase);
         } else {

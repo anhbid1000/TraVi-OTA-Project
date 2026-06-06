@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { reviewServiceV2 } from '../../features/feedback-v2/services/reviewServiceV2';
 import type { ReviewResponse, TrangThaiDanhGia } from '../../features/feedback-v2/types/review';
 import { PartnerPagination } from '../../features/feedback-v2/components/partner/PartnerPagination';
@@ -19,7 +19,7 @@ export default function PartnerReviewsPage() {
   const [replyContent, setReplyContent] = useState('');
   const [replying, setReplying] = useState(false);
 
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -31,11 +31,11 @@ export default function PartnerReviewsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
 
   useEffect(() => {
     void loadReviews();
-  }, [page]);
+  }, [loadReviews]);
 
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();

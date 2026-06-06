@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomerFeedbackLayout } from '../../../features/feedback-v2/components/CustomerFeedbackLayout';
@@ -54,7 +54,7 @@ export default function MyComplaintsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadComplaints = async () => {
+  const loadComplaints = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -66,11 +66,11 @@ export default function MyComplaintsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, status]);
 
   useEffect(() => {
     void loadComplaints();
-  }, [page, status]);
+  }, [loadComplaints]);
 
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();

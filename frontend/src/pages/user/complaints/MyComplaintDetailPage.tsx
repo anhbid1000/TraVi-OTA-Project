@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CustomerFeedbackLayout } from '../../../features/feedback-v2/components/CustomerFeedbackLayout';
 import { complaintServiceV2 } from '../../../features/feedback-v2/services/complaintServiceV2';
@@ -92,7 +92,7 @@ export default function MyComplaintDetailPage() {
   const [acceptingActionId, setAcceptingActionId] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
 
-  const loadDetail = async () => {
+  const loadDetail = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -102,11 +102,11 @@ export default function MyComplaintDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [complaintId]);
 
   useEffect(() => {
     if (complaintId) void loadDetail();
-  }, [complaintId]);
+  }, [complaintId, loadDetail]);
 
   const closed = complaint?.status === 'DA_DONG';
   const pendingActions = useMemo(() => complaint?.resolutionActions?.filter((a) => a.status === 'PROPOSED') ?? [], [complaint]);

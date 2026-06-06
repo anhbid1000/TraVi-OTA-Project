@@ -63,16 +63,7 @@ export function PartnerLayout() {
   const [hasBusinessProfile, setHasBusinessProfile] = useState<boolean>(true)
   const [serviceType, setServiceType] = useState<ServiceType>(null)
   const [isManagementExpanded, setIsManagementExpanded] = useState<boolean>(false)
-
-  useEffect(() => {
-    if (!hasBusinessProfile) {
-      setIsManagementExpanded(false)
-      return
-    }
-    if (isAssetManagementRoute) {
-      setIsManagementExpanded(true)
-    }
-  }, [hasBusinessProfile, isAssetManagementRoute])
+  const managementExpanded = hasBusinessProfile && (isManagementExpanded || isAssetManagementRoute)
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -193,7 +184,7 @@ export function PartnerLayout() {
               onClick={() => {
                 if (hasBusinessProfile) {
                   navigate('/partner/business-profile')
-                  setIsManagementExpanded(!isManagementExpanded)
+                  setIsManagementExpanded(!managementExpanded)
                 } else {
                   navigate('/partner/business-profile')
                 }
@@ -204,13 +195,13 @@ export function PartnerLayout() {
               {hasBusinessProfile && (
                 <>
                   <span className="nav-spacer" />
-                  {isManagementExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                  {managementExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </>
               )}
             </button>
           </nav>
 
-          {hasBusinessProfile && isManagementExpanded && (
+          {managementExpanded && (
             <div className="management-subnav">
               <p>Quản lý tài sản</p>
               {navItems.map((item) => (
