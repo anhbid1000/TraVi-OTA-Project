@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useState } from 'react'
+import { cn } from '../../../utils/cn'
 import {
   authErrorClass,
   authInputBaseClass,
@@ -98,7 +99,7 @@ export function AuthTextField({
 
       <div className={authInputWrapperClass}>
         {Icon && (
-          <span className={`${authInputIconClass} ${iconToneClasses[tone]}`}>
+          <span className={cn(authInputIconClass, iconToneClasses[tone])}>
             <Icon size={18} strokeWidth={2.2} aria-hidden="true" />
           </span>
         )}
@@ -111,7 +112,7 @@ export function AuthTextField({
           placeholder={placeholder}
           autoComplete={autoComplete}
           onChange={handleChange}
-          className={`${authInputBaseClass} ${toneClasses[tone]} ${shouldShowToggle ? 'pr-12' : ''}`}
+          className={cn(authInputBaseClass, toneClasses[tone], shouldShowToggle && 'pr-12')}
         />
 
         {shouldShowToggle && (

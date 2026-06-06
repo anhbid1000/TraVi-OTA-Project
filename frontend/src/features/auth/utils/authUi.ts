@@ -35,13 +35,13 @@ export const authAlertSuccessClass =
   'mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700'
 
 export const authButtonBaseClass =
-  'h-12 w-full border-none text-white rounded-xl font-bold text-base transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70'
+  'inline-flex h-12 w-full items-center justify-center rounded-xl border-none bg-transparent px-4 py-3 text-base font-bold !text-white transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70'
 
 export const authFooterClass =
   'mt-6 text-base font-medium text-center text-gray-500'
 
 export const authSmallLinkClass =
-  'text-sm font-medium transition-colors text-blue-500 transition-all  hover:-translate-y-0.5 hover:text-blue-600'
+  'text-sm font-medium text-blue-500 transition-all hover:-translate-y-0.5 hover:text-blue-600'
 
 export const authFormGroupClass =
   'mb-5'

@@ -16,6 +16,8 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VaiTro {
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -29,6 +31,10 @@ public class VaiTro {
     @CreationTimestamp
     private Timestamp ngayTao;
 
-
-
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getTen() { return ten; }
+    public void setTen(String ten) { this.ten = ten; }
+    public String getMoTa() { return moTa; }
+    public void setMoTa(String moTa) { this.moTa = moTa; }
 }

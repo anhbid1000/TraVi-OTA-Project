@@ -15,7 +15,10 @@ public class GoogleTokenVerifierService {
     @Value("${GOOGLE_CLIENT_ID:}")
     private String googleClientId;
 
+    // --- XÁC THỰC GOOGLE ID TOKEN ---
+    // Xác thực Google ID Token và trích xuất thông tin người dùng
     public GoogleUserInfo verifyIdToken(String idToken) {
+        // 1. Kiểm tra xem token và clientId có hợp lệ không
         if (idToken == null || idToken.isBlank()) {
             throw new RuntimeException("Google ID token không được để trống");
         }
@@ -25,13 +28,15 @@ public class GoogleTokenVerifierService {
         }
 
         try {
+            // 2. Xây dựng verifier và xác thực token
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                     new NetHttpTransport(),
                     GsonFactory.getDefaultInstance()
-            )
+                    )
                     .setAudience(Collections.singletonList(googleClientId))
                     .build();
 
+            // 3. Xác thực token và lấy payload
             GoogleIdToken googleIdToken = verifier.verify(idToken);
             if (googleIdToken == null) {
                 throw new RuntimeException("Google ID token không hợp lệ");
@@ -42,6 +47,7 @@ public class GoogleTokenVerifierService {
             Boolean emailVerified = payload.getEmailVerified();
             String hoTen = (String) payload.get("name");
 
+            // 4. Kiểm tra email hợp lệ và đã được xác thực
             if (email == null || email.isBlank()) {
                 throw new RuntimeException("Không thể lấy email từ tài khoản Google");
             }
@@ -50,6 +56,7 @@ public class GoogleTokenVerifierService {
                 throw new RuntimeException("Tài khoản Google chưa xác thực email");
             }
 
+            // 5. Trả về thông tin người dùng đã xác thực
             return new GoogleUserInfo(email.trim().toLowerCase(), hoTen);
         } catch (RuntimeException ex) {
             throw ex;

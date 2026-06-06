@@ -1,4 +1,3 @@
-export { AdminLogin } from './AdminLogin'
 export { CustomerLogin } from './CustomerLogin'
 export { CustomerRegister } from './CustomerRegister'
 export { ForgotPasswordPage } from './ForgotPasswordPage'

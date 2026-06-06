@@ -1,105 +1,142 @@
-import axios, {
-  AxiosError,
-  type AxiosResponse,
-  type InternalAxiosRequestConfig,
-} from 'axios'
-import type { AuthResponse } from '../types/auth'
-import { tokenStorage } from './tokenStorage'
+import axios, { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
+import type { AuthResponse } from '../types/auth';
+import { tokenStorage } from './tokenStorage';
 
 type RetriableRequestConfig = InternalAxiosRequestConfig & {
-  _retry?: boolean
-}
+  _retry?: boolean;
+};
+
+type FlexibleAuthResponse = AuthResponse & {
+  token?: string;
+  accessToken?: string;
+  access_token?: string;
+  refreshToken?: string;
+  refresh_token?: string;
+  tokenType?: string;
+  token_type?: string;
+};
 
 const rawBaseUrl =
-  import.meta.env.VITE_API_BASE_URL ??
-  import.meta.env.VITE_API_URL ??
-  'http://localhost:8080/api'
+  import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8080/api';
 
-const normalizedBaseUrl = rawBaseUrl.replace(/\/$/, '')
+const normalizedBaseUrl = rawBaseUrl.replace(/\/$/, '');
 export const API_BASE_URL = normalizedBaseUrl.endsWith('/api')
   ? normalizedBaseUrl
-  : `${normalizedBaseUrl}/api`
+  : `${normalizedBaseUrl}/api`;
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    Accept: 'application/json',
   },
-})
+});
 
-let refreshPromise: Promise<AuthResponse> | null = null
+let refreshPromise: Promise<FlexibleAuthResponse> | null = null;
+
+function getAccessTokenFromAuthResponse(auth: FlexibleAuthResponse) {
+  return auth.token || auth.accessToken || auth.access_token || '';
+}
+
+function getRefreshTokenFromAuthResponse(auth: FlexibleAuthResponse) {
+  return auth.refreshToken || auth.refresh_token || '';
+}
+
+function saveAuthResponse(auth: FlexibleAuthResponse) {
+  const accessToken = getAccessTokenFromAuthResponse(auth);
+  const refreshToken = getRefreshTokenFromAuthResponse(auth);
+  const tokenType = auth.tokenType || auth.token_type || 'Bearer';
+
+  if (accessToken) {
+    localStorage.setItem('travi_access_token', accessToken);
+  }
+
+  if (refreshToken) {
+    localStorage.setItem('travi_refresh_token', refreshToken);
+  }
+
+  localStorage.setItem('travi_token_type', tokenType);
+}
 
 const normalizeRequestUrl = (url?: string) => {
   if (!url) {
-    return ''
+    return '';
   }
 
-  return url.startsWith('http') ? url.replace(API_BASE_URL, '') : url
-}
+  return url.startsWith('http') ? url.replace(API_BASE_URL, '') : url;
+};
 
 const isPublicAuthRequest = (url?: string) => {
-  const normalizedUrl = normalizeRequestUrl(url)
+  const normalizedUrl = normalizeRequestUrl(url);
 
-  return (
-    normalizedUrl.startsWith('/v1/auth/') &&
-    normalizedUrl !== '/v1/auth/logout'
-  )
-}
+  return normalizedUrl.startsWith('/v1/auth/') && normalizedUrl !== '/v1/auth/logout';
+};
 
 const refreshAccessToken = async () => {
-  const refreshToken = tokenStorage.getRefreshToken()
+  const refreshToken = localStorage.getItem('travi_refresh_token');
 
   if (!refreshToken) {
-    throw new Error('Missing refresh token')
+    throw new Error('Missing refresh token');
   }
 
   if (!refreshPromise) {
     refreshPromise = axios
-      .post<AuthResponse>(`${API_BASE_URL}/v1/auth/refresh`, { refreshToken })
+      .post<FlexibleAuthResponse>(`${API_BASE_URL}/v1/auth/refresh`, { refreshToken })
       .then((response) => {
-        tokenStorage.setTokens(response.data)
-        window.dispatchEvent(new Event('auth:refresh'))
-        return response.data
+        saveAuthResponse(response.data);
+        window.dispatchEvent(new Event('auth:refresh'));
+        return response.data;
       })
       .finally(() => {
-        refreshPromise = null
-      })
+        refreshPromise = null;
+      });
   }
 
-  return refreshPromise
-}
+  return refreshPromise;
+};
 
 api.interceptors.request.use((config) => {
-  const token = tokenStorage.getAccessToken()
+  const token = tokenStorage.getAccessToken();
 
   if (token && !isPublicAuthRequest(config.url)) {
-    config.headers.Authorization = `${tokenStorage.getTokenType()} ${token}`
+    config.headers.Authorization = `${tokenStorage.getTokenType()} ${token}`;
   }
 
-  return config
-})
+  return config;
+});
 
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as RetriableRequestConfig | undefined
-    const status = error.response?.status
-    const isAuthRequest = isPublicAuthRequest(originalRequest?.url)
+    const originalRequest = error.config as RetriableRequestConfig | undefined;
+    const status = error.response?.status;
+    const isAuthRequest = isPublicAuthRequest(originalRequest?.url);
 
     if (status !== 401 || !originalRequest || originalRequest._retry || isAuthRequest) {
-      return Promise.reject(error)
+      return Promise.reject(error);
     }
 
-    originalRequest._retry = true
+    originalRequest._retry = true;
 
     try {
-      const auth = await refreshAccessToken()
-      originalRequest.headers.Authorization = `${auth.type || 'Bearer'} ${auth.token}`
-      return api(originalRequest)
+      const auth = await refreshAccessToken();
+      const newAccessToken = getAccessTokenFromAuthResponse(auth);
+
+      if (!newAccessToken) {
+        tokenStorage.clearTokens();
+        window.dispatchEvent(new Event('auth:logout'));
+        return Promise.reject(new Error('Refresh thành công nhưng backend không trả access token mới.'));
+      }
+
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+      return api(originalRequest);
     } catch (refreshError) {
-      tokenStorage.clearTokens()
-      window.dispatchEvent(new Event('auth:logout'))
-      return Promise.reject(refreshError)
+      tokenStorage.clearTokens();
+      localStorage.removeItem('travi_access_token');
+      localStorage.removeItem('travi_refresh_token');
+      localStorage.removeItem('travi_token_type');
+      window.dispatchEvent(new Event('auth:logout'));
+      return Promise.reject(refreshError);
     }
-  },
-)
+  }
+);

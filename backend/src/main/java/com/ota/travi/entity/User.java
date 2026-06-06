@@ -1,7 +1,5 @@
 package com.ota.travi.entity;
 
-import com.ota.travi.Enum.GioiTinh;
-import com.ota.travi.Enum.TrangThaiUser;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,6 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import com.ota.travi.enums.GioiTinh;
+import com.ota.travi.enums.TrangThaiUser;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -62,6 +63,23 @@ public abstract class User {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "vai_tro_id")
     protected VaiTro vaiTro;
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getMatKhau() { return matKhau; }
+    public void setMatKhau(String matKhau) { this.matKhau = matKhau; }
+    public String getHoTen() { return hoTen; }
+    public void setHoTen(String hoTen) { this.hoTen = hoTen; }
+    public String getSoDienThoai() { return soDienThoai; }
+    public void setSoDienThoai(String soDienThoai) { this.soDienThoai = soDienThoai; }
+    public TrangThaiUser getTrangThai() { return trangThai; }
+    public void setTrangThai(TrangThaiUser trangThai) { this.trangThai = trangThai; }
+    public VaiTro getVaiTro() { return vaiTro; }
+    public void setVaiTro(VaiTro vaiTro) { this.vaiTro = vaiTro; }
 
 
 }

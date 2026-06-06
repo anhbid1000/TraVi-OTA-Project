@@ -1,0 +1,378 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Dispute Resolution</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#87c695",
+                        "on-primary-fixed-variant": "#12512c",
+                        "on-primary-fixed": "#00210d",
+                        "primary-fixed": "#b1f2be",
+                        "mint-green": "#D1FAE5",
+                        "primary": "#003b1b",
+                        "on-secondary-container": "#00714d",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#4edea3",
+                        "outline": "#717970",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d9dadc",
+                        "pure-white": "#FFFFFF",
+                        "secondary": "#006c49",
+                        "on-secondary-fixed": "#002113",
+                        "surface": "#f8f9fb",
+                        "primary-container": "#14532d",
+                        "primary-fixed-dim": "#96d5a3",
+                        "secondary-fixed": "#6ffbbe",
+                        "deep-slate": "#1F2937",
+                        "background": "#f8f9fb",
+                        "tertiary-container": "#5e4400",
+                        "on-tertiary-fixed": "#261a00",
+                        "tertiary": "#422f00",
+                        "on-surface": "#191c1e",
+                        "inverse-surface": "#2e3132",
+                        "tertiary-fixed-dim": "#f9bd22",
+                        "surface-container-highest": "#e1e2e4",
+                        "surface-container-low": "#f3f4f6",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#005236",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e1e2e4",
+                        "on-tertiary-fixed-variant": "#5c4300",
+                        "secondary-container": "#6cf8bb",
+                        "inverse-primary": "#96d5a3",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f8f9fb",
+                        "surface-container-high": "#e7e8ea",
+                        "on-background": "#191c1e",
+                        "surface-container": "#edeef0",
+                        "outline-variant": "#c0c9be",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#404941",
+                        "inverse-on-surface": "#f0f1f3",
+                        "tertiary-fixed": "#ffdf9f",
+                        "surface-tint": "#2e6a41",
+                        "on-tertiary-container": "#e8ae06"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "margin-desktop": "48px",
+                        "gutter-desktop": "24px",
+                        "gutter-mobile": "16px",
+                        "container-max": "1280px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Montserrat"],
+                        "headline-md": ["Montserrat"],
+                        "headline-lg-mobile": ["Montserrat"],
+                        "headline-sm": ["Montserrat"],
+                        "label-lg": ["Inter"],
+                        "headline-lg": ["Montserrat"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(229, 231, 235, 0.5);
+        }
+        .action-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(20, 83, 45, 0.08);
+            border-color: #003b1b;
+        }
+        .action-card.active {
+            background-color: #f8f9fb;
+            border-color: #003b1b;
+            box-shadow: inset 0 0 0 1px #003b1b;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col md:flex-row">
+<!-- SideNavBar -->
+<nav class="h-screen w-64 fixed left-0 top-0 bg-primary dark:bg-primary-container shadow-md shadow-primary/10 flex flex-col h-full py-6 z-50 hidden md:flex">
+    <div class="px-6 mb-8">
+        <h1 class="font-headline-md text-headline-md font-bold text-pure-white mb-1">LushResolve</h1>
+        <p class="font-label-sm text-label-sm text-primary-fixed-dim">OTA Dispute Center</p>
+    </div>
+    <div class="px-4 mb-6">
+        <button class="w-full bg-secondary text-pure-white py-2 px-4 rounded-lg font-label-lg text-label-lg flex items-center justify-center gap-2 hover:bg-on-secondary-fixed-variant transition-colors shadow-sm">
+            <span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add</span>
+            New Case
+        </button>
+    </div>
+    <div class="flex-1 overflow-y-auto space-y-1">
+        <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors mx-2 rounded-lg" href="#">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="font-label-lg text-label-lg">Dashboard</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 bg-on-primary-fixed-variant text-secondary-fixed rounded-lg mx-2 transition-colors" href="#">
+            <span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">gavel</span>
+            <span class="font-label-lg text-label-lg">Dispute Cases</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors mx-2 rounded-lg" href="#">
+            <span class="material-symbols-outlined">priority_high</span>
+            <span class="font-label-lg text-label-lg">Escalations</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors mx-2 rounded-lg" href="#">
+            <span class="material-symbols-outlined">monitoring</span>
+            <span class="font-label-lg text-label-lg">Analytics</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors mx-2 rounded-lg" href="#">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="font-label-lg text-label-lg">Settings</span>
+        </a>
+    </div>
+    <div class="mt-auto px-2 space-y-1 pt-4 border-t border-primary-container/30">
+        <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors rounded-lg" href="#">
+            <span class="material-symbols-outlined">help</span>
+            <span class="font-label-lg text-label-lg">Help Center</span>
+        </a>
+        <a class="flex items-center gap-3 px-4 py-3 text-on-primary font-medium hover:bg-on-primary-fixed-variant/50 transition-colors rounded-lg" href="#">
+            <span class="material-symbols-outlined">logout</span>
+            <span class="font-label-lg text-label-lg">Logout</span>
+        </a>
+    </div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 md:ml-64 flex flex-col min-h-screen">
+    <!-- TopNavBar -->
+    <header class="sticky top-0 z-40 w-full bg-surface/60 dark:bg-background/60 backdrop-blur-md border-b border-outline-variant/30 shadow-sm flex justify-between items-center h-16 px-gutter-desktop">
+        <div class="flex items-center gap-8">
+            <h2 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed hidden md:block">Dispute Manager</h2>
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            <nav class="hidden md:flex items-center gap-6">
+                <a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-lg text-label-lg" href="#">Queue</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-lg text-label-lg" href="#">Reports</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-label-lg text-label-lg" href="#">History</a>
+            </nav>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="relative hidden sm:block focus-within:ring-2 focus-within:ring-primary/20 rounded-full">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+                <input class="pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-full text-body-sm font-body-sm focus:outline-none w-64" placeholder="Search cases..." type="text">
+            </div>
+            <button class="hover:bg-surface-container-low dark:hover:bg-surface-container-highest rounded-full p-2 text-on-surface-variant transition-colors">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+            <button class="hover:bg-surface-container-low dark:hover:bg-surface-container-highest rounded-full p-2 text-on-surface-variant transition-colors">
+                <span class="material-symbols-outlined">account_circle</span>
+            </button>
+        </div>
+    </header>
+    <!-- Canvas -->
+    <main class="flex-1 p-gutter-mobile md:p-gutter-desktop max-w-container-max mx-auto w-full space-y-6">
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-surface-variant">
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="px-2 py-0.5 bg-error-container text-on-error-container rounded text-xs font-semibold uppercase tracking-wider">High Priority</span>
+                    <span class="text-on-surface-variant font-label-sm text-label-sm">Case #DR-8472-A</span>
+                </div>
+                <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Resolve Dispute: Villa Del Mar Booking</h1>
+                <p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-2xl">Guest claims property amenities were misrepresented (pool closed for maintenance). Requesting full refund. Host refuses.</p>
+            </div>
+            <div class="flex gap-3">
+                <button class="px-4 py-2 border border-outline text-on-surface rounded-lg font-label-lg text-label-lg hover:bg-surface-container transition-colors">View Details</button>
+                <button class="px-4 py-2 bg-surface-container-highest text-on-surface rounded-lg font-label-lg text-label-lg hover:bg-surface-dim transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">history</span> History
+                </button>
+            </div>
+        </div>
+        <!-- Bento Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left Column: Resolution Actions -->
+            <div class="lg:col-span-8 space-y-6">
+                <!-- Resolution Options -->
+                <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-variant">
+                    <h3 class="font-headline-sm text-headline-sm text-primary mb-4 border-b border-surface-variant pb-2">Select Resolution Action</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="action-selector">
+                        <!-- Action: Full Refund -->
+                        <button class="action-card border border-surface-variant rounded-lg p-4 text-left flex flex-col gap-2 relative overflow-hidden group" data-target="form-refund">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-mint-green flex items-center justify-center text-primary">
+                                    <span class="material-symbols-outlined">currency_exchange</span>
+                                </div>
+                                <span class="font-label-lg text-label-lg text-on-surface">Issue Full Refund</span>
+                            </div>
+                            <p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Return $1,240.00 to original payment method.</p>
+                            <div class="absolute inset-x-0 bottom-0 h-1 bg-primary transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                        </button>
+                        <!-- Action: Discount Voucher -->
+                        <button class="action-card border border-surface-variant rounded-lg p-4 text-left flex flex-col gap-2 relative overflow-hidden group active" data-target="form-voucher">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-primary">
+                                    <span class="material-symbols-outlined">local_offer</span>
+                                </div>
+                                <span class="font-label-lg text-label-lg text-on-surface">Offer Discount Voucher</span>
+                            </div>
+                            <p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Provide future stay credit to guest.</p>
+                            <div class="absolute inset-x-0 bottom-0 h-1 bg-primary transform scale-x-100 transition-transform origin-left"></div>
+                        </button>
+                        <!-- Action: Reject Claim -->
+                        <button class="action-card border border-surface-variant rounded-lg p-4 text-left flex flex-col gap-2 relative overflow-hidden group" data-target="form-reject">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-error-container flex items-center justify-center text-on-error-container">
+                                    <span class="material-symbols-outlined">block</span>
+                                </div>
+                                <span class="font-label-lg text-label-lg text-on-surface">Reject Claim</span>
+                            </div>
+                            <p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Deny request based on host evidence.</p>
+                            <div class="absolute inset-x-0 bottom-0 h-1 bg-error transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                        </button>
+                        <!-- Action: Escalate -->
+                        <button class="action-card border border-surface-variant rounded-lg p-4 text-left flex flex-col gap-2 relative overflow-hidden group" data-target="form-escalate">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
+                                    <span class="material-symbols-outlined">trending_up</span>
+                                </div>
+                                <span class="font-label-lg text-label-lg text-on-surface">Escalate to Senior Manager</span>
+                            </div>
+                            <p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Requires higher-level authorization.</p>
+                            <div class="absolute inset-x-0 bottom-0 h-1 bg-tertiary transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                        </button>
+                    </div>
+                </div>
+                <!-- Configuration Form Area (Dynamic) -->
+                <div class="glass-panel rounded-xl p-6 relative overflow-hidden">
+                    <!-- Decorative background element -->
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-mint-green/30 rounded-full blur-3xl z-0 pointer-events-none"></div>
+                    <div class="relative z-10" id="form-container">
+                        <!-- Voucher Form (Active by default based on visual state above) -->
+                        <div class="space-y-5" id="form-voucher">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-headline-sm text-headline-sm text-primary">Configure Discount Voucher</h4>
+                                <span class="bg-surface-container-high px-3 py-1 rounded-full text-xs font-medium text-on-surface-variant">Action Required</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div class="space-y-2">
+                                    <label class="font-label-sm text-label-sm text-on-surface-variant block">Voucher Value ($)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">$</span>
+                                        <input class="w-full pl-8 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-body-md" type="number" value="250">
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="font-label-sm text-label-sm text-on-surface-variant block">Validity Period</label>
+                                    <select class="w-full px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-body-md appearance-none">
+                                        <option>6 Months</option>
+                                        <option selected="">12 Months</option>
+                                        <option>24 Months</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="font-label-sm text-label-sm text-on-surface-variant block">Message to Guest</label>
+                                <textarea class="w-full px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-body-md resize-none" rows="3">Dear Guest, we apologize for the inconvenience regarding the pool maintenance. As a gesture of goodwill, please accept this $250 voucher for a future stay with Lush Hospitality.</textarea>
+                            </div>
+                            <div class="flex items-center gap-2 mt-2">
+                                <input checked="" class="rounded border-outline-variant text-primary focus:ring-primary" id="send-copy" type="checkbox">
+                                <label class="text-body-sm font-body-sm text-on-surface-variant cursor-pointer" for="send-copy">Also send copy to Host</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Right Column: Internal Notes & Actions -->
+            <div class="lg:col-span-4 flex flex-col gap-6">
+                <!-- Internal Notes -->
+                <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-variant flex-1 flex flex-col">
+                    <div class="flex items-center gap-2 mb-4 border-b border-surface-variant pb-2">
+                        <span class="material-symbols-outlined text-outline">edit_note</span>
+                        <h3 class="font-headline-sm text-headline-sm text-primary">Internal Notes</h3>
+                    </div>
+                    <div class="bg-surface rounded-lg p-3 mb-4 text-body-sm font-body-sm text-on-surface-variant border border-surface-variant">
+                        <p class="mb-2"><span class="font-semibold text-on-surface">Agent J. Smith (Yesterday):</span> Reviewed host photos. Pool is indeed empty. Host claims guest was notified 2 days prior to arrival via platform messaging.</p>
+                        <p><span class="font-semibold text-on-surface">Agent M. Davis (Today):</span> Guest denies receiving notification. Platform logs show message was sent but unread. Suggesting partial compensation.</p>
+                    </div>
+                    <div class="mt-auto space-y-3">
+                        <label class="font-label-sm text-label-sm text-on-surface-variant block">Add final resolution note (Private)</label>
+                        <textarea class="w-full px-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-body-md resize-none" placeholder="Document reasoning for this resolution..." rows="4"></textarea>
+                    </div>
+                </div>
+                <!-- Finalize Actions -->
+                <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-variant">
+                    <p class="text-body-sm font-body-sm text-on-surface-variant mb-4 text-center">Confirming this action will finalize the case and notify relevant parties.</p>
+                    <div class="flex flex-col gap-3">
+                        <button class="w-full py-3 bg-primary text-pure-white rounded-lg font-label-lg text-label-lg hover:bg-primary-container transition-colors shadow-sm flex justify-center items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">check_circle</span>
+                            Finalize Resolution
+                        </button>
+                        <button class="w-full py-3 border border-outline text-on-surface rounded-lg font-label-lg text-label-lg hover:bg-surface-container transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script>
+    // Simple script to handle UI interaction for the action cards (visual only)
+    document.addEventListener('DOMContentLoaded', () => {
+        const cards = document.querySelectorAll('.action-card');
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Remove active class from all
+                cards.forEach(c => {
+                    c.classList.remove('active');
+                    // Reset bottom bar visual state for non-active
+                    const bar = c.querySelector('.absolute.bottom-0');
+                    if(bar) bar.style.transform = '';
+                });
+
+                // Add active to clicked
+                card.classList.add('active');
+                const activeBar = card.querySelector('.absolute.bottom-0');
+                if(activeBar) activeBar.style.transform = 'scaleX(1)';
+
+                // In a real app, this would swap the form content in #form-container
+                // For this static demo, we keep the voucher form visible as representative
+            });
+        });
+    });
+</script>
+</body></html>
