@@ -23,6 +23,9 @@ type VerifyEmailLocationState = {
   email?: string
   loginPath?: string
   registerMessage?: string
+  from?: {
+    pathname?: string
+  }
 }
 
 type VerifyEmailForm = {
@@ -135,6 +138,8 @@ export function VerifyEmailPage() {
       navigate(loginPath, {
         replace: true,
         state: {
+          email: form.email.trim(),
+          from: locationState?.from,
           registerMessage:
             typeof message === 'string'
               ? message
@@ -253,6 +258,7 @@ export function VerifyEmailPage() {
         <div className="mt-6 text-center">
           <Link
             to={loginPath}
+            state={{ email: form.email.trim(), from: locationState?.from }}
             className={cn(authSmallLinkClass, 'text-gray-400 hover:text-blue-600')}
           >
             Quay lại đăng nhập
