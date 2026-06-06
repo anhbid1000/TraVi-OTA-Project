@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { cn } from '../../utils/cn'
 import { useAuth } from '../../hooks/useAuth'
 import { authService } from '../../services/authService'
@@ -39,11 +39,24 @@ const initialForm: CustomerRegisterFormValues = {
   confirmPassword: '',
 }
 
+type LocationState = {
+  from?: {
+    pathname?: string
+  }
+  email?: string
+}
+
 export function CustomerRegister() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { loginWithGoogle } = useAuth()
+  const locationState = location.state as LocationState | null
+  const redirectPath = locationState?.from?.pathname
 
-  const [form, setForm] = useState<CustomerRegisterFormValues>(initialForm)
+  const [form, setForm] = useState<CustomerRegisterFormValues>({
+    ...initialForm,
+    email: locationState?.email ?? '',
+  })
   const [errors, setErrors] = useState<CustomerRegisterFormErrors>({})
   const [submitError, setSubmitError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -139,6 +152,7 @@ export function CustomerRegister() {
           email: form.email.trim(),
           loginPath: '/login',
           registerMessage: successMessage,
+          from: locationState?.from,
         },
       })
     } catch (error) {
@@ -163,7 +177,7 @@ export function CustomerRegister() {
       const user = tokenStorage.getUserFromToken()
       const defaultPath = getDefaultPathByRole(getUserRole(user))
 
-      navigate(defaultPath, { replace: true })
+      navigate(redirectPath || defaultPath, { replace: true })
     } catch (error) {
       setSubmitError(getApiErrorMessage(error, 'Đăng ký Google thất bại.'))
     } finally {
@@ -297,7 +311,11 @@ export function CustomerRegister() {
 
         <div className={authFooterClass}>
           Đã có tài khoản?{' '}
-          <Link to="/login" className="font-bold text-blue-500 hover:text-blue-600">
+          <Link
+            to="/login"
+            state={{ from: locationState?.from, email: form.email.trim() }}
+            className="font-bold text-blue-500 hover:text-blue-600"
+          >
             Đăng nhập
           </Link>
         </div>

@@ -408,6 +408,8 @@ public class UserService {
             throw new RuntimeException("Đơn đã bị hủy, không thể thanh toán giả lập");
         }
 
+        validatePaymentNotExpired(booking);
+
         if (booking.getTrangThai() != TrangThaiDon.DA_THANH_TOAN) {
             booking.setTrangThai(TrangThaiDon.DA_THANH_TOAN);
             hotelBookingPaymentHoldService.removePending(booking.getId());
@@ -426,6 +428,8 @@ public class UserService {
             throw new RuntimeException("Đơn đã bị hủy, không thể thanh toán giả lập");
         }
 
+        validatePaymentNotExpired(booking);
+
         if (booking.getTrangThai() != TrangThaiDon.DA_THANH_TOAN) {
             booking.setTrangThai(TrangThaiDon.DA_THANH_TOAN);
             hotelBookingPaymentHoldService.removePending(booking.getId());
@@ -433,6 +437,14 @@ public class UserService {
         }
 
         return toHotelBookingResponse(booking);
+    }
+
+    private void validatePaymentNotExpired(com.ota.travi.entity.DonDatCho booking) {
+        if (booking.getTrangThai() != TrangThaiDon.DA_THANH_TOAN
+                && booking.getPaymentExpiredAt() != null
+                && booking.getPaymentExpiredAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Đơn đã hết thời gian thanh toán");
+        }
     }
 
     @Transactional

@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { userService } from '../services/userService'
+import { getApiErrorMessage } from '../utils/apiError'
 import { formatVnd } from '../utils/display'
+
+const PENDING_CHECKOUT_KEY = 'travi_pending_checkout'
 
 type CheckoutState = {
   type?: 'hotel' | 'restaurant'
@@ -33,6 +36,21 @@ type BookingForm = {
   note: string
 }
 
+type PendingCheckout = {
+  booking: CheckoutState
+  form: BookingForm
+}
+
+function readPendingCheckout(): PendingCheckout | null {
+  try {
+    const value = sessionStorage.getItem(PENDING_CHECKOUT_KEY)
+    return value ? JSON.parse(value) as PendingCheckout : null
+  } catch {
+    sessionStorage.removeItem(PENDING_CHECKOUT_KEY)
+    return null
+  }
+}
+
 function getUserString(user: Record<string, unknown> | null, keys: string[]) {
   if (!user) return ''
   for (const key of keys) {
@@ -46,14 +64,17 @@ export function CheckoutPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated, user } = useAuth()
-  const booking = (location.state ?? {}) as CheckoutState
+  const pendingCheckout = useMemo(readPendingCheckout, [])
+  const locationBooking = (location.state ?? {}) as CheckoutState
+  const restoredCheckout = locationBooking.type ? null : pendingCheckout
+  const booking = locationBooking.type ? locationBooking : (restoredCheckout?.booking ?? {})
 
   const initialForm = useMemo<BookingForm>(() => ({
-    fullName: isAuthenticated ? getUserString(user, ['hoTen', 'fullName', 'name', 'username']) : '',
-    email: isAuthenticated ? getUserString(user, ['email']) : '',
-    phone: isAuthenticated ? getUserString(user, ['soDienThoai', 'phone', 'phoneNumber']) : '',
-    note: '',
-  }), [isAuthenticated, user])
+    fullName: restoredCheckout?.form.fullName || (isAuthenticated ? getUserString(user, ['hoTen', 'fullName', 'name', 'username']) : ''),
+    email: restoredCheckout?.form.email || (isAuthenticated ? getUserString(user, ['email']) : ''),
+    phone: restoredCheckout?.form.phone || (isAuthenticated ? getUserString(user, ['soDienThoai', 'phone', 'phoneNumber']) : ''),
+    note: restoredCheckout?.form.note ?? '',
+  }), [isAuthenticated, restoredCheckout, user])
 
   const [form, setForm] = useState<BookingForm>(initialForm)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -64,6 +85,12 @@ export function CheckoutPage() {
   useEffect(() => {
     setForm(initialForm)
   }, [initialForm])
+
+  useEffect(() => {
+    if (locationBooking.type) {
+      sessionStorage.removeItem(PENDING_CHECKOUT_KEY)
+    }
+  }, [locationBooking.type])
 
   useEffect(() => {
     if (!isAuthenticated || user?.email) return
@@ -83,7 +110,7 @@ export function CheckoutPage() {
     void fetchProfile()
   }, [isAuthenticated, user?.email])
 
-  const modeLabel = isAuthenticated ? 'Đặt chỗ bằng tài khoản' : 'Đặt chỗ nhanh'
+  const modeLabel = isAuthenticated ? 'Hoàn tất đặt chỗ bằng tài khoản' : 'Đăng nhập để hoàn tất đặt chỗ'
   const isHotel = booking.type === 'hotel'
   const isRestaurant = booking.type === 'restaurant'
   const hasBookingState = isHotel || isRestaurant
@@ -113,11 +140,6 @@ export function CheckoutPage() {
     event.preventDefault()
     setErrorMessage('')
 
-    if (!isAuthenticated) {
-      setErrorMessage('Vui lòng đăng nhập để tiếp tục thanh toán.')
-      return
-    }
-
     if (isHotel && !canSubmitHotelBooking) {
       setErrorMessage('Không đủ dữ liệu để tạo đơn đặt phòng. Vui lòng chọn lại phòng.')
       return
@@ -125,6 +147,17 @@ export function CheckoutPage() {
 
     if (!isValidPhoneNumber(form.phone)) {
       setErrorMessage('Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam hợp lệ.')
+      return
+    }
+
+    if (!isAuthenticated) {
+      sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify({ booking, form }))
+      navigate('/login', {
+        state: {
+          from: { pathname: '/checkout' },
+          email: form.email.trim(),
+        },
+      })
       return
     }
 
@@ -143,6 +176,7 @@ export function CheckoutPage() {
           expectedTotalAmount: Number(booking.totalPrice ?? 0),
           rooms: buildHotelRoomsPayload(),
         })
+        sessionStorage.removeItem(PENDING_CHECKOUT_KEY)
         navigate('/payment', { state: { booking: response, bookingType: 'hotel' } })
       } else if (isRestaurant) {
         const response = await userService.createRestaurantBooking({
@@ -155,12 +189,12 @@ export function CheckoutPage() {
           time: String(booking.time),
           soNguoi: Number(booking.guests ?? 1),
         })
+        sessionStorage.removeItem(PENDING_CHECKOUT_KEY)
         navigate('/payment', { state: { booking: response, bookingType: 'restaurant' } })
       }
     } catch (error) {
       console.error('Failed to create booking:', error)
-      const err = error as Error
-      setErrorMessage(`Tạo đơn đặt chỗ thất bại: ${err.message || 'Vui lòng kiểm tra lại thông tin và thử lại.'}`)
+      setErrorMessage(getApiErrorMessage(error, 'Tạo đơn đặt chỗ thất bại. Vui lòng kiểm tra lại thông tin và thử lại.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -213,14 +247,6 @@ export function CheckoutPage() {
               </section>
 
               <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-sm">
-                <h2 className="font-display text-xl font-bold text-on-surface">Mã ưu đãi</h2>
-                <div className="mt-4 flex gap-3">
-                  <input className="w-full rounded-xl border border-outline-variant/50 bg-surface px-4 py-3 text-sm outline-none transition focus:border-primary" placeholder="Nhập mã giảm giá" type="text" />
-                  <button type="button" className="rounded-xl bg-secondary px-5 py-3 text-sm font-bold text-on-secondary">Áp dụng</button>
-                </div>
-              </section>
-
-              <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-sm">
                 <h2 className="font-display text-xl font-bold text-on-surface">Yêu cầu đặc biệt</h2>
                 <p className="mt-2 text-sm text-on-surface-variant">Cơ sở sẽ cố gắng đáp ứng, nhưng không đảm bảo 100%.</p>
                 <textarea value={form.note} onChange={(e) => setForm((c) => ({ ...c, note: e.target.value }))} rows={4} className="mt-4 w-full rounded-xl border border-outline-variant/50 bg-surface px-4 py-3 text-sm outline-none transition focus:border-primary" placeholder="Ví dụ: check-in sớm, bàn gần cửa sổ..." />
@@ -229,7 +255,7 @@ export function CheckoutPage() {
               {errorMessage && <div className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div>}
 
               <button type="submit" disabled={isSubmitting} className="w-full rounded-xl bg-primary px-5 py-3 text-sm font-bold text-on-primary shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60">
-                {isSubmitting ? 'Đang tạo đơn đặt chỗ...' : 'Tiếp tục đến trang thanh toán'}
+                {isSubmitting ? 'Đang tạo đơn đặt chỗ...' : isAuthenticated ? 'Tiếp tục đến trang thanh toán' : 'Đăng nhập để hoàn tất đặt chỗ'}
               </button>
             </form>
           </section>

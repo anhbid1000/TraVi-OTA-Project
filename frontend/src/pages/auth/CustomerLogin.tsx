@@ -216,7 +216,11 @@ export function CustomerLogin() {
 
       <div className={authFooterClass}>
         Chưa có tài khoản?{' '}
-        <Link to="/register" className={cn('cursor-pointer font-bold text-blue-500 hover:text-blue-600')}>
+        <Link
+          to="/register"
+          state={{ from: locationState?.from, email: form.email.trim() }}
+          className={cn('cursor-pointer font-bold text-blue-500 hover:text-blue-600')}
+        >
           Đăng ký ngay
         </Link>
       </div>
