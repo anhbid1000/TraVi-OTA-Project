@@ -48,6 +48,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -122,6 +123,22 @@ public class PublicCatalogService {
         this.chinhSachRepository = chinhSachRepository;
         this.tienIchKhachSanRepository = tienIchKhachSanRepository;
         this.tienIchNhaHangRepository = tienIchNhaHangRepository;
+    }
+
+    // Helper: Convert relative /uploads/... to absolute URL
+    private String toAbsoluteUrl(String url) {
+        if (url == null || url.isEmpty()) return url;
+        if (url.startsWith("http://") || url.startsWith("https://")) return url;
+        if (url.startsWith("/uploads/")) {
+            try {
+                String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+                return baseUrl + url;
+            } catch (Exception e) {
+                // Fallback if no request context (e.g., async/background jobs)
+                return "http://localhost:8080" + url;
+            }
+        }
+        return url;
     }
 
     // --- 1. TÌMM KIẾM KHÁCH SẠN (SEARCH HOTELS) ---
@@ -801,7 +818,7 @@ public class PublicCatalogService {
                 .map(image -> new AnhResponse(
                         image.getId(),
                         hotelId,
-                        image.getDuongDanUrl(),
+                        toAbsoluteUrl(image.getDuongDanUrl()),
                         image.getMoTaAnh(),
                         image.getLaAnhDaiDien(),
                         image.getNgayTaiLen()
@@ -815,7 +832,7 @@ public class PublicCatalogService {
                 .map(image -> new AnhResponse(
                         image.getId(),
                         restaurantId,
-                        image.getDuongDanUrl(),
+                        toAbsoluteUrl(image.getDuongDanUrl()),
                         image.getMoTaAnh(),
                         image.getLaAnhDaiDien(),
                         image.getNgayTaiLen()
@@ -829,7 +846,7 @@ public class PublicCatalogService {
                 .map(image -> new AnhResponse(
                         image.getId(),
                         roomId,
-                        image.getDuongDanUrl(),
+                        toAbsoluteUrl(image.getDuongDanUrl()),
                         image.getMoTaAnh(),
                         image.getLaAnhDaiDien(),
                         image.getNgayTaiLen()
@@ -893,18 +910,22 @@ public class PublicCatalogService {
     private String resolveHotelThumbnail(String hotelId) {
         return anhKhachSanRepository.findFirstByKhachSan_IdTaiSanAndLaAnhDaiDienTrue(hotelId)
                 .map(AnhKhachSan::getDuongDanUrl)
+                .map(this::toAbsoluteUrl)
                 .orElseGet(() -> anhKhachSanRepository.findByKhachSan_IdTaiSan(hotelId).stream()
                         .findFirst()
                         .map(AnhKhachSan::getDuongDanUrl)
+                        .map(this::toAbsoluteUrl)
                         .orElse(null));
     }
 
     private String resolveRestaurantThumbnail(String restaurantId) {
         return anhNhaHangRepository.findFirstByNhaHang_IdTaiSanAndLaAnhDaiDienTrue(restaurantId)
                 .map(AnhNhaHang::getDuongDanUrl)
+                .map(this::toAbsoluteUrl)
                 .orElseGet(() -> anhNhaHangRepository.findByNhaHang_IdTaiSan(restaurantId).stream()
                         .findFirst()
                         .map(AnhNhaHang::getDuongDanUrl)
+                        .map(this::toAbsoluteUrl)
                         .orElse(null));
     }
 

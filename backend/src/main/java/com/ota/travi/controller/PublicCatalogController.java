@@ -70,9 +70,6 @@ public class PublicCatalogController {
             @RequestParam(required = false) Integer size
     ) {
         try {
-            if (city == null || city.isBlank()) {
-                return new ResponseEntity<>("Vui lòng chọn thành phố.", HttpStatus.BAD_REQUEST);
-            }
             if (checkIn == null || checkOut == null) {
                 return new ResponseEntity<>("Vui lòng chọn ngày nhận và trả phòng.", HttpStatus.BAD_REQUEST);
             }
@@ -196,9 +193,6 @@ public class PublicCatalogController {
             @RequestParam(required = false) Integer size
     ) {
         try {
-            if (city == null || city.isBlank()) {
-                return new ResponseEntity<>("Vui lòng chọn thành phố.", HttpStatus.BAD_REQUEST);
-            }
             if (date == null || time == null) {
                 return new ResponseEntity<>("Vui lòng chọn ngày và giờ dùng bữa.", HttpStatus.BAD_REQUEST);
             }

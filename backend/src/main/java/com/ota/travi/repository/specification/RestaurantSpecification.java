@@ -9,10 +9,14 @@ import com.ota.travi.enums.TrangThaiHoatDong;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
-
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Root;
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class RestaurantSpecification {
@@ -46,10 +50,10 @@ public final class RestaurantSpecification {
                 return null;
             }
             Join<NhaHang, HoSoKinhDoanh> hoSoJoin = root.join("hoSoKinhDoanh", JoinType.INNER);
-            String normalizedKeyword = "%" + city.trim().toLowerCase(Locale.ROOT) + "%";
+            String normalizedKeyword = "%" + removeAccents(city.trim().toLowerCase(Locale.ROOT)) + "%";
             return cb.or(
-                    cb.like(cb.lower(hoSoJoin.get("thanhPho")), normalizedKeyword),
-                    cb.like(cb.lower(hoSoJoin.get("diaChi")), normalizedKeyword)
+                    cb.like(unaccent(cb, cb.lower(hoSoJoin.get("thanhPho"))), normalizedKeyword),
+                    cb.like(unaccent(cb, cb.lower(hoSoJoin.get("diaChi"))), normalizedKeyword)
             );
         };
     }
@@ -62,12 +66,12 @@ public final class RestaurantSpecification {
             List<String> normalizedCuisines = cuisineTypes.stream()
                     .map(String::trim)
                     .filter(value -> !value.isBlank())
-                    .map(value -> value.toLowerCase(Locale.ROOT))
+                    .map(value -> removeAccents(value.toLowerCase(Locale.ROOT)))
                     .collect(Collectors.toList());
             if (normalizedCuisines.isEmpty()) {
                 return null;
             }
-            return cb.lower(root.get("loaiAmThuc")).in(normalizedCuisines);
+            return unaccent(cb, cb.lower(root.get("loaiAmThuc"))).in(normalizedCuisines);
         };
     }
 
@@ -81,12 +85,12 @@ public final class RestaurantSpecification {
             List<String> normalizedAmenities = amenityIds.stream()
                     .map(String::trim)
                     .filter(value -> !value.isBlank())
-                    .map(value -> value.toLowerCase(Locale.ROOT))
+                    .map(value -> removeAccents(value.toLowerCase(Locale.ROOT)))
                     .collect(Collectors.toList());
             if (normalizedAmenities.isEmpty()) {
                 return null;
             }
-            return cb.lower(amenityJoin.get("tenTienIch")).in(normalizedAmenities);
+            return unaccent(cb, cb.lower(amenityJoin.get("tenTienIch"))).in(normalizedAmenities);
         };
     }
 
@@ -95,15 +99,15 @@ public final class RestaurantSpecification {
             if (!hasText(keyword)) {
                 return null;
             }
-            String normalizedKeyword = "%" + keyword.trim().toLowerCase(Locale.ROOT) + "%";
+            String normalizedKeyword = "%" + removeAccents(keyword.trim().toLowerCase(Locale.ROOT)) + "%";
             Join<NhaHang, HoSoKinhDoanh> hoSoJoin = root.join("hoSoKinhDoanh", JoinType.LEFT);
 
             return cb.or(
-                    cb.like(cb.lower(root.get("ten")), normalizedKeyword),
-                    cb.like(cb.lower(root.get("moTa")), normalizedKeyword),
-                    cb.like(cb.lower(root.get("loaiAmThuc")), normalizedKeyword),
-                    cb.like(cb.lower(hoSoJoin.get("tenCoSo")), normalizedKeyword),
-                    cb.like(cb.lower(hoSoJoin.get("diaChi")), normalizedKeyword)
+                    cb.like(unaccent(cb, cb.lower(root.get("ten"))), normalizedKeyword),
+                    cb.like(unaccent(cb, cb.lower(root.get("moTa"))), normalizedKeyword),
+                    cb.like(unaccent(cb, cb.lower(root.get("loaiAmThuc"))), normalizedKeyword),
+                    cb.like(unaccent(cb, cb.lower(hoSoJoin.get("tenCoSo"))), normalizedKeyword),
+                    cb.like(unaccent(cb, cb.lower(hoSoJoin.get("diaChi"))), normalizedKeyword)
             );
         };
     }
@@ -143,5 +147,17 @@ public final class RestaurantSpecification {
 
     private static boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private static Expression<String> unaccent(CriteriaBuilder cb, Expression<String> expression) {
+        return cb.function("unaccent", String.class, expression);
+    }
+
+    private static String removeAccents(String text) {
+        if (text == null) return null;
+        String nfdNormalizedString = Normalizer.normalize(text, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(nfdNormalizedString).replaceAll("")
+                .replace('đ', 'd').replace('Đ', 'D');
     }
 }
