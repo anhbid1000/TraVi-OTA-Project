@@ -565,7 +565,7 @@ CREATE TABLE su_kien_hanh_vi (
     doi_tuan_id BIGINT NOT NULL,
     loai_doi_tuong VARCHAR(50) NOT NULL,
     thoi_luong_xem_ms INTEGER,
-    metadata JSONB,
+    metadata ${json_type},
     thoi_gian TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_su_kien_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

@@ -17,6 +17,7 @@ import { Navbar } from '../../components/layout/Navbar'
 import { useAuth } from '../../hooks/useAuth'
 import type { AuthUser } from '../../types/auth'
 import { userService, type BookingSearchResponse, type UserBookingResponse } from '../../services/userService'
+import { getApiErrorMessage } from '../../utils/apiError'
 
 function getUserDisplayName(user: AuthUser | null) {
   if (!user) return 'bạn'
@@ -110,9 +111,9 @@ export function SearchPage() {
       try {
         const res = await userService.getMyBookings()
         setBookings(res)
-      } catch (err: any) {
+      } catch (err) {
         console.error(err)
-        setError(err.response?.data || 'Không thể tải lịch sử đặt chỗ. Vui lòng thử lại sau.')
+        setError(getApiErrorMessage(err, 'Không thể tải lịch sử đặt chỗ. Vui lòng thử lại sau.'))
       } finally {
         setLoading(false)
       }
@@ -153,9 +154,9 @@ export function SearchPage() {
 
       const detail = await userService.getMyBookingDetail(bookingId)
       setSelectedBooking(detail)
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
-      setError(err.response?.data || 'Không thể tải chi tiết đơn đặt chỗ. Vui lòng thử lại sau.')
+      setError(getApiErrorMessage(err, 'Không thể tải chi tiết đơn đặt chỗ. Vui lòng thử lại sau.'))
     } finally {
       setDetailLoading(false)
     }
@@ -182,11 +183,10 @@ export function SearchPage() {
         guestPhone.trim() || undefined
       )
       setSelectedBooking(result)
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
       setGuestError(
-        err.response?.data || 
-        'Tra cứu thất bại. Vui lòng kiểm tra lại mã đặt chỗ và thông tin xác thực.'
+        getApiErrorMessage(err, 'Tra cứu thất bại. Vui lòng kiểm tra lại mã đặt chỗ và thông tin xác thực.')
       )
     } finally {
       setGuestLoading(false)

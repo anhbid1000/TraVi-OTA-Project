@@ -28,7 +28,7 @@ export function PartnerReviewCard({ review, onReply }: PartnerReviewCardProps) {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   useEffect(() => {
-    let revoked: string[] = [];
+    const revoked: string[] = [];
     let cancelled = false;
 
     const loadImages = async () => {

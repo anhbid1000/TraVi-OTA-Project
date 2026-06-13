@@ -79,6 +79,21 @@ public class LocalFileStorageServiceImpl implements FileStorageInterfaceService 
     @Override
     public Resource loadAsResource(String filename) {
         try {
+            if (filename == null || filename.isBlank()) {
+                throw new StorageException("Filename cannot be null or empty");
+            }
+
+            // If filename is a full CDN URL (starts with http:// or https://), load directly from URL
+            if (filename.startsWith("http://") || filename.startsWith("https://")) {
+                Resource resource = new UrlResource(filename);
+                if (resource.exists() || resource.isReadable()) {
+                    return resource;
+                } else {
+                    throw new StorageException("Could not read file from CDN: " + filename);
+                }
+            }
+
+            // Otherwise, treat as local file path
             Path file = rootLocation.resolve(filename);
             Resource resource = new UrlResource(file.toUri());
             if (resource.exists() || resource.isReadable()) {

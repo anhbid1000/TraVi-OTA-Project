@@ -190,7 +190,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout,
       refreshSession,
     }),
-    [accessToken, isLoading, login, loginWithGoogle, logout, refreshSession, refreshToken, user]
+    [accessToken, isAuthenticated, isLoading, login, loginWithGoogle, logout, refreshSession, refreshToken, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

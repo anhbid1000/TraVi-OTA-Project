@@ -2231,8 +2231,6 @@ type BusinessProfileViewProps = {
 }
 
 function BusinessProfileView({
-  step: _step,
-  setStep: _setStep,
   profile,
   profileForm,
   profileErrors,
@@ -2240,12 +2238,8 @@ function BusinessProfileView({
   updateProfileField,
   saveProfile,
   saveDraft,
-  uploadFile: _uploadFile,
   uploadBusinessLicense,
   isUploadingLicense,
-  toggleAmenity: _toggleAmenity,
-  addCustomAmenity: _addCustomAmenity,
-  availableHotelAmenities: _availableHotelAmenities,
 }: BusinessProfileViewProps) {
   // One-page form: keep existing validation + upload/map logic,
   // but render all sections in a single screen.

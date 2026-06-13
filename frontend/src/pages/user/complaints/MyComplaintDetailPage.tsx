@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CustomerFeedbackLayout } from '../../../features/feedback-v2/components/CustomerFeedbackLayout';
 import { complaintServiceV2 } from '../../../features/feedback-v2/services/complaintServiceV2';
@@ -37,13 +37,16 @@ const categoryMap: Record<ComplaintCategory, string> = {
 };
 
 const actionTypeMap: Record<ComplaintResolutionActionType, string> = {
+  APOLOGY: 'Xin lỗi chính thức',
+  ROOM_CHANGE: 'Đổi phòng',
+  TABLE_CHANGE: 'Đổi bàn',
+  SERVICE_REDO: 'Thực hiện lại dịch vụ',
   FULL_REFUND: 'Hoàn tiền toàn bộ',
   PARTIAL_REFUND: 'Hoàn tiền một phần',
   VOUCHER: 'Voucher',
-  DISCOUNT_NEXT_BOOKING: 'Giảm giá lần đặt sau',
-  CHANGE_ROOM: 'Đổi phòng',
-  OTHER_SOLUTION: 'Phương án khác',
-  REJECT_COMPLAINT: 'Từ chối khiếu nại',
+  DISCOUNT_CODE: 'Mã giảm giá',
+  REJECT_REQUEST: 'Từ chối yêu cầu',
+  OTHER: 'Phương án khác',
 };
 
 function severityLabel(severity: ComplaintResponse['severity']) {
@@ -89,7 +92,7 @@ export default function MyComplaintDetailPage() {
   const [acceptingActionId, setAcceptingActionId] = useState<string | null>(null);
   const [closing, setClosing] = useState(false);
 
-  const loadDetail = async () => {
+  const loadDetail = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -99,11 +102,11 @@ export default function MyComplaintDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [complaintId]);
 
   useEffect(() => {
     if (complaintId) void loadDetail();
-  }, [complaintId]);
+  }, [complaintId, loadDetail]);
 
   const closed = complaint?.status === 'DA_DONG';
   const pendingActions = useMemo(() => complaint?.resolutionActions?.filter((a) => a.status === 'PROPOSED') ?? [], [complaint]);

@@ -100,6 +100,10 @@ function getStatusMeta(status: string) {
   }
 }
 
+function canCompleteBooking(status: string) {
+  return status === 'DA_THANH_TOAN' || status === 'DA_XAC_NHAN' || status === 'DANG_PHUC_VU'
+}
+
 type ChartPoint = {
   x: number
   y: number
@@ -150,7 +154,15 @@ function getNameInitials(name: string) {
     .join('')
 }
 
-function HotelOverview({ dashboard }: { dashboard: PartnerDashboardOverviewResponse }) {
+function HotelOverview({
+  dashboard,
+  completingBookingId,
+  onCompleteBooking,
+}: {
+  dashboard: PartnerDashboardOverviewResponse
+  completingBookingId: string | null
+  onCompleteBooking: (bookingId: string) => void
+}) {
   const chartPoints = useMemo(() => buildChartPoints(dashboard.doanhThuTheoNgay ?? []), [dashboard.doanhThuTheoNgay])
   const linePath = useMemo(() => buildLinePath(chartPoints), [chartPoints])
   const areaPath = useMemo(() => buildAreaPath(chartPoints), [chartPoints])
@@ -313,16 +325,18 @@ function HotelOverview({ dashboard }: { dashboard: PartnerDashboardOverviewRespo
                   <th>Loại phòng</th>
                   <th>Số tiền</th>
                   <th>Trạng thái</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {dashboard.datChoGanDay.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="empty-cell">Chưa có giao dịch đặt phòng gần đây</td>
+                    <td colSpan={6} className="empty-cell">Chưa có giao dịch đặt phòng gần đây</td>
                   </tr>
                 )}
                 {dashboard.datChoGanDay.map((item) => {
                   const status = getStatusMeta(item.trangThai)
+                  const completable = canCompleteBooking(item.trangThai)
                   return (
                     <tr key={item.id}>
                       <td>
@@ -336,6 +350,20 @@ function HotelOverview({ dashboard }: { dashboard: PartnerDashboardOverviewRespo
                       <td>{formatCurrency(item.tongTien)}</td>
                       <td>
                         <span className={`partner-dashboard-status ${status.tone}`}>{status.label}</span>
+                      </td>
+                      <td>
+                        {completable ? (
+                          <button
+                            type="button"
+                            className="partner-dashboard-complete-btn"
+                            disabled={completingBookingId === item.id}
+                            onClick={() => onCompleteBooking(item.id)}
+                          >
+                            {completingBookingId === item.id ? 'Đang xử lý...' : 'Hoàn tất'}
+                          </button>
+                        ) : (
+                          <span className="partner-dashboard-muted-action">--</span>
+                        )}
                       </td>
                     </tr>
                   )
@@ -383,10 +411,14 @@ function RestaurantOverview({
   dashboard,
   period,
   onChangePeriod,
+  completingBookingId,
+  onCompleteBooking,
 }: {
   dashboard: PartnerRestaurantDashboardOverviewResponse
   period: RestaurantDashboardPeriod
   onChangePeriod: (value: RestaurantDashboardPeriod) => void
+  completingBookingId: string | null
+  onCompleteBooking: (bookingId: string) => void
 }) {
   const maxRevenue = useMemo(() => {
     return Math.max(...dashboard.doanhThuTheoGio.map((item) => item.doanhThu), 0)
@@ -555,16 +587,18 @@ function RestaurantOverview({
                   <th>Bàn</th>
                   <th>Thành tiền</th>
                   <th>Trạng thái</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {dashboard.donGanDay.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="empty-cell">Chưa có đơn nhà hàng gần đây</td>
+                    <td colSpan={6} className="empty-cell">Chưa có đơn nhà hàng gần đây</td>
                   </tr>
                 )}
                 {dashboard.donGanDay.map((item) => {
                   const status = getStatusMeta(item.trangThai)
+                  const completable = canCompleteBooking(item.trangThai)
                   return (
                     <tr key={item.id}>
                       <td>
@@ -578,6 +612,20 @@ function RestaurantOverview({
                       <td>{formatCurrency(item.tongTien)}</td>
                       <td>
                         <span className={`partner-dashboard-status ${status.tone}`}>{status.label}</span>
+                      </td>
+                      <td>
+                        {completable ? (
+                          <button
+                            type="button"
+                            className="partner-dashboard-complete-btn"
+                            disabled={completingBookingId === item.id}
+                            onClick={() => onCompleteBooking(item.id)}
+                          >
+                            {completingBookingId === item.id ? 'Đang xử lý...' : 'Hoàn tất'}
+                          </button>
+                        ) : (
+                          <span className="partner-dashboard-muted-action">--</span>
+                        )}
                       </td>
                     </tr>
                   )
@@ -633,6 +681,7 @@ export function PartnerDashboardOverviewPage() {
   const [hotelDashboard, setHotelDashboard] = useState<PartnerDashboardOverviewResponse | null>(null)
   const [restaurantDashboard, setRestaurantDashboard] = useState<PartnerRestaurantDashboardOverviewResponse | null>(null)
   const [restaurantPeriod, setRestaurantPeriod] = useState<RestaurantDashboardPeriod>('TODAY')
+  const [completingBookingId, setCompletingBookingId] = useState<string | null>(null)
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -678,6 +727,27 @@ export function PartnerDashboardOverviewPage() {
     void loadDashboard()
   }, [restaurantPeriod])
 
+  const handleCompleteBooking = async (bookingId: string) => {
+    setCompletingBookingId(bookingId)
+    setErrorMessage(null)
+
+    try {
+      await partnerAssetService.completeBooking(bookingId)
+
+      if (dashboardType === 'NHA_HANG') {
+        const data = await partnerAssetService.getRestaurantDashboardOverview(restaurantPeriod)
+        setRestaurantDashboard(data)
+      } else {
+        const data = await partnerAssetService.getDashboardOverview(DASHBOARD_RANGE_DAYS)
+        setHotelDashboard(data)
+      }
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, 'Không thể hoàn tất đơn. Vui lòng thử lại sau.'))
+    } finally {
+      setCompletingBookingId(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="partner-dashboard-loading panel">
@@ -722,10 +792,16 @@ export function PartnerDashboardOverviewPage() {
           dashboard={restaurantDashboard}
           period={restaurantPeriod}
           onChangePeriod={setRestaurantPeriod}
+          completingBookingId={completingBookingId}
+          onCompleteBooking={handleCompleteBooking}
         />
       ) : null}
       {dashboardType !== 'NHA_HANG' && hotelDashboard ? (
-        <HotelOverview dashboard={hotelDashboard} />
+        <HotelOverview
+          dashboard={hotelDashboard}
+          completingBookingId={completingBookingId}
+          onCompleteBooking={handleCompleteBooking}
+        />
       ) : null}
     </>
   )

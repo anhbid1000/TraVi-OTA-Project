@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Navbar } from '../../../components/layout/Navbar';
 
 type CustomerFeedbackLayoutProps = {
-  active: 'bookings' | 'complaints';
+  active: 'bookings' | 'complaints' | 'loyalty';
   title: string;
   subtitle?: string;
   children: React.ReactNode;
@@ -24,6 +24,14 @@ export function CustomerFeedbackLayout({ active, title, subtitle, children }: Cu
               <Link className={`flex items-center gap-3 rounded-xl px-4 py-3 transition ${active === 'complaints' ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`} to="/user/complaints">
                 <span className="material-symbols-outlined">report_problem</span>
                 <span className="text-sm font-semibold">Khiếu nại của tôi</span>
+              </Link>
+              <Link className={`flex items-center gap-3 rounded-xl px-4 py-3 transition ${active === 'loyalty' ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-container-high'}`} to="/user/loyalty">
+                <span className="material-symbols-outlined">workspace_premium</span>
+                <span className="text-sm font-semibold">Loyalty & voucher</span>
+              </Link>
+              <Link className="flex items-center gap-3 rounded-xl px-4 py-3 text-on-surface-variant transition hover:bg-surface-container-high" to="#settings">
+                <span className="material-symbols-outlined">settings</span>
+                <span className="text-sm font-semibold">Cài đặt</span>
               </Link>
             </nav>
           </div>

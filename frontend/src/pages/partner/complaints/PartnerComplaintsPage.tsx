@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { complaintServiceV2 } from '../../../features/feedback-v2/services/complaintServiceV2';
 import type { ComplaintCategory, ComplaintResponse, MucDoKhieuNai, TrangThaiKhieuNai } from '../../../features/feedback-v2/types/complaint';
 import { PartnerComplaintFilters } from '../../../features/feedback-v2/components/partner/PartnerComplaintFilters';
@@ -17,7 +17,7 @@ export default function PartnerComplaintsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -36,11 +36,11 @@ export default function PartnerComplaintsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [category, page, severity, status]);
 
   useEffect(() => {
     void load();
-  }, [page, status, severity, category]);
+  }, [load]);
 
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();

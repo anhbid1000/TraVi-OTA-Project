@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { complaintServiceV2 } from '../../../features/feedback-v2/services/complaintServiceV2';
 import { api } from '../../../services/api';
@@ -16,13 +16,16 @@ import { PartnerMessageInput } from '../../../features/feedback-v2/components/pa
 import '../../dashboard.css';
 
 const ACTION_TYPE_OPTIONS: Array<{ value: ComplaintResolutionActionType; label: string }> = [
+  { value: 'APOLOGY', label: 'Xin lỗi chính thức' },
+  { value: 'ROOM_CHANGE', label: 'Đổi phòng' },
+  { value: 'TABLE_CHANGE', label: 'Đổi bàn' },
+  { value: 'SERVICE_REDO', label: 'Làm lại dịch vụ' },
   { value: 'FULL_REFUND', label: 'Hoàn tiền toàn bộ' },
   { value: 'PARTIAL_REFUND', label: 'Hoàn tiền một phần' },
   { value: 'VOUCHER', label: 'Tặng voucher' },
-  { value: 'DISCOUNT_NEXT_BOOKING', label: 'Giảm giá lần đặt tiếp theo' },
-  { value: 'CHANGE_ROOM', label: 'Đổi phòng' },
-  { value: 'OTHER_SOLUTION', label: 'Phương án khác' },
-  { value: 'REJECT_COMPLAINT', label: 'Từ chối khiếu nại' },
+  { value: 'DISCOUNT_CODE', label: 'Mã giảm giá' },
+  { value: 'REJECT_REQUEST', label: 'Từ chối yêu cầu' },
+  { value: 'OTHER', label: 'Phương án khác' },
 ];
 
 function actionTypeLabel(type: ComplaintResolutionActionType) {
@@ -65,7 +68,7 @@ export default function PartnerComplaintDetailPage() {
     currency: 'VND',
   });
 
-  const loadDetail = async () => {
+  const loadDetail = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -75,11 +78,11 @@ export default function PartnerComplaintDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [complaintId]);
 
   useEffect(() => {
     if (complaintId) void loadDetail();
-  }, [complaintId]);
+  }, [complaintId, loadDetail]);
 
   const closed = complaint?.status === 'DA_DONG';
   const canProposeAction = !!complaint && !closed && (complaint.status === 'CHO_PHAN_HOI' || complaint.status === 'DANG_XU_LY');

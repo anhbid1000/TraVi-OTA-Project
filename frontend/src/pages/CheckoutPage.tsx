@@ -247,6 +247,13 @@ export function CheckoutPage() {
               </section>
 
               <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-sm">
+                <h2 className="font-display text-xl font-bold text-on-surface">Mã ưu đãi</h2>
+                <div className="mt-4 rounded-xl border border-outline-variant/40 bg-white p-4 text-sm text-on-surface-variant">
+                  Voucher hiện được áp dụng theo đơn đặt chỗ đã tạo. Bạn có thể nhập / xem trước / áp dụng / gỡ voucher ở bước thanh toán ngay sau khi tạo đơn.
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-6 shadow-sm">
                 <h2 className="font-display text-xl font-bold text-on-surface">Yêu cầu đặc biệt</h2>
                 <p className="mt-2 text-sm text-on-surface-variant">Cơ sở sẽ cố gắng đáp ứng, nhưng không đảm bảo 100%.</p>
                 <textarea value={form.note} onChange={(e) => setForm((c) => ({ ...c, note: e.target.value }))} rows={4} className="mt-4 w-full rounded-xl border border-outline-variant/50 bg-surface px-4 py-3 text-sm outline-none transition focus:border-primary" placeholder="Ví dụ: check-in sớm, bàn gần cửa sổ..." />

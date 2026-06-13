@@ -52,6 +52,7 @@ export function PartnerLayout() {
   const isAiInsightRoute = location.pathname.startsWith('/partner/ai-insights')
   const isReviewRoute = location.pathname.startsWith('/partner/reviews')
   const isComplaintRoute = location.pathname.startsWith('/partner/complaints')
+  const isPromotionRoute = location.pathname.startsWith('/partner/promotions')
   const isAssetManagementRoute = location.pathname.startsWith('/partner/asset-management') ||
     location.pathname.startsWith('/partner/business-profile') ||
     location.pathname.startsWith('/partner/hotels') ||
@@ -64,16 +65,7 @@ export function PartnerLayout() {
   const [hasBusinessProfile, setHasBusinessProfile] = useState<boolean>(true)
   const [serviceType, setServiceType] = useState<ServiceType>(null)
   const [isManagementExpanded, setIsManagementExpanded] = useState<boolean>(false)
-
-  useEffect(() => {
-    if (!hasBusinessProfile) {
-      setIsManagementExpanded(false)
-      return
-    }
-    if (isAssetManagementRoute) {
-      setIsManagementExpanded(true)
-    }
-  }, [hasBusinessProfile, isAssetManagementRoute])
+  const managementExpanded = hasBusinessProfile && (isManagementExpanded || isAssetManagementRoute)
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -171,9 +163,9 @@ export function PartnerLayout() {
                     <CalendarIcon />
                     Đặt dịch vụ
                   </button>
-                  <button>
+                  <button className={isPromotionRoute ? 'active' : ''} onClick={() => navigate('/partner/promotions')}>
                     <AnalyticsIcon />
-                    Phân tích
+                    Ưu đãi & phân tích
                   </button>
                   <button
                     className={isAiInsightRoute ? 'active' : ''}
@@ -204,7 +196,7 @@ export function PartnerLayout() {
               onClick={() => {
                 if (hasBusinessProfile) {
                   navigate('/partner/business-profile')
-                  setIsManagementExpanded(!isManagementExpanded)
+                  setIsManagementExpanded(!managementExpanded)
                 } else {
                   navigate('/partner/business-profile')
                 }
@@ -215,13 +207,13 @@ export function PartnerLayout() {
               {hasBusinessProfile && (
                 <>
                   <span className="nav-spacer" />
-                  {isManagementExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                  {managementExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </>
               )}
             </button>
           </nav>
 
-          {hasBusinessProfile && isManagementExpanded && (
+          {managementExpanded && (
             <div className="management-subnav">
               <p>Quản lý tài sản</p>
               {navItems.map((item) => (

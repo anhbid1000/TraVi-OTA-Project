@@ -13,6 +13,13 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+
+  flyway:
+    enabled: false
+    placeholders:
+      json_type: JSON
+      reserved_index_filter: ""
+      seed_default_loyalty_suffix: ""
   
   data:
     redis:

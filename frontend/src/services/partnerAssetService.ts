@@ -17,6 +17,7 @@ import type {
   PartnerBookingStatus,
   PartnerRestaurantDashboardOverviewResponse,
   RestaurantDashboardPeriod,
+  PartnerAiInsightResponse,
   TablePayload,
   TableResponse,
 } from '../types/asset'
@@ -49,7 +50,6 @@ export const partnerAssetService = {
       })
       .then((response) => response.data)
   },
-
 
   getPartnerBookings(params: {
     status?: PartnerBookingStatus[]
@@ -105,6 +105,17 @@ export const partnerAssetService = {
       .then((response) => response.data)
   },
 
+  completeBooking(bookingId: string) {
+    return api
+      .post<{
+        bookingId: string
+        maDon: string
+        trangThai: string
+        loyaltyRewardProcessed: boolean
+        message: string
+      }>(`/v1/partner/bookings/${bookingId}/complete`)
+      .then((response) => response.data)
+  },
 
   updateBusinessProfile(id: string, payload: BusinessProfilePayload) {
     return api

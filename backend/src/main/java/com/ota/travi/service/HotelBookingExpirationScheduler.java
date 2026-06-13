@@ -20,6 +20,9 @@ public class HotelBookingExpirationScheduler {
     @Autowired
     private HotelBookingPaymentHoldService hotelBookingPaymentHoldService;
 
+    @Autowired
+    private PaymentCallbackService paymentCallbackService;
+
     @Scheduled(fixedDelay = 60_000)
     @Transactional
     public void cancelExpiredPendingHotelBookings() {
@@ -29,6 +32,11 @@ public class HotelBookingExpirationScheduler {
         );
 
         for (DonKhachSan booking : expiredBookings) {
+            try {
+                paymentCallbackService.onPaymentFail(booking.getId(), booking.getKhachHang().getId());
+            } catch (RuntimeException ignored) {
+                // Keep cancellation flow resilient even when voucher release hits inconsistent data.
+            }
             booking.setTrangThai(TrangThaiDon.DA_HUY);
             booking.setCancelledAt(LocalDateTime.now());
             booking.setCancelReason("Quá thời gian thanh toán 20 phút");

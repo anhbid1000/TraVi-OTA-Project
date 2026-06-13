@@ -78,6 +78,9 @@ public class UserService {
     @Autowired
     private HotelBookingPaymentHoldService hotelBookingPaymentHoldService;
 
+    @Autowired
+    private PaymentCallbackService paymentCallbackService;
+
     public UserProfileResponse getUserProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
@@ -411,9 +414,10 @@ public class UserService {
         validatePaymentNotExpired(booking);
 
         if (booking.getTrangThai() != TrangThaiDon.DA_THANH_TOAN) {
-            booking.setTrangThai(TrangThaiDon.DA_THANH_TOAN);
+            paymentCallbackService.onPaymentSuccess(booking.getId(), booking.getKhachHang().getId());
             hotelBookingPaymentHoldService.removePending(booking.getId());
-            booking = donNhaHangRepository.save(booking);
+            booking = donNhaHangRepository.findById(booking.getId())
+                    .orElseThrow(() -> new RuntimeException("KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n Ä‘áº·t nhÃ  hÃ ng"));
         }
 
         return toRestaurantBookingResponse(booking);
@@ -431,9 +435,10 @@ public class UserService {
         validatePaymentNotExpired(booking);
 
         if (booking.getTrangThai() != TrangThaiDon.DA_THANH_TOAN) {
-            booking.setTrangThai(TrangThaiDon.DA_THANH_TOAN);
+            paymentCallbackService.onPaymentSuccess(booking.getId(), booking.getKhachHang().getId());
             hotelBookingPaymentHoldService.removePending(booking.getId());
-            booking = donKhachSanRepository.save(booking);
+            booking = donKhachSanRepository.findById(booking.getId())
+                    .orElseThrow(() -> new RuntimeException("KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n Ä‘áº·t khÃ¡ch sáº¡n"));
         }
 
         return toHotelBookingResponse(booking);
@@ -457,6 +462,7 @@ public class UserService {
         }
 
         if (booking.getPaymentExpiredAt() != null && booking.getPaymentExpiredAt().isBefore(LocalDateTime.now())) {
+            paymentCallbackService.onPaymentFail(booking.getId(), booking.getKhachHang().getId());
             booking.setTrangThai(TrangThaiDon.DA_HUY);
             booking.setCancelledAt(LocalDateTime.now());
             booking.setCancelReason("Quá thời gian thanh toán");
@@ -469,9 +475,10 @@ public class UserService {
             throw new RuntimeException("Phiên thanh toán đã hết hạn");
         }
 
-        booking.setTrangThai(TrangThaiDon.DA_THANH_TOAN);
+        paymentCallbackService.onPaymentSuccess(booking.getId(), booking.getKhachHang().getId());
         hotelBookingPaymentHoldService.removePending(booking.getId());
-        DonKhachSan saved = donKhachSanRepository.save(booking);
+        DonKhachSan saved = donKhachSanRepository.findById(booking.getId())
+                .orElseThrow(() -> new RuntimeException("KhÃ´ng tÃ¬m tháº¥y Ä‘Æ¡n Ä‘áº·t khÃ¡ch sáº¡n"));
 
         return toHotelBookingResponse(saved);
     }
