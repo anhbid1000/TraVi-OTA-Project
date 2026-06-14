@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { cn } from '../../utils/cn'
 import { useAuth } from '../../hooks/useAuth'
 import { tokenStorage } from '../../services/tokenStorage'
+import { userService } from '../../services/userService'
 import type { LoginRequest } from '../../types/auth'
 import { getDefaultPathByRole, getUserRole, normalizeRole } from '../../routes/routeGuards'
 import { getApiErrorMessage } from '../../utils/apiError'
@@ -91,6 +92,25 @@ export function CustomerLogin() {
     return Object.keys(nextErrors).length === 0
   }
 
+  const resolveRedirectPath = async (): Promise<string> => {
+    const defaultPath = await validateCustomerRole();
+    if (!defaultPath) {
+      // validateCustomerRole already set error & return null
+      return '/login';
+    }
+
+    try {
+      const profile = await userService.getProfile();
+      if (!profile.daHoanThanhOnboarding) {
+        return '/onboarding';
+      }
+    } catch {
+      // On failure, ignore and redirect to default path
+    }
+
+    return redirectPath || defaultPath;
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -107,12 +127,10 @@ export function CustomerLogin() {
         matKhau: form.matKhau,
       })
 
-      const defaultPath = await validateCustomerRole()
-      if (!defaultPath) {
-        return
-      }
+      const finalPath = await resolveRedirectPath();
+      if (finalPath === '/login') return;
 
-      navigate(redirectPath || defaultPath, { replace: true })
+      navigate(finalPath, { replace: true })
     } catch (error) {
       setSubmitError(getApiErrorMessage(error, 'Email hoặc mật khẩu không chính xác.'))
     } finally {
@@ -130,12 +148,10 @@ export function CustomerLogin() {
         loaiTaiKhoan: 'KHACH_HANG',
       })
 
-      const defaultPath = await validateCustomerRole()
-      if (!defaultPath) {
-        return
-      }
+      const finalPath = await resolveRedirectPath();
+      if (finalPath === '/login') return;
 
-      navigate(redirectPath || defaultPath, { replace: true })
+      navigate(finalPath, { replace: true })
     } catch (error) {
       setSubmitError(getApiErrorMessage(error, 'Đăng nhập Google thất bại.'))
     } finally {

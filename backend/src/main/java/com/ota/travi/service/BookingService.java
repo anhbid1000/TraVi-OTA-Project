@@ -194,7 +194,8 @@ public class BookingService {
                             .filter(AnhKhachSan::getLaAnhDaiDien)
                             .findFirst()
                             .map(AnhKhachSan::getDuongDanUrl)
-                            .orElse(khachSan.getDanhSachAnh().get(0).getDuongDanUrl());
+                            .map(this::toAbsoluteUrl)
+                            .orElse(toAbsoluteUrl(khachSan.getDanhSachAnh().get(0).getDuongDanUrl()));
                 }
             }
 
@@ -240,7 +241,8 @@ public class BookingService {
                             .filter(AnhNhaHang::getLaAnhDaiDien)
                             .findFirst()
                             .map(AnhNhaHang::getDuongDanUrl)
-                            .orElse(nhaHang.getDanhSachAnh().get(0).getDuongDanUrl());
+                            .map(this::toAbsoluteUrl)
+                            .orElse(toAbsoluteUrl(nhaHang.getDanhSachAnh().get(0).getDuongDanUrl()));
                 }
             }
 
@@ -349,11 +351,11 @@ public class BookingService {
             if (!khachSans.isEmpty()) {
                 KhachSan ks = khachSans.get(0);
                 if (ks.getDanhSachAnh() != null && !ks.getDanhSachAnh().isEmpty()) {
-                    return ks.getDanhSachAnh().stream()
+                    return toAbsoluteUrl(ks.getDanhSachAnh().stream()
                             .filter(a -> Boolean.TRUE.equals(a.getLaAnhDaiDien()))
                             .map(AnhKhachSan::getDuongDanUrl)
                             .findFirst()
-                            .orElseGet(() -> ks.getDanhSachAnh().get(0).getDuongDanUrl());
+                            .orElseGet(() -> ks.getDanhSachAnh().get(0).getDuongDanUrl()));
                 }
             }
         } else if (type == LoaiDichVu.NHA_HANG) {
@@ -361,14 +363,31 @@ public class BookingService {
             if (!nhaHangs.isEmpty()) {
                 NhaHang nh = nhaHangs.get(0);
                 if (nh.getDanhSachAnh() != null && !nh.getDanhSachAnh().isEmpty()) {
-                    return nh.getDanhSachAnh().stream()
+                    return toAbsoluteUrl(nh.getDanhSachAnh().stream()
                             .filter(a -> Boolean.TRUE.equals(a.getLaAnhDaiDien()))
                             .map(AnhNhaHang::getDuongDanUrl)
                             .findFirst()
-                            .orElseGet(() -> nh.getDanhSachAnh().get(0).getDuongDanUrl());
+                            .orElseGet(() -> nh.getDanhSachAnh().get(0).getDuongDanUrl()));
                 }
             }
         }
         return "";
+    }
+
+    // Helper: Convert relative /uploads/... to absolute URL
+    private String toAbsoluteUrl(String url) {
+        if (url == null || url.isEmpty()) return url;
+        if (url.startsWith("http://") || url.startsWith("https://")) return url;
+        if (url.startsWith("/uploads/")) {
+            try {
+                String baseUrl = org.springframework.web.servlet.support.ServletUriComponentsBuilder
+                        .fromCurrentContextPath().build().toUriString();
+                return baseUrl + url;
+            } catch (Exception e) {
+                // Fallback if no request context (e.g., async/background jobs)
+                return "http://localhost:8080" + url;
+            }
+        }
+        return url;
     }
 }

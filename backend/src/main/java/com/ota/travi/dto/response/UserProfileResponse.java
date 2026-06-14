@@ -6,6 +6,7 @@ public record UserProfileResponse(
         String email,
         String hoTen,
         String soDienThoai,
-        String vaiTro
+        String vaiTro,
+        Boolean daHoanThanhOnboarding
 ) {
 }

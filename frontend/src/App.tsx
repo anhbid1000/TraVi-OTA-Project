@@ -31,17 +31,17 @@ import { RestaurantCatalogPage } from './features/restaurants/pages/RestaurantCa
 import { HotelDetailPage } from './features/hotels/pages/HotelDetailPage';
 import { RestaurantDetailPage } from './features/restaurants/pages/RestaurantDetailPage';
 import MyBookings from './pages/user/dashboard/MyBookings';
-import MyBookingsV2 from './pages/user/dashboard/MyBookingsV2.tsx';
-import MyComplaintsPage from './pages/user/complaints/MyComplaintsPage.tsx';
-import MyComplaintDetailPage from './pages/user/complaints/MyComplaintDetailPage.tsx';
+import MyBookingsV2 from './pages/user/dashboard/MyBookingsV2';
+import MyComplaintsPage from './pages/user/complaints/MyComplaintsPage';
+import MyComplaintDetailPage from './pages/user/complaints/MyComplaintDetailPage';
 import PartnerReviewsPage from './pages/partner/PartnerReviewsPage';
-import PartnerComplaintsPage from './pages/partner/complaints/PartnerComplaintsPage.tsx';
-import PartnerComplaintDetailPage from './pages/partner/complaints/PartnerComplaintDetailPage.tsx';
+import PartnerComplaintsPage from './pages/partner/complaints/PartnerComplaintsPage';
+import PartnerComplaintDetailPage from './pages/partner/complaints/PartnerComplaintDetailPage';
 import './App.css';
-
-import BookingDetailPage from './pages/user/dashboard/BookingDetailPage.tsx';
+import BookingDetailPage from './pages/user/dashboard/BookingDetailPage';
+import PartnerPromotionsPage from './pages/partner/promotions/PartnerPromotionsPage';
 import LoyaltyDashboardPage from './pages/user/loyalty/LoyaltyDashboardPage.tsx';
-import PartnerPromotionsPage from './pages/partner/promotions/PartnerPromotionsPage.tsx';
+import { OnboardingPage } from './pages/OnboardingPage';
 
 function NotFoundPage() {
   return (
@@ -95,6 +95,7 @@ function App() {
         <Route path="/403" element={<ForbiddenPage />} />
 
         <Route element={<ProtectedRoute />}>
+          <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/ai/travel-planner" element={<AiTravelPlannerPage />} />
           <Route path="/user/bookings-v2" element={<MyBookingsV2 />} />

@@ -241,3 +241,8 @@ ALTER TABLE khach_hang ADD COLUMN IF NOT EXISTS version BIGINT DEFAULT 0;
 INSERT INTO loyalty_rule (money_per_point, silver_threshold, gold_threshold, diamond_threshold, is_active)
 VALUES (10000, 5000000, 20000000, 50000000, TRUE)
 ${seed_default_loyalty_suffix};
+
+-- Align loyalty point history with UUID booking identifiers used by don_dat_cho.
+ALTER TABLE lich_su_diem
+    ALTER COLUMN booking_id TYPE VARCHAR(36)
+    USING booking_id::TEXT;

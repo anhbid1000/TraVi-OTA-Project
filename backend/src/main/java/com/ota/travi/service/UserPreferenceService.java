@@ -79,6 +79,10 @@ public class UserPreferenceService {
             );
         }
 
+        // Mark onboarding as complete
+        khachHang.setDaHoanThanhOnboarding(true);
+        khachHangRepository.save(khachHang);
+
         return requestedPreferences.stream()
                 .map(st -> new SoThichResponse(st.getId(), st.getTenSoThich()))
                 .toList();

@@ -25,6 +25,9 @@ public class KhachHang extends User{
 
     private Double tongChiTieu = 0.0;
 
+    @Column(name = "da_hoan_thanh_onboarding")
+    private Boolean daHoanThanhOnboarding = false;
+
     @ElementCollection
     @CollectionTable(name = "khach_hang_tu_khoa", joinColumns = @JoinColumn(name = "khach_hang_id"))
     @Column(name = "tu_khoa")

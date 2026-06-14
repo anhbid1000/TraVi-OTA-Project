@@ -7,6 +7,7 @@ export type UserProfile = {
   hoTen: string
   soDienThoai: string
   vaiTro: string
+  daHoanThanhOnboarding: boolean
 }
 
 export type CreateHotelBookingPayload = {

@@ -91,13 +91,20 @@ public class UserService {
 
         String roleName = (user.getVaiTro() != null) ? user.getVaiTro().getTen() : null;
 
+        // Lấy flag onboarding từ KhachHang (nếu là khách hàng)
+        Boolean daHoanThanhOnboarding = false;
+        if (user instanceof KhachHang khachHang) {
+            daHoanThanhOnboarding = Boolean.TRUE.equals(khachHang.getDaHoanThanhOnboarding());
+        }
+
         return new UserProfileResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getHoTen(),
                 user.getSoDienThoai(),
-                roleName
+                roleName,
+                daHoanThanhOnboarding
         );
     }
 
